@@ -773,6 +773,7 @@ fn show_software_emulation_warning_if_needed(
 
 fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<anyhow::Result<()>> {
     cx.spawn_in(window, async move |workspace_handle, cx| {
+        let project_panel = ProjectPanel::load(workspace_handle.clone(), cx.clone());
         let terminal_panel = TerminalPanel::load(workspace_handle.clone(), cx.clone());
 
         async fn add_panel_when_ready(
@@ -791,6 +792,7 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
         }
 
         futures::join!(
+            add_panel_when_ready(project_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(terminal_panel, workspace_handle.clone(), cx.clone()),
             initialize_agent_panel(workspace_handle.clone(), cx.clone()).map(|r| r.log_err()),
         );
@@ -1353,20 +1355,7 @@ fn register_actions(
                 .detach_and_log_err(cx);
             }
         })
-        .register_action({
-            let app_state = app_state.clone();
-            move |_, _: &NewFile, _, cx| {
-                open_new(
-                    Default::default(),
-                    app_state.clone(),
-                    cx,
-                    |workspace, window, cx| {
-                        Editor::new_file(workspace, &Default::default(), window, cx)
-                    },
-                )
-                .detach_and_log_err(cx);
-            }
-        });
+;
 
     #[cfg(not(target_os = "windows"))]
     workspace.register_action(install_cli);

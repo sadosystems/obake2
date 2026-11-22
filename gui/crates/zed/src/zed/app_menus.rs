@@ -114,7 +114,6 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             name: "File".into(),
             disabled: false,
             items: vec![
-                MenuItem::action("New", workspace::NewFile),
                 MenuItem::action("New Window", workspace::NewWindow),
                 MenuItem::separator(),
                 #[cfg(not(target_os = "macos"))]

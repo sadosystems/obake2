@@ -362,16 +362,12 @@ pub fn init(cx: &mut App) {
     cx.set_global(GlobalBlameRenderer(Arc::new(())));
     cx.set_global(breadcrumbs::RenderBreadcrumbText(render_breadcrumb_text));
 
-    workspace::register_project_item::<Editor>(cx);
-    workspace::FollowableViewRegistry::register::<Editor>(cx);
-    workspace::register_serializable_item::<Editor>(cx);
+    // obake: not a code editor. Files never open as editors, editors aren't restored
+    // from previous sessions, and there are no "new file" actions. The Editor type stays
+    // as a widget (agent panel input, diffs).
 
     cx.observe_new(
         |workspace: &mut Workspace, window: Option<&mut Window>, cx: &mut Context<Workspace>| {
-            workspace.register_action(Editor::new_file);
-            workspace.register_action(Editor::new_file_split);
-            workspace.register_action(Editor::new_file_vertical);
-            workspace.register_action(Editor::new_file_horizontal);
             workspace.register_action(Editor::cancel_language_server_work);
             workspace.register_action(Editor::toggle_focus);
             workspace.register_action(Editor::view_bookmarks);

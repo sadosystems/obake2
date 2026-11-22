@@ -721,6 +721,7 @@ fn main() {
         workspace::init(app_state.clone(), cx);
         ui_prompt::init(cx);
         tab_switcher::init(cx);
+        project_panel::init(cx);
         terminal_view::init(cx);
         theme_selector::init(cx);
         settings_profile_selector::init(cx);
@@ -1940,9 +1941,7 @@ pub(crate) async fn restore_or_create_workspace(
                             WorkspaceSettings::get_global(cx).restore_on_startup;
                         match restore_on_startup {
                             workspace::RestoreOnStartupBehavior::Launchpad => {}
-                            _ => {
-                                Editor::new_file(workspace, &Default::default(), window, cx);
-                            }
+                            _ => {}
                         }
                     },
                 )
@@ -1961,9 +1960,7 @@ pub(crate) async fn restore_or_create_workspace(
                     let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
                     match restore_on_startup {
                         workspace::RestoreOnStartupBehavior::Launchpad => {}
-                        _ => {
-                            Editor::new_file(workspace, &Default::default(), window, cx);
-                        }
+                        _ => {}
                     }
                 },
             )

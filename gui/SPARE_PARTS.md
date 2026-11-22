@@ -7,9 +7,6 @@ Add an entry whenever something useful gets unhooked, so it isn't forgotten.
 
 Format: crate (or file) — what it is — possible obake use — how it was unhooked.
 
-- **project_panel** — dockable tree view with file operations, drag and drop,
-  multi-select — browser for runs, recordings, traces — init and panel load removed
-  (`zed/main.rs`, `zed/zed.rs`)
 - **search** — buffer and project search bars, query options, match navigation —
   searching traces and logs — init, pane search-bar callbacks and toolbar items removed
 - **outline** / **outline_panel** — fuzzy picker and dockable list over a document's
