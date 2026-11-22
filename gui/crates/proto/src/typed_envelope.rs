@@ -8,7 +8,7 @@ use std::{
 };
 use std::{marker::PhantomData, time::Instant};
 
-pub trait EnvelopedMessage: Clone + Debug + Serialize + Sized + Send + Sync + 'static {
+pub trait EnvelopedMessage: Clone + Debug + Sized + Send + Sync + 'static {
     const NAME: &'static str;
     const PRIORITY: MessagePriority;
     fn into_envelope(
