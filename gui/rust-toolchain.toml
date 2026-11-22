@@ -1,9 +1,7 @@
+# obake: nightly for the parallel front-end (-Zthreads) and the Cranelift backend,
+# which together roughly halve cold builds. (Pin a date once a download succeeds;
+# installed and tested: rustc 1.102.0-nightly bdf712ee8 2026-11-21.)
 [toolchain]
-channel = "1.98.1"
+channel = "nightly"
 profile = "minimal"
-components = [ "rustfmt", "clippy", "rust-analyzer", "rust-src" ]
-targets = [
-    "wasm32-wasip2", # extensions
-    "wasm32-unknown-unknown", # gpui on the web
-    "x86_64-unknown-linux-musl", # remote server
-]
+components = ["rustfmt", "clippy", "rust-analyzer", "rust-src", "rustc-codegen-cranelift-preview"]

@@ -1,3 +1,5 @@
+cargo-features = ["codegen-backend"]
+
 [workspace]
 resolver = "2"
 members = [
@@ -1034,7 +1036,10 @@ scratch = { path = "tooling/corgi/patches/scratch" }
 split-debuginfo = "unpacked"
 incremental = true
 codegen-units = 256
-debug = "line-tables-only"
+# obake: no debuginfo in dev (cold-build time); use the `dbg` profile for full info
+debug = false
+# obake: Cranelift for fast debug codegen (nightly)
+codegen-backend = "cranelift"
 
 # mirror configuration for crates compiled for the build platform
 # (without this cargo will compile ~400 crates twice)
@@ -1046,6 +1051,7 @@ debug = false
 codegen-units = 256
 split-debuginfo = "unpacked"
 debug = false
+codegen-backend = "cranelift"
 
 # "debug" is a reserved profile name.
 [profile.dbg]

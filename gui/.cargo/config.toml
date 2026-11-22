@@ -1,6 +1,6 @@
 [target.'cfg(all())']
 # v0 mangling scheme provides more detailed backtraces around closures
-rustflags = ["-C", "symbol-mangling-version=v0", "--cfg", "tokio_unstable"]
+rustflags = ["-C", "symbol-mangling-version=v0", "--cfg", "tokio_unstable", "-Zthreads=8"]
 
 [alias]
 perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", "--all-features", "--config", "target.'cfg(true)'.runner='cargo run -p perf --release'", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]"]
