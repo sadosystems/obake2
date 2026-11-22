@@ -106,6 +106,17 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ],
         },
         Menu {
+            name: "Game".into(),
+            disabled: false,
+            items: vec![
+                MenuItem::action("Launch Game...", obake_actions::obake::LaunchGame),
+                MenuItem::separator(),
+                MenuItem::action("Play / Pause", obake_actions::obake::TogglePause),
+                MenuItem::action("Step Frame", obake_actions::obake::StepFrame),
+                MenuItem::action("Stop Game", obake_actions::obake::StopGame),
+            ],
+        },
+        Menu {
             name: "File".into(),
             disabled: false,
             items: vec![

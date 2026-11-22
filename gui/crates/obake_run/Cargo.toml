@@ -1,0 +1,23 @@
+[package]
+name = "obake_run"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/obake_run.rs"
+doctest = false
+
+[dependencies]
+gpui.workspace = true
+image.workspace = true
+obake-controller.workspace = true
+open_path_prompt.workspace = true
+project.workspace = true
+ui.workspace = true
+workspace.workspace = true
+obake_actions.workspace = true

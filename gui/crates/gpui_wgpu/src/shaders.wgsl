@@ -1428,6 +1428,7 @@ struct PolySpriteVarying {
     @location(0) tile_position: vec2<f32>,
     @location(1) @interpolate(flat) sprite_id: u32,
     @location(2) @interpolate(flat) opacity: f32,
+    @location(3) @interpolate(flat) nearest: u32,
 }
 
 @vertex
@@ -1442,12 +1443,19 @@ fn vs_poly_sprite(@builtin(vertex_index) vertex_id: u32, @builtin(instance_index
     let simple = !has_rounded_corners(sprite.corner_radii) && sprite.grayscale == 0u;
     out.sprite_id = instance_id | select(0u, SIMPLE_PRIMITIVE_FLAG, simple);
     out.opacity = sprite.opacity;
+    out.nearest = sprite.pad & 1u;
     return out;
 }
 
 @fragment
 fn fs_poly_sprite(input: PolySpriteVarying) -> @location(0) vec4<f32> {
     var color = textureSample(t_sprite, s_sprite, input.tile_position);
+    if (input.nearest != 0u) {
+        // Nearest-neighbor: fetch the exact texel (pixel art).
+        let dims = vec2<f32>(textureDimensions(t_sprite, 0));
+        let texel = vec2<i32>(clamp(floor(input.tile_position * dims), vec2<f32>(0.0), dims - 1.0));
+        color = textureLoad(t_sprite, texel, 0);
+    }
     if ((input.sprite_id & SIMPLE_PRIMITIVE_FLAG) != 0u) {
         return blend_color(color, input.opacity);
     }

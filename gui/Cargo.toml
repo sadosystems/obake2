@@ -87,6 +87,7 @@ members = [
     "crates/net",
     "crates/node_runtime",
     "crates/notifications",
+    "crates/obake_run",
     "crates/oauth_callback_server",
     "crates/ollama",
     "crates/open_path_prompt",
@@ -336,6 +337,8 @@ watch = { path = "crates/watch" }
 which_key = { path = "crates/which_key" }
 windows_resources = { path = "crates/windows_resources" }
 workspace = { path = "crates/workspace" }
+obake_run = { path = "crates/obake_run" }
+obake-controller = { path = "../crates/controller" }
 worktree = { path = "crates/worktree" }
 obake_actions = { path = "crates/obake_actions" }
 obake_credentials_provider = { path = "crates/obake_credentials_provider" }
@@ -921,6 +924,33 @@ resvg = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 serde_json = { opt-level = 3 }
 # Build single-source-file crates with cg=1 as it helps make `cargo build` of a whole workspace a bit faster
+
+# obake: the game pane uploads a full frame every game frame; the image and
+# GPU paths must be optimized even in dev or the pane drops to ~9fps.
+[profile.dev.package.gpui]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.gpui_wgpu]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.gpui_linux]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.image]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.wgpu]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.wgpu-core]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.wgpu-hal]
+codegen-backend = "llvm"
+opt-level = 3
+[profile.dev.package.obake_run]
+codegen-backend = "llvm"
+opt-level = 3
 
 [profile.release]
 debug = "limited"

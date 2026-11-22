@@ -683,6 +683,7 @@ fn main() {
         tab_switcher::init(cx);
         project_panel::init(cx);
         terminal_view::init(cx);
+        obake_run::init(cx);
         theme_selector::init(cx);
         settings_profile_selector::init(cx);
         notifications::init(app_state.client.clone(), app_state.user_store.clone(), cx);

@@ -7412,6 +7412,7 @@ dependencies = [
  "obake_actions",
  "obake_credentials_provider",
  "obake_env_vars",
+ "obake_run",
  "parking_lot",
  "paths",
  "picker",
@@ -7473,6 +7474,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "obake-controller"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "obake-protocol",
+]
+
+[[package]]
+name = "obake-protocol"
+version = "0.1.0"
+
+[[package]]
 name = "obake_actions"
 version = "0.1.0"
 dependencies = [
@@ -7500,6 +7513,20 @@ name = "obake_env_vars"
 version = "0.1.0"
 dependencies = [
  "env_var",
+]
+
+[[package]]
+name = "obake_run"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "image",
+ "obake-controller",
+ "obake_actions",
+ "open_path_prompt",
+ "project",
+ "ui",
+ "workspace",
 ]
 
 [[package]]

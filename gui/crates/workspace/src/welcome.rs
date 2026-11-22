@@ -1,11 +1,10 @@
 use crate::{
-    NewFile, Open, OpenMode, PathList, RecentWorkspace, SerializedWorkspaceLocation,
+    Open, OpenMode, PathList, RecentWorkspace, SerializedWorkspaceLocation,
     ToggleWorkspaceSidebar, Workspace, WorkspaceSettings,
     item::{Item, ItemEvent},
     persistence::WorkspaceDb,
 };
 use agent_settings::AgentSettings;
-use git::Clone as GitClone;
 use gpui::{
     Action, App, Context, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement,
     ParentElement, Render, Styled, Task, TaskExt, Window, actions,
@@ -19,7 +18,7 @@ use settings::{DefaultOpenBehavior, Settings};
 use ui::{ButtonLike, Divider, DividerColor, KeyBinding, Vector, VectorName, prelude::*};
 use util::ResultExt;
 use obake_actions::{
-    Extensions, OpenKeymap, OpenOnboarding, OpenSettings, assistant::ToggleFocus, command_palette,
+    OpenKeymap, OpenSettings, assistant::ToggleFocus, command_palette, obake::LaunchGame,
 };
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize, JsonSchema, Action)]
@@ -163,26 +162,20 @@ impl SectionEntry {
     }
 }
 
-const CONTENT: (Section<4>, Section<3>) = (
+const CONTENT: (Section<3>, Section<2>) = (
     Section {
         title: "Get Started",
         entries: [
             SectionEntry {
-                icon: IconName::Plus,
-                title: "New File",
-                action: &NewFile,
+                icon: IconName::PlayFilled,
+                title: "Launch Game…",
+                action: &LaunchGame,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
                 icon: IconName::FolderOpen,
                 title: "Open Project",
                 action: &Open::DEFAULT,
-                visibility_guard: SectionVisibility::Always,
-            },
-            SectionEntry {
-                icon: IconName::CloudDownload,
-                title: "Clone Repository",
-                action: &GitClone,
                 visibility_guard: SectionVisibility::Always,
             },
             SectionEntry {
@@ -206,15 +199,6 @@ const CONTENT: (Section<4>, Section<3>) = (
                 icon: IconName::Keyboard,
                 title: "Customize Keymaps",
                 action: &OpenKeymap,
-                visibility_guard: SectionVisibility::Always,
-            },
-            SectionEntry {
-                icon: IconName::Blocks,
-                title: "Explore Extensions",
-                action: &Extensions {
-                    category_filter: None,
-                    id: None,
-                },
                 visibility_guard: SectionVisibility::Always,
             },
         ],
@@ -333,7 +317,7 @@ impl WelcomePage {
         let focus = self.focus_handle.clone();
         let color = cx.theme().colors();
 
-        let description = "Run multiple threads at once, mix and match any ACP-compatible agent, and keep work conflict-free with worktrees.";
+        let description = "Drive the game from any ACP-compatible agent: record, replay, rewind and compare runs.";
 
         v_flex()
             .w_full()
@@ -483,7 +467,7 @@ impl Render for WelcomePage {
                             .child(Vector::square(VectorName::ObakeLogo, rems_from_px(45_f32)))
                             .child(
                                 v_flex().child(Headline::new(welcome_label)).child(
-                                    Label::new("The editor for what's next")
+                                    Label::new("Run, record, replay and compare games")
                                         .size(LabelSize::Small)
                                         .color(Color::Muted)
                                         .italic(),
@@ -497,19 +481,6 @@ impl Render for WelcomePage {
                         next_tab_index += 1;
                         this.child(self.render_agent_card(agent_tab_index, cx))
                     })
-                    .when(!self.fallback_to_recent_projects, |this| {
-                        this.child(
-                            v_flex().gap_4().child(Divider::horizontal()).child(
-                                Button::new("welcome-exit", "Return to Onboarding")
-                                    .tab_index(next_tab_index as isize)
-                                    .full_width()
-                                    .label_size(LabelSize::XSmall)
-                                    .on_click(|_, window, cx| {
-                                        window.dispatch_action(OpenOnboarding.boxed_clone(), cx);
-                                    }),
-                            ),
-                        )
-                    }),
             )
     }
 }

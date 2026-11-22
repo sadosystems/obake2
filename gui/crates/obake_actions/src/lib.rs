@@ -280,6 +280,24 @@ pub mod remote_debug {
     );
 }
 
+pub mod obake {
+    use gpui::actions;
+
+    actions!(
+        obake,
+        [
+            /// Picks a game binary in a file browser and launches it under obake's shim.
+            LaunchGame,
+            /// Pauses or resumes the game shown in the focused game pane.
+            TogglePause,
+            /// Advances the paused game by exactly one frame.
+            StepFrame,
+            /// Asks the game to quit (killed after two seconds).
+            StopGame,
+        ]
+    );
+}
+
 pub mod workspace {
     use gpui::actions;
 

@@ -5631,7 +5631,8 @@ impl Window {
 
         self.next_frame.scene.insert_primitive(PolychromeSprite {
             order: 0,
-            pad: 0,
+            // Bit 0: nearest-neighbor sampling.
+            pad: data.nearest as u32,
             grayscale: grayscale.into(),
             bounds: visible_bounds_snapped,
             content_mask,

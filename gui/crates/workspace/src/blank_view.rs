@@ -66,6 +66,25 @@ impl Render for BlankView {
             .flex()
             .items_center()
             .justify_center()
-            .child(Label::new("Empty").color(Color::Muted))
+            .child(
+                ui::v_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(Label::new("Empty").color(Color::Muted))
+                    .child(
+                        ui::Button::new("launch-game", "Launch Game…")
+                            .style(ui::ButtonStyle::Outlined)
+                            .key_binding(ui::KeyBinding::for_action(
+                                &obake_actions::obake::LaunchGame,
+                                cx,
+                            ))
+                            .on_click(|_, window, cx| {
+                                window.dispatch_action(
+                                    Box::new(obake_actions::obake::LaunchGame),
+                                    cx,
+                                )
+                            }),
+                    ),
+            )
     }
 }

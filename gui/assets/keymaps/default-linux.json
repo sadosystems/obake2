@@ -635,6 +635,7 @@
   {
     "context": "Workspace",
     "bindings": {
+      "ctrl-alt-l": "obake::LaunchGame",
       // obake: pane splits work from anywhere in the window, not just a focused pane.
       "ctrl-k up": "pane::SplitUp",
       "ctrl-k down": "pane::SplitDown",

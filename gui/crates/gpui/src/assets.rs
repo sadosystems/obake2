@@ -45,6 +45,8 @@ pub struct RenderImage {
     pub id: ImageId,
     /// The scale factor of this image on render.
     pub(crate) scale_factor: f32,
+    /// Sample with nearest-neighbor instead of linear filtering when scaled.
+    pub(crate) nearest: bool,
     data: SmallVec<[Frame; 1]>,
 }
 
@@ -64,8 +66,16 @@ impl RenderImage {
         Self {
             id: ImageId(NEXT_ID.fetch_add(1, SeqCst)),
             scale_factor: 1.0,
+            nearest: false,
             data: data.into(),
         }
+    }
+
+    /// Scale this image with nearest-neighbor sampling (crisp pixel art)
+    /// instead of linear filtering.
+    pub fn with_nearest_filter(mut self) -> Self {
+        self.nearest = true;
+        self
     }
 
     /// Convert this image into a byte slice.
