@@ -21,8 +21,3 @@ anyhow.workspace = true
 prost.workspace = true
 serde = { workspace = true, features = ["derive"] }
 
-[build-dependencies]
-prost-build.workspace = true
-protox.workspace = true
-
-[dev-dependencies]

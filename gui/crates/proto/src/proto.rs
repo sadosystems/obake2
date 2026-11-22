@@ -12,7 +12,9 @@ use std::{
 };
 pub use typed_envelope::*;
 
-include!(concat!(env!("OUT_DIR"), "/zed.messages.rs"));
+// obake: pre-generated from proto/*.proto (was a build script using protox +
+// prost-build, which delayed this crate in cold builds). Regenerate if .proto changes.
+include!("zed.messages.rs");
 
 pub const REMOTE_SERVER_PEER_ID: PeerId = PeerId { owner_id: 0, id: 0 };
 pub const REMOTE_SERVER_PROJECT_ID: u64 = 0;
