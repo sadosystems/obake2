@@ -13,12 +13,14 @@ path = "src/mermaid_render.rs"
 doctest = false
 
 [features]
+# obake: merman dominated cold builds; mermaid diagrams are off unless enabled.
+render = ["dep:merman"]
 test-support = []
 
 [dependencies]
 anyhow.workspace = true
 gpui.workspace = true
-merman = { workspace = true, features = [
+merman = { workspace = true, optional = true, features = [
     "diagram-class",
     "diagram-er",
     "diagram-flowchart",

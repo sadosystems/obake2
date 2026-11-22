@@ -258,6 +258,13 @@ publish = false
 edition = "2024"
 
 [workspace.dependencies]
+gpui_macros = { path = "crates/gpui_macros" }
+derive_refineable = { path = "crates/refineable/derive_refineable" }
+feature_flags_macros = { path = "crates/feature_flags_macros" }
+settings_macros = { path = "crates/settings_macros" }
+sqlez_macros = { path = "crates/sqlez_macros" }
+ui_macros = { path = "crates/ui_macros" }
+util_macros = { path = "crates/util_macros" }
 
 #
 # Workspace member crates
@@ -306,7 +313,6 @@ debug_adapter_extension = { path = "crates/debug_adapter_extension" }
 debugger_tools = { path = "crates/debugger_tools" }
 debugger_ui = { path = "crates/debugger_ui" }
 deepseek = { path = "crates/deepseek" }
-derive_refineable = { path = "crates/refineable/derive_refineable" }
 dev_container = { path = "crates/dev_container" }
 diagnostics = { path = "crates/diagnostics" }
 edit_prediction = { path = "crates/edit_prediction" }
@@ -324,7 +330,6 @@ extension_host = { path = "crates/extension_host" }
 extension_suggest = { path = "crates/extension_suggest" }
 extensions_ui = { path = "crates/extensions_ui" }
 feature_flags = { path = "crates/feature_flags" }
-feature_flags_macros = { path = "crates/feature_flags_macros" }
 file_content = { path = "crates/file_content" }
 file_finder = { path = "crates/file_finder" }
 file_icons = { path = "crates/file_icons" }
@@ -343,7 +348,6 @@ gpui_apple = { path = "crates/gpui_apple" }
 gpui_ios = { path = "crates/gpui_ios" }
 gpui_linux = { path = "crates/gpui_linux", default-features = false }
 gpui_macos = { path = "crates/gpui_macos", default-features = false }
-gpui_macros = { path = "crates/gpui_macros" }
 gpui_platform = { path = "crates/gpui_platform", default-features = false }
 gpui_shared_string = { path = "crates/gpui_shared_string" }
 gpui_tokio = { path = "crates/gpui_tokio" }
@@ -436,7 +440,6 @@ session = { path = "crates/session" }
 settings = { path = "crates/settings" }
 settings_content = { path = "crates/settings_content" }
 settings_json = { path = "crates/settings_json", default-features = false }
-settings_macros = { path = "crates/settings_macros" }
 settings_profile_selector = { path = "crates/settings_profile_selector" }
 settings_ui = { path = "crates/settings_ui" }
 shell_command_parser = { path = "crates/shell_command_parser" }
@@ -445,7 +448,6 @@ snippet = { path = "crates/snippet" }
 snippet_provider = { path = "crates/snippet_provider" }
 snippets_ui = { path = "crates/snippets_ui" }
 sqlez = { path = "crates/sqlez" }
-sqlez_macros = { path = "crates/sqlez_macros" }
 streaming_diff = { path = "crates/streaming_diff" }
 sum_tree = { path = "crates/sum_tree" }
 svg_preview = { path = "crates/svg_preview" }
@@ -469,10 +471,8 @@ title_bar = { path = "crates/title_bar" }
 toolchain_selector = { path = "crates/toolchain_selector" }
 ui = { path = "crates/ui" }
 ui_input = { path = "crates/ui_input" }
-ui_macros = { path = "crates/ui_macros" }
 ui_prompt = { path = "crates/ui_prompt" }
 util = { path = "crates/util" }
-util_macros = { path = "crates/util_macros" }
 vim = { path = "crates/vim" }
 vim_mode_setting = { path = "crates/vim_mode_setting" }
 watch = { path = "crates/watch" }
@@ -1037,8 +1037,8 @@ scratch = { path = "tooling/corgi/patches/scratch" }
 [profile.dev]
 split-debuginfo = "unpacked"
 incremental = true
-codegen-units = 16
-debug = "limited"
+codegen-units = 256
+debug = "line-tables-only"
 
 # mirror configuration for crates compiled for the build platform
 # (without this cargo will compile ~400 crates twice)
@@ -1047,9 +1047,9 @@ debug = "limited"
 debug = false
 
 [profile.dev.build-override]
-codegen-units = 16
+codegen-units = 256
 split-debuginfo = "unpacked"
-debug = "limited"
+debug = false
 
 # "debug" is a reserved profile name.
 [profile.dbg]
@@ -1061,13 +1061,6 @@ debug = "full"
 
 [profile.dev.package]
 # proc-macros start
-gpui_macros = { opt-level = 3 }
-derive_refineable = { opt-level = 3 }
-feature_flags_macros = { opt-level = 3 }
-settings_macros = { opt-level = 3 }
-sqlez_macros = { opt-level = 3, codegen-units = 1 }
-ui_macros = { opt-level = 3 }
-util_macros = { opt-level = 3 }
 # proc-macros end
 
 tree-sitter = { opt-level = 3 }
@@ -1076,42 +1069,6 @@ resvg = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 serde_json = { opt-level = 3 }
 # Build single-source-file crates with cg=1 as it helps make `cargo build` of a whole workspace a bit faster
-activity_indicator = { codegen-units = 1 }
-assets = { codegen-units = 1 }
-breadcrumbs = { codegen-units = 1 }
-collections = { codegen-units = 1 }
-command_palette = { codegen-units = 1 }
-command_palette_hooks = { codegen-units = 1 }
-edit_prediction_ui = { codegen-units = 1 }
-feature_flags = { codegen-units = 1 }
-file_content = { codegen-units = 1 }
-file_icons = { codegen-units = 1 }
-image_viewer = { codegen-units = 1 }
-install_cli = { codegen-units = 1 }
-journal = { codegen-units = 1 }
-json_schema_store = { codegen-units = 1 }
-llama_cpp = { codegen-units = 1 }
-lmstudio = { codegen-units = 1 }
-menu = { codegen-units = 1 }
-notifications = { codegen-units = 1 }
-ollama = { codegen-units = 1 }
-outline = { codegen-units = 1 }
-paths = { codegen-units = 1 }
-prettier = { codegen-units = 1 }
-project_symbols = { codegen-units = 1 }
-project_bookmarks = { codegen-units = 1 }
-refineable = { codegen-units = 1 }
-release_channel = { codegen-units = 1 }
-reqwest_client = { codegen-units = 1 }
-session = { codegen-units = 1 }
-sidebar = { codegen-units = 1 }
-snippet = { codegen-units = 1 }
-snippets_ui = { codegen-units = 1 }
-telemetry_events = { codegen-units = 1 }
-theme_selector = { codegen-units = 1 }
-time_format = { codegen-units = 1 }
-ui_input = { codegen-units = 1 }
-zed_actions = { codegen-units = 1 }
 
 [profile.release]
 debug = "limited"

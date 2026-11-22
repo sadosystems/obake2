@@ -63,6 +63,7 @@
 //!    `accent_colors`
 
 mod postprocess;
+#[cfg(feature = "render")]
 mod render;
 
 use anyhow::Result;
@@ -180,9 +181,17 @@ pub fn render_to_svg(
     theme: &MermaidTheme,
     svg_renderer: &SvgRenderer,
 ) -> Result<String> {
-    let svg = render::render_mermaid(source, theme, svg_renderer)?;
-    let svg = postprocess::postprocess(&svg, theme)?;
-    Ok(svg)
+    #[cfg(feature = "render")]
+    {
+        let svg = render::render_mermaid(source, theme, svg_renderer)?;
+        let svg = postprocess::postprocess(&svg, theme)?;
+        return Ok(svg);
+    }
+    #[cfg(not(feature = "render"))]
+    {
+        let _ = (source, theme, svg_renderer);
+        anyhow::bail!("mermaid rendering is disabled in obake")
+    }
 }
 
 #[cfg(test)]
