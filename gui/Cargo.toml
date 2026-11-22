@@ -12,13 +12,11 @@ members = [
     "crates/agent_settings",
     "crates/agent_skills",
     "crates/agent_ui",
-    "crates/ai_onboarding",
     "crates/anthropic",
     "crates/askpass",
     "crates/assets",
     "crates/audio",
     "crates/auto_update",
-    "crates/aws_http_client",
     "crates/breadcrumbs",
     "crates/buffer_diff",
     "crates/cli",
@@ -50,7 +48,6 @@ members = [
     "crates/fuzzy",
     "crates/fuzzy_nucleo",
     "crates/git",
-    "crates/git_hosting_providers",
     "crates/git_ui_core",
     "crates/github_releases",
     "crates/google_ai",
@@ -74,7 +71,6 @@ members = [
     "crates/http_proxy",
     "crates/icons",
     "crates/install_cli",
-    "crates/json_schema_store",
     "crates/language",
     "crates/language_core",
     "crates/language_detection",
@@ -86,7 +82,6 @@ members = [
     "crates/markdown",
     "crates/markdown_preview",
     "crates/menu",
-    "crates/mermaid_render",
     "crates/migrator",
     "crates/multi_buffer",
     "crates/net",
@@ -154,9 +149,7 @@ members = [
     "crates/ui_prompt",
     "crates/util",
     "crates/util_macros",
-    "crates/vim_mode_setting",
     "crates/watch",
-    "crates/web_search",
     "crates/which_key",
     "crates/windows_resources",
     "crates/workspace",
@@ -208,13 +201,11 @@ agent_servers = { path = "crates/agent_servers" }
 agent_settings = { path = "crates/agent_settings" }
 agent_skills = { path = "crates/agent_skills" }
 agent_ui = { path = "crates/agent_ui" }
-ai_onboarding = { path = "crates/ai_onboarding" }
 anthropic = { path = "crates/anthropic" }
 askpass = { path = "crates/askpass" }
 assets = { path = "crates/assets" }
 audio = { path = "crates/audio" }
 auto_update = { path = "crates/auto_update" }
-aws_http_client = { path = "crates/aws_http_client" }
 breadcrumbs = { path = "crates/breadcrumbs" }
 buffer_diff = { path = "crates/buffer_diff" }
 cli = { path = "crates/cli", default-features = false }
@@ -245,7 +236,6 @@ fs = { path = "crates/fs" }
 fuzzy = { path = "crates/fuzzy" }
 fuzzy_nucleo = { path = "crates/fuzzy_nucleo" }
 git = { path = "crates/git" }
-git_hosting_providers = { path = "crates/git_hosting_providers" }
 git_ui_core = { path = "crates/git_ui_core" }
 github_releases = { path = "crates/github_releases" }
 google_ai = { path = "crates/google_ai" }
@@ -267,7 +257,6 @@ http_client_tls = { path = "crates/http_client_tls" }
 http_proxy = { path = "crates/http_proxy" }
 icons = { path = "crates/icons" }
 install_cli = { path = "crates/install_cli" }
-json_schema_store = { path = "crates/json_schema_store" }
 language = { path = "crates/language" }
 language_core = { path = "crates/language_core" }
 language_detection = { path = "crates/language_detection" }
@@ -279,7 +268,6 @@ lsp = { path = "crates/lsp" }
 markdown = { path = "crates/markdown" }
 markdown_preview = { path = "crates/markdown_preview" }
 menu = { path = "crates/menu" }
-mermaid_render = { path = "crates/mermaid_render" }
 migrator = { path = "crates/migrator" }
 multi_buffer = { path = "crates/multi_buffer" }
 net = { path = "crates/net" }
@@ -344,9 +332,7 @@ ui = { path = "crates/ui" }
 ui_input = { path = "crates/ui_input" }
 ui_prompt = { path = "crates/ui_prompt" }
 util = { path = "crates/util" }
-vim_mode_setting = { path = "crates/vim_mode_setting" }
 watch = { path = "crates/watch" }
-web_search = { path = "crates/web_search" }
 which_key = { path = "crates/which_key" }
 windows_resources = { path = "crates/windows_resources" }
 workspace = { path = "crates/workspace" }

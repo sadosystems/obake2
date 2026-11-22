@@ -4,7 +4,7 @@ use crate::{
     DiagnosticsTool, EditFileTool, FetchTool, FindPathTool, FindReferencesTool, GetCodeActionsTool,
     GoToDefinitionTool, GrepTool, ListAgentsAndModelsTool, ListDirectoryTool, MovePathTool,
     ProjectSnapshot, ReadFileTool, RenameTool, SandboxedTerminalTool, SpawnAgentTool,
-    SystemPromptTemplate, Template, Templates, TerminalTool, ToolPermissionDecision, WebSearchTool,
+    SystemPromptTemplate, Template, Templates, TerminalTool, ToolPermissionDecision,
     WriteFileTool, decide_permission_from_settings,
 };
 use acp_thread::{AgentModelId, ClientUserMessageId, MentionUri, ProcessOutput};
@@ -2273,7 +2273,6 @@ impl Thread {
             self.project.clone(),
             environment.clone(),
         ));
-        self.add_tool(WebSearchTool);
 
         self.add_tool(AskUserTool);
 

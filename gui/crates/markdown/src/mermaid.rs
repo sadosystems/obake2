@@ -215,7 +215,7 @@ impl CachedMermaidDiagram {
         let render_image = Arc::new(OnceLock::<anyhow::Result<Arc<RenderImage>>>::new());
         let parsed_svg = Arc::new(OnceLock::<Arc<ParsedSvg>>::new());
         let svg_renderer = cx.svg_renderer();
-        let mermaid_theme = build_mermaid_theme(cx);
+        let mermaid_theme = ();
 
         let task = cx.spawn({
             let render_image = render_image.clone();
@@ -224,11 +224,10 @@ impl CachedMermaidDiagram {
             async move |this, cx| {
                 let value = cx
                     .background_spawn(async move {
-                        let svg_string = mermaid_render::render_to_svg(
-                            &contents.contents,
-                            &mermaid_theme,
-                            &svg_renderer,
-                        )?;
+                        // obake: mermaid rendering removed.
+                        let _ = &mermaid_theme;
+                        let svg_string: String =
+                            anyhow::bail!("mermaid diagrams are not supported in obake");
                         let tree = svg_renderer
                             .parse_svg(svg_string.as_bytes())
                             .map_err(|error| anyhow::anyhow!("{error}"))?;
@@ -347,55 +346,6 @@ impl CachedMermaidDiagram {
     }
 }
 
-fn build_mermaid_theme(cx: &Context<Markdown>) -> mermaid_render::MermaidTheme {
-    let colors = cx.theme().colors();
-    let theme_settings = ThemeSettings::get_global(cx);
-    let is_dark = !cx.theme().appearance.is_light();
-
-    let players = cx.theme().players();
-    let git_branch_colors = std::array::from_fn(|i| players.0[i % players.0.len()].cursor);
-    let git_branch_label_colors = git_branch_colors.map(mermaid_render::text_color_for_background);
-
-    mermaid_render::MermaidTheme {
-        dark_mode: is_dark,
-        font_family: gpui::font_name_with_fallbacks(
-            theme_settings.mermaid_font_family().as_ref(),
-            "system-ui",
-        )
-        .to_string(),
-        background: colors.editor_background,
-        primary_color: colors.surface_background,
-        primary_text_color: colors.text,
-        primary_border_color: colors.border,
-        secondary_color: colors.element_background,
-        tertiary_color: colors.ghost_element_hover,
-        line_color: colors.border,
-        text_color: colors.text,
-        edge_label_background: colors.editor_background,
-        cluster_background: colors.panel_background,
-        cluster_border: colors.border_variant,
-        note_background: colors.surface_background,
-        note_border: colors.border_variant,
-        actor_background: colors.element_background,
-        actor_border: colors.border,
-        activation_background: colors.ghost_element_hover,
-        activation_border: colors.border,
-        git_branch_colors,
-        git_branch_label_colors,
-        er_attr_bg_odd: colors.surface_background,
-        er_attr_bg_even: colors.element_background,
-        error_color: cx.theme().status().error,
-        warning_color: cx.theme().status().warning,
-        accent_colors: players
-            .0
-            .iter()
-            .map(|player| mermaid_render::AccentColor {
-                foreground: player.cursor,
-                background: player.background,
-            })
-            .collect(),
-    }
-}
 
 fn parse_mermaid_info(info: &str) -> Option<u32> {
     let mut parts = info.split_whitespace();

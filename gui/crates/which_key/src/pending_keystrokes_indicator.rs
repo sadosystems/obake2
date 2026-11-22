@@ -9,7 +9,6 @@ use ui::{
     ButtonLike, CircularProgress, KeyBinding, KeyBindingStyle, prelude::*, tooltip_container,
 };
 use util::ResultExt;
-use vim_mode_setting::{HelixModeSetting, VimModeSetting};
 use workspace::{HideStatusItem, StatusBarSettings, StatusItemView, item::ItemHandle};
 
 use crate::{
@@ -106,8 +105,7 @@ impl PendingKeystrokesIndicator {
         let status_bar_settings = StatusBarSettings::get_global(cx);
         status_bar_settings.show
             && status_bar_settings.pending_keystrokes_indicator
-            && !VimModeSetting::is_enabled(cx)
-            && !HelixModeSetting::is_enabled(cx)
+
     }
 
     fn popover_enabled(cx: &App) -> bool {

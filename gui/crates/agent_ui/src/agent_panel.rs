@@ -56,10 +56,9 @@ use crate::{
     conversation_view::{
         AcpThreadViewEvent, RootThreadUpdated, ThreadView, reset_fast_mode_warnings,
     },
-    ui::{AgentNotification, AgentNotificationEvent, EndTrialUpsell},
+    ui::{AgentNotification, AgentNotificationEvent},
 };
 use agent_settings::AgentSettings;
-use ai_onboarding::AgentPanelOnboarding;
 use anyhow::{Context as _, Result, anyhow};
 #[cfg(feature = "audio")]
 use audio::{Audio, Sound};
@@ -1249,7 +1248,6 @@ pub struct AgentPanel {
     zoomed: bool,
     pending_serialization: Option<Task<Result<()>>>,
     persist_selected_agent_task: Task<()>,
-    new_user_onboarding: Entity<AgentPanelOnboarding>,
     new_user_onboarding_upsell_dismissed: AtomicBool,
     selected_agent: Agent,
     _thread_view_subscription: Option<Subscription>,
@@ -1584,21 +1582,8 @@ impl AgentPanel {
 
         let base_view = BaseView::Uninitialized;
 
-        let weak_panel = cx.entity().downgrade();
-        let onboarding = cx.new(|cx| {
-            AgentPanelOnboarding::new(
-                user_store.clone(),
-                client,
-                move |_window, cx| {
-                    weak_panel
-                        .update(cx, |panel, cx| {
-                            panel.dismiss_ai_onboarding(cx);
-                        })
-                        .ok();
-                },
-                cx,
-            )
-        });
+        // obake: AI onboarding / trial upsell removed.
+        let _ = &client;
 
         // Subscribe to extension events to sync agent servers when extensions change
         let extension_subscription = ExtensionStore::try_global(cx).map(|store| {
@@ -1670,7 +1655,6 @@ impl AgentPanel {
             _project_subscription,
             zoomed: false,
             pending_serialization: None,
-            new_user_onboarding: onboarding,
             thread_store,
             selected_agent: Agent::default(),
             _thread_view_subscription: None,
@@ -6435,46 +6419,13 @@ impl AgentPanel {
     fn render_new_user_onboarding(
         &mut self,
         _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<impl IntoElement> {
-        if !self.should_render_new_user_onboarding(cx) {
-            return None;
-        }
-
-        Some(
-            div()
-                .bg(cx.theme().colors().editor_background)
-                .child(self.new_user_onboarding.clone()),
-        )
+        _cx: &mut Context<Self>,
+    ) -> Option<Div> {
+        None
     }
 
-    fn render_trial_end_upsell(
-        &self,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<impl IntoElement> {
-        if !self.should_render_trial_end_upsell(cx) {
-            return None;
-        }
-
-        Some(
-            v_flex()
-                .absolute()
-                .inset_0()
-                .size_full()
-                .bg(cx.theme().colors().panel_background)
-                .opacity(0.85)
-                .block_mouse_except_scroll()
-                .child(EndTrialUpsell::new(Arc::new({
-                    let this = cx.entity();
-                    move |_, cx| {
-                        this.update(cx, |_this, cx| {
-                            TrialEndUpsell::set_dismissed(true, cx);
-                            cx.notify();
-                        });
-                    }
-                }))),
-        )
+    fn render_trial_end_upsell(&self, _window: &mut Window, _cx: &mut Context<Self>) -> Option<Div> {
+        None
     }
 
     fn render_drag_target(&self, cx: &Context<Self>) -> Div {

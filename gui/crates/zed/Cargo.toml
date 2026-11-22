@@ -95,7 +95,6 @@ feature_flags.workspace = true
 fs.workspace = true
 futures.workspace = true
 git.workspace = true
-git_hosting_providers.workspace = true
 git_ui_core.workspace = true
 gpui = { workspace = true, features = ["profiler", "stacker"] }
 gpui_platform = { workspace = true, features = [
@@ -114,7 +113,6 @@ tempfile = { workspace = true, optional = true }
 
 http_client.workspace = true
 install_cli.workspace = true
-json_schema_store.workspace = true
 language.workspace = true
 language_model.workspace = true
 language_models.workspace = true
@@ -169,9 +167,7 @@ url.workspace = true
 urlencoding.workspace = true
 util.workspace = true
 uuid.workspace = true
-vim_mode_setting.workspace = true
 watch.workspace = true
-web_search.workspace = true
 which_key.workspace = true
 workspace.workspace = true
 zed_actions.workspace = true

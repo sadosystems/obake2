@@ -525,7 +525,6 @@ fn main() {
         <dyn Fs>::set_global(fs.clone(), cx);
 
         GitHostingProviderRegistry::set_global(git_hosting_provider_registry, cx);
-        git_hosting_providers::init(cx);
 
         OpenListener::set_global(cx, open_listener.clone());
 
@@ -664,7 +663,6 @@ fn main() {
         acp_tools::init(cx);
         zed::telemetry_log::init(cx);
         zed::remote_debug::init(cx);
-        web_search::init(cx);
         let prompt_builder = PromptBuilder::load(app_state.fs.clone(), stdout_is_a_pty(), cx);
         project::AgentRegistryStore::init_global(
             cx,
@@ -681,7 +679,6 @@ fn main() {
         );
         zed::watch_user_agents_md(app_state.fs.clone(), cx);
         recent_projects::init(cx);
-        dev_container::init(cx);
 
         load_embedded_fonts(cx);
         #[cfg(target_os = "linux")]
@@ -700,7 +697,6 @@ fn main() {
         notifications::init(app_state.client.clone(), app_state.user_store.clone(), cx);
         // obake: was called from the removed collab_ui::init.
         title_bar::init(cx);
-        json_schema_store::init(cx);
         which_key::init(cx);
         #[cfg(target_os = "windows")]
         etw_tracing::init(cx);
@@ -1485,9 +1481,10 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                     .update(cx, |project, _| project.lsp_store())
                             })?;
                             let uri = format!("zed://schemas/{}", schema_path);
-                            let json_schema_content =
-                                json_schema_store::handle_schema_request(lsp_store, uri, cx)
-                                    .await?;
+                            // obake: json_schema_store removed.
+                            let _ = (lsp_store, uri);
+                            let json_schema_content: String =
+                                anyhow::bail!("built-in JSON schemas are not available in obake");
                             let json_schema_value: serde_json::Value =
                                 serde_json::from_str(&json_schema_content)
                                     .context("Failed to parse JSON Schema")?;
