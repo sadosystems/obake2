@@ -279,6 +279,7 @@ dependencies = [
  "language_models",
  "log",
  "lsp",
+ "obake_env_vars",
  "parking_lot",
  "paths",
  "pretty_assertions",
@@ -313,7 +314,6 @@ dependencies = [
  "util",
  "uuid",
  "watch",
- "zed_env_vars",
  "zlog",
  "zstd",
 ]
@@ -386,6 +386,7 @@ dependencies = [
  "indoc",
  "language_model",
  "log",
+ "obake_credentials_provider",
  "project",
  "release_channel",
  "remote",
@@ -401,7 +402,6 @@ dependencies = [
  "util",
  "uuid",
  "watch",
- "zed_credentials_provider",
 ]
 
 [[package]]
@@ -502,6 +502,7 @@ dependencies = [
  "menu",
  "multi_buffer",
  "notifications",
+ "obake_actions",
  "ordered-float",
  "parking_lot",
  "paths",
@@ -544,7 +545,6 @@ dependencies = [
  "uuid",
  "watch",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -2186,6 +2186,7 @@ dependencies = [
  "http_client",
  "http_client_tls",
  "log",
+ "obake_credentials_provider",
  "objc2-foundation 0.3.2",
  "parking_lot",
  "paths",
@@ -2216,7 +2217,6 @@ dependencies = [
  "util",
  "windows 0.62.2",
  "worktree",
- "zed_credentials_provider",
 ]
 
 [[package]]
@@ -2351,6 +2351,7 @@ dependencies = [
  "language",
  "log",
  "menu",
+ "obake_actions",
  "picker",
  "postage",
  "project",
@@ -2363,7 +2364,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -3122,6 +3122,7 @@ dependencies = [
  "indoc",
  "inventory",
  "log",
+ "obake_env_vars",
  "paths",
  "release_channel",
  "sqlez",
@@ -3129,7 +3130,6 @@ dependencies = [
  "tempfile",
  "util",
  "uuid",
- "zed_env_vars",
 ]
 
 [[package]]
@@ -3500,6 +3500,7 @@ dependencies = [
  "markdown",
  "menu",
  "multi_buffer",
+ "obake_actions",
  "ordered-float",
  "parking_lot",
  "pretty_assertions",
@@ -3543,7 +3544,6 @@ dependencies = [
  "util",
  "uuid",
  "workspace",
- "zed_actions",
  "zlog",
  "ztracing",
 ]
@@ -4502,6 +4502,7 @@ dependencies = [
  "log",
  "menu",
  "notifications",
+ "obake_actions",
  "picker",
  "project",
  "proto",
@@ -4520,7 +4521,6 @@ dependencies = [
  "util",
  "watch",
  "workspace",
- "zed_actions",
  "zeroize",
  "zlog",
  "ztracing",
@@ -6300,11 +6300,11 @@ dependencies = [
  "fuzzy",
  "gpui",
  "language_model",
+ "obake_actions",
  "ordered-float",
  "picker",
  "settings",
  "ui",
- "zed_actions",
 ]
 
 [[package]]
@@ -6685,6 +6685,7 @@ dependencies = [
  "language",
  "log",
  "markdown",
+ "obake_actions",
  "project",
  "serde_json",
  "settings",
@@ -6694,7 +6695,6 @@ dependencies = [
  "urlencoding",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -7114,13 +7114,13 @@ dependencies = [
  "component",
  "futures-lite",
  "gpui",
+ "obake_actions",
  "rpc",
  "sum_tree",
  "time",
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -7350,6 +7350,156 @@ dependencies = [
  "log",
  "tiny_http",
  "url",
+]
+
+[[package]]
+name = "obake"
+version = "1.31.0"
+dependencies = [
+ "acp_thread",
+ "acp_tools",
+ "action_log",
+ "activity_indicator",
+ "agent",
+ "agent-client-protocol",
+ "agent_servers",
+ "agent_settings",
+ "agent_skills",
+ "agent_ui",
+ "anyhow",
+ "ashpd",
+ "askpass",
+ "assets",
+ "auto_update",
+ "breadcrumbs",
+ "chrono",
+ "clap",
+ "cli",
+ "client",
+ "clock",
+ "collections",
+ "command_palette",
+ "crashes",
+ "db",
+ "dev_container",
+ "editor",
+ "env_logger",
+ "extension",
+ "feature_flags",
+ "fs",
+ "futures",
+ "git",
+ "git_ui_core",
+ "gpui",
+ "gpui_platform",
+ "gpui_tokio",
+ "http_client",
+ "image",
+ "install_cli",
+ "itertools 0.14.0",
+ "language",
+ "language_model",
+ "language_models",
+ "log",
+ "markdown",
+ "markdown_preview",
+ "menu",
+ "migrator",
+ "mimalloc",
+ "nix",
+ "node_runtime",
+ "notifications",
+ "obake_actions",
+ "obake_credentials_provider",
+ "obake_env_vars",
+ "parking_lot",
+ "paths",
+ "picker",
+ "pkg-config",
+ "pretty_assertions",
+ "profiling",
+ "project",
+ "project_panel",
+ "prompt_store",
+ "proto",
+ "rayon",
+ "recent_projects",
+ "release_channel",
+ "remote",
+ "reqwest_client",
+ "rope",
+ "sandbox",
+ "sandbox_linux",
+ "search",
+ "semver",
+ "serde",
+ "serde_json",
+ "session",
+ "settings",
+ "settings_profile_selector",
+ "shellexpand",
+ "sidebar",
+ "smol",
+ "svg_preview",
+ "sysinfo 0.39.6",
+ "system_specs",
+ "tab_switcher",
+ "telemetry",
+ "telemetry_events",
+ "tempfile",
+ "terminal_view",
+ "theme",
+ "theme_selector",
+ "theme_settings",
+ "time",
+ "time_format",
+ "title_bar",
+ "tracing",
+ "ui",
+ "ui_prompt",
+ "url",
+ "urlencoding",
+ "util",
+ "uuid",
+ "watch",
+ "which_key",
+ "windows 0.62.2",
+ "windows_resources",
+ "workspace",
+ "zed-reqwest",
+ "zlog",
+ "zlog_settings",
+ "ztracing",
+]
+
+[[package]]
+name = "obake_actions"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "schemars 1.0.4",
+ "serde",
+ "util",
+]
+
+[[package]]
+name = "obake_credentials_provider"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "credentials_provider",
+ "futures",
+ "gpui",
+ "paths",
+ "release_channel",
+ "serde_json",
+]
+
+[[package]]
+name = "obake_env_vars"
+version = "0.1.0"
+dependencies = [
+ "env_var",
 ]
 
 [[package]]
@@ -8257,6 +8407,7 @@ dependencies = [
  "gpui",
  "language",
  "menu",
+ "obake_actions",
  "project",
  "schemars 1.0.4",
  "serde",
@@ -8268,7 +8419,6 @@ dependencies = [
  "ui_input",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -8377,6 +8527,7 @@ name = "platform_title_bar"
 version = "0.1.0"
 dependencies = [
  "gpui",
+ "obake_actions",
  "project",
  "settings",
  "smallvec",
@@ -8386,7 +8537,6 @@ dependencies = [
  "util",
  "windows 0.62.2",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -8730,6 +8880,7 @@ dependencies = [
  "lsp",
  "markdown",
  "node_runtime",
+ "obake_credentials_provider",
  "parking_lot",
  "path",
  "paths",
@@ -8770,7 +8921,6 @@ dependencies = [
  "wax",
  "which",
  "worktree",
- "zed_credentials_provider",
  "zeroize",
  "zlog",
  "ztracing",
@@ -8798,6 +8948,7 @@ dependencies = [
  "markdown_preview",
  "menu",
  "notifications",
+ "obake_actions",
  "pretty_assertions",
  "project",
  "rayon",
@@ -8815,7 +8966,6 @@ dependencies = [
  "util",
  "workspace",
  "worktree",
- "zed_actions",
 ]
 
 [[package]]
@@ -9315,6 +9465,7 @@ dependencies = [
  "log",
  "menu",
  "node_runtime",
+ "obake_actions",
  "open_path_prompt",
  "ordered-float",
  "paths",
@@ -9333,7 +9484,6 @@ dependencies = [
  "windows-registry 0.6.1",
  "workspace",
  "worktree",
- "zed_actions",
 ]
 
 [[package]]
@@ -10033,6 +10183,7 @@ dependencies = [
  "lsp",
  "menu",
  "multi_buffer",
+ "obake_actions",
  "picker",
  "picker_preview",
  "pretty_assertions",
@@ -10051,7 +10202,6 @@ dependencies = [
  "util",
  "util_macros",
  "workspace",
- "zed_actions",
  "ztracing",
 ]
 
@@ -10387,6 +10537,7 @@ dependencies = [
  "fuzzy",
  "gpui",
  "menu",
+ "obake_actions",
  "picker",
  "project",
  "serde_json",
@@ -10395,7 +10546,6 @@ dependencies = [
  "theme_settings",
  "ui",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -10494,6 +10644,7 @@ dependencies = [
  "menu",
  "node_runtime",
  "notifications",
+ "obake_actions",
  "platform_title_bar",
  "pretty_assertions",
  "project",
@@ -10513,7 +10664,6 @@ dependencies = [
  "unicode-segmentation",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -11042,10 +11192,10 @@ dependencies = [
  "gpui",
  "language",
  "multi_buffer",
+ "obake_actions",
  "project",
  "ui",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -11251,6 +11401,7 @@ dependencies = [
  "gpui",
  "hex",
  "log",
+ "obake_actions",
  "pretty_assertions",
  "proto",
  "schemars 1.0.4",
@@ -11260,7 +11411,6 @@ dependencies = [
  "sha2",
  "shellexpand",
  "util",
- "zed_actions",
 ]
 
 [[package]]
@@ -11385,6 +11535,7 @@ dependencies = [
  "language",
  "log",
  "menu",
+ "obake_actions",
  "pretty_assertions",
  "project",
  "regex",
@@ -11405,7 +11556,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -11459,6 +11609,7 @@ dependencies = [
  "fuzzy",
  "gpui",
  "log",
+ "obake_actions",
  "picker",
  "project",
  "serde_json",
@@ -11469,7 +11620,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -11699,6 +11849,7 @@ dependencies = [
  "git_ui_core",
  "gpui",
  "icons",
+ "obake_actions",
  "path",
  "platform_title_bar",
  "project",
@@ -11717,7 +11868,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -13524,6 +13674,7 @@ dependencies = [
  "collections",
  "command_palette",
  "gpui",
+ "obake_actions",
  "project",
  "settings",
  "theme",
@@ -13531,7 +13682,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
- "zed_actions",
 ]
 
 [[package]]
@@ -14310,6 +14460,7 @@ dependencies = [
  "markdown",
  "menu",
  "node_runtime",
+ "obake_actions",
  "parking_lot",
  "postage",
  "pretty_assertions",
@@ -14336,7 +14487,6 @@ dependencies = [
  "url",
  "util",
  "uuid",
- "zed_actions",
  "zlog",
 ]
 
@@ -14697,126 +14847,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "zed"
-version = "1.31.0"
-dependencies = [
- "acp_thread",
- "acp_tools",
- "action_log",
- "activity_indicator",
- "agent",
- "agent-client-protocol",
- "agent_servers",
- "agent_settings",
- "agent_skills",
- "agent_ui",
- "anyhow",
- "ashpd",
- "askpass",
- "assets",
- "auto_update",
- "breadcrumbs",
- "chrono",
- "clap",
- "cli",
- "client",
- "clock",
- "collections",
- "command_palette",
- "crashes",
- "db",
- "dev_container",
- "editor",
- "env_logger",
- "extension",
- "feature_flags",
- "fs",
- "futures",
- "git",
- "git_ui_core",
- "gpui",
- "gpui_platform",
- "gpui_tokio",
- "http_client",
- "image",
- "install_cli",
- "itertools 0.14.0",
- "language",
- "language_model",
- "language_models",
- "log",
- "markdown",
- "markdown_preview",
- "menu",
- "migrator",
- "mimalloc",
- "nix",
- "node_runtime",
- "notifications",
- "parking_lot",
- "paths",
- "picker",
- "pkg-config",
- "pretty_assertions",
- "profiling",
- "project",
- "project_panel",
- "prompt_store",
- "proto",
- "rayon",
- "recent_projects",
- "release_channel",
- "remote",
- "reqwest_client",
- "rope",
- "sandbox",
- "sandbox_linux",
- "search",
- "semver",
- "serde",
- "serde_json",
- "session",
- "settings",
- "settings_profile_selector",
- "shellexpand",
- "sidebar",
- "smol",
- "svg_preview",
- "sysinfo 0.39.6",
- "system_specs",
- "tab_switcher",
- "telemetry",
- "telemetry_events",
- "tempfile",
- "terminal_view",
- "theme",
- "theme_selector",
- "theme_settings",
- "time",
- "time_format",
- "title_bar",
- "tracing",
- "ui",
- "ui_prompt",
- "url",
- "urlencoding",
- "util",
- "uuid",
- "watch",
- "which_key",
- "windows 0.62.2",
- "windows_resources",
- "workspace",
- "zed-reqwest",
- "zed_actions",
- "zed_credentials_provider",
- "zed_env_vars",
- "zlog",
- "zlog_settings",
- "ztracing",
-]
-
-[[package]]
 name = "zed-font-kit"
 version = "0.14.1-zed"
 source = "git+https://github.com/zed-industries/font-kit?rev=94b0f28166665e8fd2f53ff6d268a14955c82269#94b0f28166665e8fd2f53ff6d268a14955c82269"
@@ -14914,36 +14944,6 @@ dependencies = [
  "x11rb",
  "xim-ctext",
  "xim-parser",
-]
-
-[[package]]
-name = "zed_actions"
-version = "0.1.0"
-dependencies = [
- "gpui",
- "schemars 1.0.4",
- "serde",
- "util",
-]
-
-[[package]]
-name = "zed_credentials_provider"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "credentials_provider",
- "futures",
- "gpui",
- "paths",
- "release_channel",
- "serde_json",
-]
-
-[[package]]
-name = "zed_env_vars"
-version = "0.1.0"
-dependencies = [
- "env_var",
 ]
 
 [[package]]

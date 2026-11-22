@@ -84,7 +84,7 @@ pub struct AcpConnection {
     auth_status: Option<Rc<ConnectionAuthStatus>>,
     agent_server_store: WeakEntity<AgentServerStore>,
     agent_capabilities: acp::AgentCapabilities,
-    /// Whether Zed advertised the subagents RFD, so the agent reports subagents with it.
+    /// Whether Obake advertised the subagents RFD, so the agent reports subagents with it.
     accepts_subagent_updates: bool,
     request_elicitations: Entity<ElicitationStore>,
     defaults: AcpConnectionDefaults,
@@ -503,7 +503,7 @@ fn client_builder(
         )
 }
 
-/// `acp_beta` advertises the unstable subagents and plan operations RFDs, which Zed only
+/// `acp_beta` advertises the unstable subagents and plan operations RFDs, which Obake only
 /// offers v1 agents behind the `acp-beta` flag.
 fn client_capabilities_for_agent(agent_id: &AgentId, acp_beta: bool) -> acp::ClientCapabilities {
     let mut meta = acp::Meta::from_iter([
@@ -620,7 +620,7 @@ impl AcpConnection {
 
         let (connection_tx, connection_rx) = futures::channel::oneshot::channel();
         let connection_future = connect_client_future(
-            "zed",
+            "obake",
             transport,
             dispatch_tx.clone(),
             connection_tx,
@@ -657,7 +657,7 @@ impl AcpConnection {
                 acp::InitializeRequest::new(ProtocolVersion::V1)
                     .client_capabilities(client_capabilities)
                     .client_info(
-                        acp::Implementation::new("zed", version)
+                        acp::Implementation::new("obake", version)
                             .title(release_channel.map(ToOwned::to_owned)),
                     ),
             )
@@ -936,7 +936,7 @@ impl AcpConnection {
         self.agent_capabilities.session_capabilities.close.is_some()
     }
 
-    /// `session/options` is still a draft, so Zed only uses it with the ACP beta flag.
+    /// `session/options` is still a draft, so Obake only uses it with the ACP beta flag.
     fn agent_supports_initial_config_options(&self, cx: &App) -> bool {
         cx.has_flag::<AcpBetaFeatureFlag>()
             && self
@@ -1917,7 +1917,7 @@ pub mod test_support {
 
     impl crate::AgentServer for FakeAcpAgentServer {
         fn logo(&self) -> ui::IconName {
-            ui::IconName::ZedAgent
+            ui::IconName::ObakeAgent
         }
 
         fn agent_id(&self) -> AgentId {
@@ -2309,7 +2309,7 @@ pub mod test_support {
 
         let (connection_tx, connection_rx) = futures::channel::oneshot::channel();
         let client_future = connect_client_future(
-            "zed-test",
+            "obake-test",
             client_transport,
             dispatch_tx.clone(),
             connection_tx,
@@ -5599,7 +5599,7 @@ mod tests {
                         url_elicitation_id.clone(),
                         "https://auth.example.com/device",
                     ),
-                    "Authorize Zed in your browser",
+                    "Authorize Obake in your browser",
                 ),
                 acp::CompleteElicitationNotification::new(url_elicitation_id),
                 cx,
@@ -7367,7 +7367,7 @@ mod tests {
             ),
         });
         // Like claude-agent-acp, this agent reports a subagent while it works on a prompt.
-        // It sends the announcement whatever Zed advertised, so the test also covers Zed
+        // It sends the announcement whatever Obake advertised, so the test also covers Obake
         // ignoring subagent updates it did not ask for.
         let script = format!(
             r#"
@@ -7425,7 +7425,7 @@ exec cat >/dev/null
                         }
                         _ => None,
                     })
-                    .expect("Zed's initialize request is logged");
+                    .expect("Obake's initialize request is logged");
                 assert_eq!(
                     initialize.pointer("/clientCapabilities/subagents"),
                     enabled.then(|| serde_json::json!({})).as_ref(),
@@ -7920,7 +7920,7 @@ exit 7
 
         let (connection_tx, connection_rx) = futures::channel::oneshot::channel();
         let client_future = connect_client_future(
-            "zed-test",
+            "obake-test",
             client_transport,
             dispatch_tx.clone(),
             connection_tx,
@@ -10508,7 +10508,7 @@ fn handle_session_notification(
     ) && !ctx.accepts_subagent_updates
     {
         log::warn!(
-            "Ignoring a subagents update for {session_id:?}: Zed did not advertise the subagents capability"
+            "Ignoring a subagents update for {session_id:?}: Obake did not advertise the subagents capability"
         );
         return;
     }

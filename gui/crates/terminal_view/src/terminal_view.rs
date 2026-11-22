@@ -59,7 +59,7 @@ use workspace::{
         Direction, SearchEvent, SearchOptions, SearchToken, SearchableItem, SearchableItemHandle,
     },
 };
-use zed_actions::{agent::AddSelectionToThread, assistant::InlineAssist};
+use obake_actions::{agent::AddSelectionToThread, assistant::InlineAssist};
 
 struct ImeState {
     marked_text: String,
@@ -1188,8 +1188,8 @@ impl TerminalView {
     }
 }
 
-fn terminal_rerun_override(task: &TaskId) -> zed_actions::Rerun {
-    zed_actions::Rerun {
+fn terminal_rerun_override(task: &TaskId) -> obake_actions::Rerun {
+    obake_actions::Rerun {
         task_id: Some(task.0.clone()),
         allow_concurrent_runs: Some(true),
         use_new_terminal: Some(false),
@@ -2521,7 +2521,7 @@ mod tests {
         cx.update(|cx| {
             cx.on_action({
                 let rerun_count = rerun_count.clone();
-                move |_: &zed_actions::Rerun, _| rerun_count.set(rerun_count.get() + 1)
+                move |_: &obake_actions::Rerun, _| rerun_count.set(rerun_count.get() + 1)
             });
         });
         let (pane, terminal, terminal_view) =
@@ -2764,7 +2764,7 @@ mod tests {
         assert_eq!(
             terminal.update(&mut cx, |terminal, _| terminal.take_input_log()),
             vec![vec![0x11]],
-            "ctrl-q in a focused terminal should send 0x11 to the PTY, not trigger zed::Quit",
+            "ctrl-q in a focused terminal should send 0x11 to the PTY, not trigger obake::Quit",
         );
     }
 

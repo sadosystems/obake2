@@ -19,7 +19,7 @@ use util::paths::{PathStyle, UrlExt};
 
 use crate::Range;
 
-const URL_REGEX: &str = r#"(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file://|git://|ssh:|ftp://|zed://)[^\u{0000}-\u{001F}\u{007F}-\u{009F}<>"\s{-}\^⟨⟩`']+"#;
+const URL_REGEX: &str = r#"(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file://|git://|ssh:|ftp://|obake://)[^\u{0000}-\u{001F}\u{007F}-\u{009F}<>"\s{-}\^⟨⟩`']+"#;
 const WIDE_CHAR_SPACERS: Flags =
     Flags::from_bits(Flags::LEADING_WIDE_CHAR_SPACER.bits() | Flags::WIDE_CHAR_SPACER.bits())
         .unwrap();
@@ -551,8 +551,8 @@ mod tests {
         );
         re_test(
             URL_REGEX,
-            "open zed://channel/the-channel and zed://settings/theme now",
-            vec!["zed://channel/the-channel", "zed://settings/theme"],
+            "open obake://channel/the-channel and obake://settings/theme now",
+            vec!["obake://channel/the-channel", "obake://settings/theme"],
         );
     }
 
@@ -1200,7 +1200,7 @@ mod tests {
 
             #[perf]
             pub fn cargo_hyperlink_benchmark() {
-                const LINE: &str = "    Compiling terminal v0.1.0 (/Hyperlinks/Bench/Source/zed-hyperlinks/crates/terminal)\r\n";
+                const LINE: &str = "    Compiling terminal v0.1.0 (/Hyperlinks/Bench/Source/obake-hyperlinks/crates/terminal)\r\n";
                 thread_local! {
                     static TEST_TERM_AND_POINT: (Term<VoidListener>, AlacPoint) =
                         build_test_term(LINE, 500, 50);
@@ -1210,7 +1210,7 @@ mod tests {
                         find_from_grid_point_bench(term, *point)
                             .map(|hyperlink| hyperlink.text)
                             .unwrap_or_default(),
-                        "/Hyperlinks/Bench/Source/zed-hyperlinks/crates/terminal",
+                        "/Hyperlinks/Bench/Source/obake-hyperlinks/crates/terminal",
                         "Hyperlink should have been found"
                     );
                 });
@@ -1218,7 +1218,7 @@ mod tests {
 
             #[perf]
             pub fn rust_hyperlink_benchmark() {
-                const LINE: &str = "    --> /Hyperlinks/Bench/Source/zed-hyperlinks/crates/terminal/terminal.rs:1000:42\r\n";
+                const LINE: &str = "    --> /Hyperlinks/Bench/Source/obake-hyperlinks/crates/terminal/terminal.rs:1000:42\r\n";
                 thread_local! {
                     static TEST_TERM_AND_POINT: (Term<VoidListener>, AlacPoint) =
                         build_test_term(LINE, 500, 50);
@@ -1228,7 +1228,7 @@ mod tests {
                         find_from_grid_point_bench(term, *point)
                             .map(|hyperlink| hyperlink.text)
                             .unwrap_or_default(),
-                        "/Hyperlinks/Bench/Source/zed-hyperlinks/crates/terminal/terminal.rs:1000:42",
+                        "/Hyperlinks/Bench/Source/obake-hyperlinks/crates/terminal/terminal.rs:1000:42",
                         "Hyperlink should have been found"
                     );
                 });

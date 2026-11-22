@@ -1,7 +1,7 @@
-//! The helper (`zed --zed-sandbox-linux-helper`), which becomes the parent of
+//! The helper (`obake --obake-sandbox-linux-helper`), which becomes the parent of
 //! the sandboxed command.
 //!
-//! Spawned by Zed with two inherited sockets: [`SETUP_FD`] carries the
+//! Spawned by Obake with two inherited sockets: [`SETUP_FD`] carries the
 //! [`HelperSetup`], and [`ATTACH_FD`] reaches the supervisor. It then:
 //!
 //! 1. creates user, mount, network and IPC namespaces. The mount namespace
@@ -35,7 +35,7 @@ use anyhow::{Context as _, Result};
 use crate::protocol::{AttachInfo, HelperSetup, receive_message, send_message};
 use crate::sys::{self, cvt};
 
-pub(crate) const HELPER_FLAG: &str = "--zed-sandbox-linux-helper";
+pub(crate) const HELPER_FLAG: &str = "--obake-sandbox-linux-helper";
 pub(crate) const SETUP_FD: RawFd = 3;
 pub(crate) const ATTACH_FD: RawFd = 4;
 
@@ -46,7 +46,7 @@ pub(crate) fn run() -> ! {
     match run_helper() {
         Ok(code) => std::process::exit(code),
         Err(error) => {
-            eprintln!("zed sandbox: {error:#}");
+            eprintln!("obake sandbox: {error:#}");
             std::process::exit(SETUP_FAILED);
         }
     }
@@ -54,7 +54,7 @@ pub(crate) fn run() -> ! {
 
 fn run_helper() -> Result<i32> {
     sys::set_parent_death_signal()?;
-    // SAFETY: Zed spawns the helper with exactly these two descriptors.
+    // SAFETY: Obake spawns the helper with exactly these two descriptors.
     let (setup_socket, attach_socket) = unsafe {
         (
             sys::inherited_fd(SETUP_FD).context("missing setup socket")?,
@@ -62,7 +62,7 @@ fn run_helper() -> Result<i32> {
         )
     };
     let (setup, _) = receive_message::<HelperSetup>(setup_socket.as_fd())?
-        .context("Zed closed the setup channel")?;
+        .context("Obake closed the setup channel")?;
     drop(setup_socket);
 
     // SAFETY: getuid/getgid can't fail.
@@ -226,7 +226,7 @@ fn start_factory(attach_socket: OwnedFd) -> Result<()> {
     }
     // The new thread inherits the blocked mask.
     let spawned = std::thread::Builder::new()
-        .name("zed-sandbox-factory".to_string())
+        .name("obake-sandbox-factory".to_string())
         .spawn(move || crate::net::serve_factory(attach_socket));
     // SAFETY: as above.
     unsafe { libc::pthread_sigmask(libc::SIG_UNBLOCK, &terminate, std::ptr::null_mut()) };
@@ -279,7 +279,7 @@ fn spawn_command(
 }
 
 /// Clear every capability set. `exec` as a non-root uid already does this;
-/// being explicit also covers a user running Zed as root.
+/// being explicit also covers a user running Obake as root.
 fn drop_capabilities() -> std::io::Result<()> {
     #[repr(C)]
     struct CapabilityHeader {

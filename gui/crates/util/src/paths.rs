@@ -29,11 +29,11 @@ pub fn home_dir() -> &'static PathBuf {
     HOME_DIR.get_or_init(|| {
         if cfg!(test) {
             if cfg!(target_os = "macos") {
-                PathBuf::from("/Users/zed")
+                PathBuf::from("/Users/obake")
             } else if cfg!(target_os = "windows") {
-                PathBuf::from("C:\\Users\\zed")
+                PathBuf::from("C:\\Users\\obake")
             } else {
-                PathBuf::from("/home/zed")
+                PathBuf::from("/home/obake")
             }
         } else {
             dirs::home_dir().expect("failed to determine home directory")
@@ -174,7 +174,7 @@ impl<T: AsRef<Path>> PathExt for T {
 
 /// Case-insensitive ASCII comparison of a path component to a literal
 /// folder name. macOS and Windows use case-insensitive filesystems by
-/// default, so a path like `.ZED/settings.json` resolves to the same
+/// default, so a path like `.OBAKE/settings.json` resolves to the same
 /// inode as the lowercase form. A case-sensitive `==` check would miss
 /// those and let a malicious settings author bypass classifiers with
 /// unusual casing. Callers should restrict `name` to ASCII; for ASCII
@@ -753,7 +753,7 @@ impl PathWithPosition {
 /// If a part of path doesn't exist, it will canonicalize the
 /// existing part and append the non-existing part.
 ///
-/// This method must return an absolute path, as many zed
+/// This method must return an absolute path, as many obake
 /// crates assume absolute paths.
 pub fn parse_path_with_position(argument_str: &str) -> anyhow::Result<String> {
     use anyhow::Context as _;
@@ -2764,9 +2764,9 @@ mod tests {
         );
 
         assert_eq!(
-            PathWithPosition::parse_str("app-editors:zed-0.143.6:20240710-201212.log:34:"),
+            PathWithPosition::parse_str("app-editors:obake-0.143.6:20240710-201212.log:34:"),
             PathWithPosition {
-                path: PathBuf::from("app-editors:zed-0.143.6:20240710-201212.log"),
+                path: PathBuf::from("app-editors:obake-0.143.6:20240710-201212.log"),
                 row: Some(34),
                 column: None,
             }

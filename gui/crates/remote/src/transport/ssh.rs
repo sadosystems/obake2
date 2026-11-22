@@ -352,7 +352,7 @@ impl MasterProcess {
 
 #[cfg(windows)]
 impl MasterProcess {
-    const CONNECTION_ESTABLISHED_MAGIC: &str = "ZED_SSH_CONNECTION_ESTABLISHED";
+    const CONNECTION_ESTABLISHED_MAGIC: &str = "OBAKE_SSH_CONNECTION_ESTABLISHED";
 
     pub fn new(
         askpass_script_path: &std::ffi::OsStr,
@@ -376,7 +376,7 @@ impl MasterProcess {
             .stderr(Stdio::piped())
             .env("SSH_ASKPASS_REQUIRE", "force")
             .env("SSH_ASKPASS", askpass_script_path)
-            .env("ZED_ASKPASS_SOCKET", askpass_socket_path)
+            .env("OBAKE_ASKPASS_SOCKET", askpass_socket_path)
             .args(additional_args)
             .arg("-t")
             .args(destination_args)
@@ -638,7 +638,7 @@ impl RemoteConnection for SshRemoteConnection {
         delegate: Arc<dyn RemoteClientDelegate>,
         cx: &mut AsyncApp,
     ) -> Task<Result<i32>> {
-        const VARS: [&str; 3] = ["RUST_LOG", "RUST_BACKTRACE", "ZED_GENERATE_MINIDUMPS"];
+        const VARS: [&str; 3] = ["RUST_LOG", "RUST_BACKTRACE", "OBAKE_GENERATE_MINIDUMPS"];
         delegate.set_status(Some("Starting proxy"), cx);
 
         let Some(remote_binary_path) = self.remote_binary_path.clone() else {
@@ -810,7 +810,7 @@ impl SshRemoteConnection {
         use askpass::AskPassResult;
 
         let temp_dir = tempfile::Builder::new()
-            .prefix("zed-ssh-session")
+            .prefix("obake-ssh-session")
             .tempdir()?;
 
         // On non-Windows, check if the user already has an active ControlMaster
@@ -1027,7 +1027,7 @@ impl SshRemoteConnection {
             _ => version.to_string(),
         };
         let binary_name = format!(
-            "zed-remote-server-{}-{}{}",
+            "obake-remote-server-{}-{}{}",
             release_channel.dev_name(),
             version_str,
             if self.ssh_platform.os.is_windows() {
@@ -1082,7 +1082,7 @@ impl SshRemoteConnection {
             ReleaseChannel::Nightly => Ok(None),
             ReleaseChannel::Dev => {
                 anyhow::bail!(
-                    "ZED_BUILD_REMOTE_SERVER is not set and no remote server exists at ({:?})",
+                    "OBAKE_BUILD_REMOTE_SERVER is not set and no remote server exists at ({:?})",
                     dst_path
                 )
             }
@@ -1518,7 +1518,7 @@ impl SshSocket {
             _proxy.script_path().as_ref().display().to_string(),
         );
         envs.insert(
-            "ZED_ASKPASS_SOCKET".into(),
+            "OBAKE_ASKPASS_SOCKET".into(),
             _proxy.socket_path().as_ref().display().to_string(),
         );
 
@@ -2346,7 +2346,7 @@ mod tests {
                     port: Some(2222),
                     ..SshConnectionOptions::default()
                 },
-                socket_path: PathBuf::from("/tmp/zed-test.sock"),
+                socket_path: PathBuf::from("/tmp/obake-test.sock"),
                 envs: HashMap::from_iter([(
                     String::from("SSH_ASKPASS_REQUIRE"),
                     String::from("force"),
@@ -2384,68 +2384,68 @@ mod tests {
         );
 
         connection.remote_binary_path = Some(Arc::from(RelPath::from_unix_str(
-            ".local/share/zed/remote server",
+            ".local/share/obake/remote server",
         )?));
         for (home_dir, working_dir, shell_kind, expected_exec) in [
             (
                 None,
                 Some("~/project"),
                 ShellKind::Posix,
-                "cd \"$HOME\"/project && exec \"$HOME\"/'.local/share/zed/remote server' exec",
+                "cd \"$HOME\"/project && exec \"$HOME\"/'.local/share/obake/remote server' exec",
             ),
             (
                 None,
                 Some("/srv/project!"),
                 ShellKind::Tcsh,
-                "cd '/srv/project'\\! && exec \"$HOME\"/'.local/share/zed/remote server' exec",
+                "cd '/srv/project'\\! && exec \"$HOME\"/'.local/share/obake/remote server' exec",
             ),
             (
                 Some("/home/user/"),
                 Some("~/project"),
                 ShellKind::Posix,
-                "cd \"$HOME\"/project && exec '/home/user/.local/share/zed/remote server' exec",
+                "cd \"$HOME\"/project && exec '/home/user/.local/share/obake/remote server' exec",
             ),
             (
                 Some("/home/bang!user"),
                 Some("/srv/project!"),
                 ShellKind::Tcsh,
-                "cd '/srv/project'\\! && exec '/home/bang'\\!'user/.local/share/zed/remote server' exec",
+                "cd '/srv/project'\\! && exec '/home/bang'\\!'user/.local/share/obake/remote server' exec",
             ),
             (
                 Some("/home/user/"),
                 Some("/srv/project 'x'"),
                 ShellKind::Fish,
-                "cd \"/srv/project 'x'\" && exec '/home/user/.local/share/zed/remote server' exec",
+                "cd \"/srv/project 'x'\" && exec '/home/user/.local/share/obake/remote server' exec",
             ),
             (
                 Some("/home/user/"),
                 Some("/srv/project"),
                 ShellKind::Nushell,
-                "cd /srv/project ; exec '/home/user/.local/share/zed/remote server' exec",
+                "cd /srv/project ; exec '/home/user/.local/share/obake/remote server' exec",
             ),
             (
                 None,
                 Some("~/project 'x'"),
                 ShellKind::Nushell,
-                "cd ($env.HOME | path join \"project 'x'\") ; exec ($env.HOME | path join '.local/share/zed/remote server') exec",
+                "cd ($env.HOME | path join \"project 'x'\") ; exec ($env.HOME | path join '.local/share/obake/remote server') exec",
             ),
             (
                 None,
                 Some("~/"),
                 ShellKind::Nushell,
-                "cd $env.HOME ; exec ($env.HOME | path join '.local/share/zed/remote server') exec",
+                "cd $env.HOME ; exec ($env.HOME | path join '.local/share/obake/remote server') exec",
             ),
             (
                 Some("/home/a^b"),
                 Some("/srv/O'Brien $x"),
                 ShellKind::Nushell,
-                "cd \"/srv/O'Brien $x\" ; exec '/home/a^b/.local/share/zed/remote server' exec",
+                "cd \"/srv/O'Brien $x\" ; exec '/home/a^b/.local/share/obake/remote server' exec",
             ),
             (
                 Some("/home/user/"),
                 None,
                 ShellKind::Posix,
-                "cd && exec '/home/user/.local/share/zed/remote server' exec",
+                "cd && exec '/home/user/.local/share/obake/remote server' exec",
             ),
         ] {
             connection.ssh_home_dir = home_dir.map(String::from);
@@ -2463,7 +2463,7 @@ mod tests {
                     "-o",
                     "ControlMaster=no",
                     "-o",
-                    "ControlPath=/tmp/zed-test.sock",
+                    "ControlPath=/tmp/obake-test.sock",
                     "-o",
                     "LogLevel=ERROR",
                     "-T",
@@ -2552,7 +2552,7 @@ mod tests {
         {
             let socket = smol::block_on(SshSocket::new(
                 SshConnectionOptions::default(),
-                PathBuf::from("/tmp/zed-test.sock"),
+                PathBuf::from("/tmp/obake-test.sock"),
             ))?;
             let command = socket.environment_posix_command();
             let remote_command = command
@@ -2625,7 +2625,7 @@ mod tests {
     fn environment_posix_probe_retries_when_stdin_is_consumed() -> Result<()> {
         let socket = smol::block_on(SshSocket::new(
             SshConnectionOptions::default(),
-            PathBuf::from("/tmp/zed-test.sock"),
+            PathBuf::from("/tmp/obake-test.sock"),
         ))?;
         let script = RemoteEnvironment::posix_script();
         let stdin_command = stdin_consuming_remote_shell(&socket.environment_posix_command())?;
@@ -3056,7 +3056,7 @@ mod tests {
     #[test]
     fn test_build_command_quotes_env_assignment() -> Result<()> {
         let mut input_env = HashMap::default();
-        input_env.insert("ZED$(echo foo)".to_string(), "value".to_string());
+        input_env.insert("OBAKE$(echo foo)".to_string(), "value".to_string());
 
         let command = build_command_posix(
             Some("remote_program".to_string()),
@@ -3083,7 +3083,7 @@ mod tests {
             .last()
             .context("missing remote command argument")?;
         assert!(
-            remote_command.contains("exec env 'ZED$(echo foo)=value' remote_program"),
+            remote_command.contains("exec env 'OBAKE$(echo foo)=value' remote_program"),
             "expected env assignment to be quoted, got: {remote_command}"
         );
 
@@ -3094,10 +3094,10 @@ mod tests {
     fn test_sftp_put_command_quotes_paths() {
         assert_eq!(
             sftp_put_command(
-                "/tmp/Zed Repro/remote_server",
-                ".zed_server/downloaded server",
+                "/tmp/Obake Repro/remote_server",
+                ".obake_server/downloaded server",
             ),
-            "put \"/tmp/Zed Repro/remote_server\" \".zed_server/downloaded server\"\n"
+            "put \"/tmp/Obake Repro/remote_server\" \".obake_server/downloaded server\"\n"
         );
     }
 
@@ -3105,18 +3105,18 @@ mod tests {
     fn test_sftp_put_command_escapes_quotes_in_paths() {
         assert_eq!(
             sftp_put_command(
-                r#"/tmp/Zed "Nightly"/remote_server"#,
-                ".zed_server/remote_server",
+                r#"/tmp/Obake "Nightly"/remote_server"#,
+                ".obake_server/remote_server",
             ),
-            "put \"/tmp/Zed \\\"Nightly\\\"/remote_server\" \".zed_server/remote_server\"\n"
+            "put \"/tmp/Obake \\\"Nightly\\\"/remote_server\" \".obake_server/remote_server\"\n"
         );
     }
 
     #[test]
     fn test_sftp_put_command_doubles_trailing_destination_backslash_before_closing_quote() {
         assert_eq!(
-            sftp_put_command("/tmp/remote_server", r"C:\zed server\"),
-            "put \"/tmp/remote_server\" \"C:\\\\zed server\\\\\"\n"
+            sftp_put_command("/tmp/remote_server", r"C:\obake server\"),
+            "put \"/tmp/remote_server\" \"C:\\\\obake server\\\\\"\n"
         );
     }
 
@@ -3124,10 +3124,10 @@ mod tests {
     fn test_sftp_put_command_doubles_source_backslashes_for_posix_glob() {
         assert_eq!(
             sftp_put_command(
-                r"/tmp/zed\server/remote_server",
-                ".zed_server/remote_server",
+                r"/tmp/obake\server/remote_server",
+                ".obake_server/remote_server",
             ),
-            "put \"/tmp/zed\\\\server/remote_server\" \".zed_server/remote_server\"\n"
+            "put \"/tmp/obake\\\\server/remote_server\" \".obake_server/remote_server\"\n"
         );
     }
 
@@ -3135,10 +3135,10 @@ mod tests {
     fn test_sftp_put_command_doubles_windows_source_backslashes_on_all_platforms() {
         assert_eq!(
             sftp_put_command(
-                r"C:\Users\Smit\Zed Repro\remote_server",
-                ".zed_server/remote_server",
+                r"C:\Users\Smit\Obake Repro\remote_server",
+                ".obake_server/remote_server",
             ),
-            "put \"C:\\\\Users\\\\Smit\\\\Zed Repro\\\\remote_server\" \".zed_server/remote_server\"\n"
+            "put \"C:\\\\Users\\\\Smit\\\\Obake Repro\\\\remote_server\" \".obake_server/remote_server\"\n"
         );
     }
 

@@ -4509,7 +4509,7 @@ pub mod tests {
     /// Asserts that every header-like block in the snapshot references a
     /// buffer that is still present in the multibuffer: the invariant whose
     /// violation panics at render time with "buffer snapshot not found for
-    /// excerpt boundary" (ZED-7G6).
+    /// excerpt boundary" (OBAKE-7G6).
     #[track_caller]
     fn assert_headers_resolve(snapshot: &DisplaySnapshot) {
         let end_row = DisplayRow(snapshot.max_point().row().0 + 1);
@@ -4534,7 +4534,7 @@ pub mod tests {
         }
     }
 
-    /// Deterministic end-to-end regression test for ZED-7G6 ("buffer snapshot
+    /// Deterministic end-to-end regression test for OBAKE-7G6 ("buffer snapshot
     /// not found for excerpt boundary"), driving a real `DisplayMap` with
     /// ordinary operations. In a diff-backed multibuffer with all hunks
     /// expanded, two folds inside an expanded deleted hunk are ordered only by

@@ -22,7 +22,7 @@ use project::agent_server_store::AllAgentServersSettings;
 use project::{AgentId, ProjectItem};
 use serde::{Deserialize, Serialize};
 
-use zed_actions::{
+use obake_actions::{
     DecreaseBufferFontSize, IncreaseBufferFontSize, ResetBufferFontSize,
     agent::{
         AddSelectionToThread, ConflictContent, LogoutAgent, OpenSettings, ReauthenticateAgent,
@@ -1047,7 +1047,7 @@ pub struct CreateThreadOptions {
     /// Agent to use. Defaults to the panel's selected agent.
     pub agent: Option<Agent>,
     /// Model override, as `provider/model-id`. Only applied when the thread
-    /// uses the native Zed agent.
+    /// uses the native Obake agent.
     pub model: Option<String>,
     /// Working directories to attach to the new thread (e.g., the path of a
     /// freshly-created sibling worktree). When `None`, the thread inherits
@@ -3637,8 +3637,8 @@ impl AgentPanel {
         cx: &mut Context<Self>,
     ) {
         window.dispatch_action(
-            Box::new(zed_actions::OpenSettingsAt {
-                path: zed_actions::AGENT_SKILLS_SETTINGS_PATH.to_string(),
+            Box::new(obake_actions::OpenSettingsAt {
+                path: obake_actions::AGENT_SKILLS_SETTINGS_PATH.to_string(),
                 target: None,
             }),
             cx,
@@ -3806,7 +3806,7 @@ impl AgentPanel {
 
     pub(crate) fn open_configuration(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         window.dispatch_action(
-            Box::new(zed_actions::OpenSettingsPage {
+            Box::new(obake_actions::OpenSettingsPage {
                 page: "AI".to_string(),
                 target: None,
             }),
@@ -4918,7 +4918,7 @@ impl agent::SiblingThreadHost for AgentPanelSiblingHost {
         cx.spawn(async move |cx| {
             let agent_choice = match request.agent_id.as_deref() {
                 None => None,
-                Some(id) if id == agent::ZED_AGENT_ID.as_ref() => Some(Agent::NativeAgent),
+                Some(id) if id == agent::OBAKE_AGENT_ID.as_ref() => Some(Agent::NativeAgent),
                 Some(id) => {
                     // Reject unknown agent ids up front so the model gets a
                     // structured error pointing at `list_agents_and_models`,
@@ -4980,12 +4980,12 @@ impl agent::SiblingThreadHost for AgentPanelSiblingHost {
                 // detached HEAD state — the agent can attach to a branch via
                 // git afterwards.
                 let branch_target = match request.base_ref.as_ref() {
-                    Some(ref_name) => zed_actions::NewWorktreeBranchTarget::ExistingBranch {
+                    Some(ref_name) => obake_actions::NewWorktreeBranchTarget::ExistingBranch {
                         name: ref_name.clone(),
                     },
-                    None => zed_actions::NewWorktreeBranchTarget::CurrentBranch,
+                    None => obake_actions::NewWorktreeBranchTarget::CurrentBranch,
                 };
-                let action = zed_actions::CreateWorktree {
+                let action = obake_actions::CreateWorktree {
                     worktree_name: request.worktree_name.clone(),
                     branch_target,
                 };
@@ -5194,7 +5194,7 @@ impl Panel for AgentPanel {
     }
 
     fn icon(&self, _window: &Window, cx: &App) -> Option<IconName> {
-        (self.enabled(cx) && AgentSettings::get_global(cx).button).then_some(IconName::ZedAssistant)
+        (self.enabled(cx) && AgentSettings::get_global(cx).button).then_some(IconName::ObakeAssistant)
     }
 
     fn icon_tooltip(&self, _window: &Window, _cx: &App) -> Option<&'static str> {
@@ -5822,16 +5822,16 @@ impl AgentPanel {
                                 .header("MCP Servers")
                                 .action(
                                     "Add Server…",
-                                    Box::new(zed_actions::OpenSettingsAt {
+                                    Box::new(obake_actions::OpenSettingsAt {
                                         path: "context_servers".to_string(),
                                         target: None,
                                     }),
                                 )
                                 .action(
                                     "Install New Servers…",
-                                    Box::new(zed_actions::Extensions {
+                                    Box::new(obake_actions::Extensions {
                                         category_filter: Some(
-                                            zed_actions::ExtensionCategoryFilter::ContextServers,
+                                            obake_actions::ExtensionCategoryFilter::ContextServers,
                                         ),
                                         id: None,
                                     }),
@@ -5998,12 +5998,12 @@ impl AgentPanel {
                 Some(ContextMenu::build(window, cx, |menu, _window, cx| {
                     menu.context(focus_handle.clone())
                         .item(
-                            ContextMenuEntry::new("Zed Agent")
+                            ContextMenuEntry::new("Obake Agent")
                                 .when(
                                     !showing_terminal && is_agent_selected(Agent::NativeAgent),
                                     |this| this.action(Box::new(NewThread)),
                                 )
-                                .icon(IconName::ZedAgent)
+                                .icon(IconName::ObakeAgent)
                                 .icon_color(Color::Muted)
                                 .handler({
                                     let workspace = workspace.clone();
@@ -6157,7 +6157,7 @@ impl AgentPanel {
                                 .handler({
                                     move |window, cx| {
                                         window
-                                            .dispatch_action(Box::new(zed_actions::AcpRegistry), cx)
+                                            .dispatch_action(Box::new(obake_actions::AcpRegistry), cx)
                                     }
                                 }),
                         )
@@ -6340,7 +6340,7 @@ impl AgentPanel {
                 if LanguageModelRegistry::global(cx)
                     .read(cx)
                     .default_model()
-                    .is_some_and(|model| model.provider_id != language_model::ZED_CLOUD_PROVIDER_ID)
+                    .is_some_and(|model| model.provider_id != language_model::OBAKE_CLOUD_PROVIDER_ID)
                 {
                     return false;
                 }
@@ -6353,7 +6353,7 @@ impl AgentPanel {
         let plan = self.user_store.read(cx).plan();
         let has_previous_trial = self.user_store.read(cx).trial_started_at().is_some();
 
-        plan.is_some_and(|plan| plan == Plan::ZedFree) && has_previous_trial
+        plan.is_some_and(|plan| plan == Plan::ObakeFree) && has_previous_trial
     }
 
     fn dismiss_ai_onboarding(&mut self, cx: &mut Context<Self>) {
@@ -6373,7 +6373,7 @@ impl AgentPanel {
 
         let user_store = self.user_store.read(cx);
 
-        if user_store.plan().is_some_and(|plan| plan == Plan::ZedPro)
+        if user_store.plan().is_some_and(|plan| plan == Plan::ObakePro)
             && user_store
                 .subscription_period()
                 .and_then(|period| period.0.checked_add_days(chrono::Days::new(1)))
@@ -6388,12 +6388,12 @@ impl AgentPanel {
             return false;
         }
 
-        let has_configured_non_zed_providers = LanguageModelRegistry::read_global(cx)
+        let has_configured_non_obake_providers = LanguageModelRegistry::read_global(cx)
             .visible_providers()
             .iter()
             .any(|provider| {
                 provider.is_authenticated(cx)
-                    && provider.id() != language_model::ZED_CLOUD_PROVIDER_ID
+                    && provider.id() != language_model::OBAKE_CLOUD_PROVIDER_ID
             });
 
         match &self.base_view {
@@ -6401,7 +6401,7 @@ impl AgentPanel {
             BaseView::AgentThread { conversation_view } => {
                 if conversation_view.read(cx).as_native_thread(cx).is_some() {
                     let history_is_empty = ThreadStore::global(cx).read(cx).is_empty();
-                    history_is_empty || !has_configured_non_zed_providers
+                    history_is_empty || !has_configured_non_obake_providers
                 } else {
                     false
                 }
@@ -7181,7 +7181,7 @@ mod tests {
 
     impl AgentConnection for SessionTrackingConnection {
         fn agent_id(&self) -> AgentId {
-            agent::ZED_AGENT_ID.clone()
+            agent::OBAKE_AGENT_ID.clone()
         }
 
         fn telemetry_id(&self) -> SharedString {
@@ -7464,7 +7464,7 @@ mod tests {
             acp::ContentChunk::new("New response".into()),
         )]);
         user_message_editor.update_in(cx, |_editor, window, cx| {
-            window.dispatch_action(Box::new(zed_actions::agent::Chat), cx);
+            window.dispatch_action(Box::new(obake_actions::agent::Chat), cx);
         });
         cx.update(|window, cx| window.blur(cx));
         cx.run_until_parked();
@@ -8817,8 +8817,8 @@ mod tests {
             "resource text should be the raw conflict"
         );
         assert!(
-            uri.starts_with("zed:///agent/merge-conflict"),
-            "URI should use the zed merge-conflict scheme, got: {uri}"
+            uri.starts_with("obake:///agent/merge-conflict"),
+            "URI should use the obake merge-conflict scheme, got: {uri}"
         );
         assert!(uri.contains("utils.rs"), "URI should encode the file path");
     }
@@ -9464,7 +9464,7 @@ mod tests {
 
     impl AgentServer for DelayedSelectionAgentServer {
         fn logo(&self) -> IconName {
-            IconName::ZedAgent
+            IconName::ObakeAgent
         }
 
         fn agent_id(&self) -> AgentId {
@@ -14090,7 +14090,7 @@ mod tests {
 
     impl AgentConnection for DisassociationTrackingConnection {
         fn agent_id(&self) -> AgentId {
-            agent::ZED_AGENT_ID.clone()
+            agent::OBAKE_AGENT_ID.clone()
         }
 
         fn telemetry_id(&self) -> SharedString {

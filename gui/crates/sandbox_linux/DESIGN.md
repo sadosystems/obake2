@@ -14,9 +14,9 @@ Traditional wisdom is that there is a fundamental difference between "missing fu
 - explain to the user: "I can't use docker because of the sandbox, can you disable it?"
 - the user disables the sandbox
 
-## Limitations of the current Zed sandbox
+## Limitations of the current Obake sandbox
 
-The current Zed sandbox is, in a vacuum, very secure. However, users can still be exposed to risk in various ways. These ways usually look something like:
+The current Obake sandbox is, in a vacuum, very secure. However, users can still be exposed to risk in various ways. These ways usually look something like:
 - edit the project using sandboxed tools
 - this edited configuration triggers an out-of-sandbox program to run malicious code
 
@@ -54,7 +54,7 @@ The rough flow would then become:
 ### Implementation
 
 I will refer to three processes:
-- the owner process - the process that sets up the sandbox (i.e. Zed)
+- the owner process - the process that sets up the sandbox (i.e. Obake)
 - the sandbox process - the process that the untrusted command runs in
   - technically this is actually two processes, an in-sandbox helper that then spawns the untrusted command
 - the supervisor process - the process that is registered with the kernel to validate syscalls made by the sandbox process
@@ -108,7 +108,7 @@ When it responds, by default it responds *only for the current syscall*. Unlike 
 - `/foo`
 - `/`
 
-The `linux_sandbox` crate doesn't address this issue, but provides the `Decision` type, which is what a `Responder` actually responds with. It contains a decision for this syscall, but also a list of rules to remember for the rest of this session. It is up zed to determine what options to show to the user.
+The `linux_sandbox` crate doesn't address this issue, but provides the `Decision` type, which is what a `Responder` actually responds with. It contains a decision for this syscall, but also a list of rules to remember for the rest of this session. It is up obake to determine what options to show to the user.
 
 It's almost always wrong to not supply any extra rules to remember.
 
@@ -148,7 +148,7 @@ Port 53 of every address in the sandbox is answered by the supervisor's DNS. Tha
 
 #### Async supervisor
 
-Every relayed TCP connection takes two threads, and every UDP flow and DNS query one, so a busy `npm install` can mean hundreds of threads. An event loop in the supervisor (`smol`, which Zed already uses: `async-io` plus a small executor) would make these tasks instead; seccomp notifications would stay with their leader/follower receivers, since prompts block.
+Every relayed TCP connection takes two threads, and every UDP flow and DNS query one, so a busy `npm install` can mean hundreds of threads. An event loop in the supervisor (`smol`, which Obake already uses: `async-io` plus a small executor) would make these tasks instead; seccomp notifications would stay with their leader/follower receivers, since prompts block.
 
 Measured (9950X3D; benchmark harness in the benchmarking thread): at 1 Gbit/s every relay model costs 2.5–3% of a core, so throughput alone doesn't motivate this. For bursts of short connections, async halves the relay's CPU per exchange (21 vs 48 µs) and replaces 626 threads at 1000 concurrent connections with 3. Not urgent; revisit if supervisor resource usage becomes a problem.
 

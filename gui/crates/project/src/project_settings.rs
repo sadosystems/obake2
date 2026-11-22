@@ -102,9 +102,9 @@ pub struct SessionSettings {
 pub struct NodeBinarySettings {
     /// The path to the Node binary.
     pub path: Option<String>,
-    /// The path to the npm binary Zed should use (defaults to `.path/../npm`).
+    /// The path to the npm binary Obake should use (defaults to `.path/../npm`).
     pub npm_path: Option<String>,
-    /// If enabled, Zed will download its own copy of Node.
+    /// If enabled, Obake will download its own copy of Node.
     pub ignore_system_version: bool,
 }
 
@@ -703,7 +703,7 @@ pub struct DiagnosticsSettings {
     /// Whether or not to include warning diagnostics.
     pub include_warnings: bool,
 
-    /// Settings for using LSP pull diagnostics mechanism in Zed.
+    /// Settings for using LSP pull diagnostics mechanism in Obake.
     pub lsp_pull_diagnostics: LspPullDiagnosticsSettings,
 
     /// Settings for showing inline diagnostics.
@@ -930,10 +930,10 @@ pub struct SettingsObserver {
     _global_debug_config_watcher: Task<()>,
 }
 
-/// SettingsObserver observers changes to .zed/{settings, task}.json files in local worktrees
+/// SettingsObserver observers changes to .obake/{settings, task}.json files in local worktrees
 /// (or the equivalent protobuf messages from upstream) and updates local settings
 /// and sends notifications downstream.
-/// In ssh mode it also monitors ~/.config/zed/{settings, task}.json and sends the content
+/// In ssh mode it also monitors ~/.config/obake/{settings, task}.json and sends the content
 /// upstream.
 impl SettingsObserver {
     pub fn init(client: &AnyProtoClient) {
@@ -1358,15 +1358,15 @@ impl SettingsObserver {
                                             .with_context(|| {
                                                 format!("parsing VSCode tasks, file {abs_path:?}")
                                             })?;
-                                    let zed_tasks = TaskTemplates::try_from(vscode_tasks)
+                                    let obake_tasks = TaskTemplates::try_from(vscode_tasks)
                                         .with_context(|| {
                                             format!(
-                                        "converting VSCode tasks into Zed ones, file {abs_path:?}"
+                                        "converting VSCode tasks into Obake ones, file {abs_path:?}"
                                     )
                                         })?;
-                                    serde_json::to_string(&zed_tasks).with_context(|| {
+                                    serde_json::to_string(&obake_tasks).with_context(|| {
                                         format!(
-                                            "serializing Zed tasks into JSON, file {abs_path:?}"
+                                            "serializing Obake tasks into JSON, file {abs_path:?}"
                                         )
                                     })
                                 } else if abs_path.ends_with(local_vscode_launch_file_relative_path().as_std_path()) {
@@ -1375,15 +1375,15 @@ impl SettingsObserver {
                                             .with_context(|| {
                                                 format!("parsing VSCode debug tasks, file {abs_path:?}")
                                             })?;
-                                    let zed_tasks = DebugTaskFile::try_from(vscode_tasks)
+                                    let obake_tasks = DebugTaskFile::try_from(vscode_tasks)
                                         .with_context(|| {
                                             format!(
-                                        "converting VSCode debug tasks into Zed ones, file {abs_path:?}"
+                                        "converting VSCode debug tasks into Obake ones, file {abs_path:?}"
                                     )
                                         })?;
-                                    serde_json::to_string(&zed_tasks).with_context(|| {
+                                    serde_json::to_string(&obake_tasks).with_context(|| {
                                         format!(
-                                            "serializing Zed tasks into JSON, file {abs_path:?}"
+                                            "serializing Obake tasks into JSON, file {abs_path:?}"
                                         )
                                     })
                                 } else {

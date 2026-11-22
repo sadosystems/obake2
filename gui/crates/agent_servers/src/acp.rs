@@ -250,7 +250,7 @@ struct ClientContext {
     request_elicitations: Entity<ElicitationStore>,
     // Legacy and ingress-only contexts do not track caller ownership of outgoing RPCs.
     active_request_scopes: Option<RefCell<HashSet<acp_v2::RequestId>>>,
-    /// A v1 agent may only send `subagent_update` after Zed advertises the `subagents`
+    /// A v1 agent may only send `subagent_update` after Obake advertises the `subagents`
     /// client capability. v2 includes subagents in every session.
     accepts_subagent_updates: bool,
 }
@@ -821,7 +821,7 @@ fn close_undelivered_session(
 }
 
 /// Applies a `subagent_update` received on `parent`'s stream. The first update for a
-/// session announces it: Zed creates its thread, routes the session's traffic on this
+/// session announces it: Obake creates its thread, routes the session's traffic on this
 /// connection, and hands the thread to the parent. Later updates patch the association.
 /// The update's `state` is left to the caller because v2 separates history from live
 /// state per session, whereas v1 uses the response as the boundary.
@@ -895,7 +895,7 @@ fn apply_subagent_update(
         subagent.inherit_subagent_work_dirs(parent_work_dirs.as_ref(), cx);
         anyhow::Ok(())
     })?;
-    // Unlike a session Zed opened, releasing a subagent must not close it: the agent
+    // Unlike a session Obake opened, releasing a subagent must not close it: the agent
     // releases subagents when their parent closes.
     let release_subscription = cx.observe_release(&subagent, {
         let sessions = Rc::downgrade(sessions);

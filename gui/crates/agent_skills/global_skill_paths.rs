@@ -14,12 +14,12 @@ use util::paths::normalize_path;
 ///
 /// This is needed for paths where the leaf (or intermediate directories) don't
 /// exist yet but an ancestor may be a symlink. For example, when creating
-/// `.zed/settings.json` where `.zed` is a symlink to an external directory.
+/// `.obake/settings.json` where `.obake` is a symlink to an external directory.
 ///
 /// Note: intermediate directories *can* be symlinks (not just leaf entries),
 /// so we must walk the full ancestor chain. For example:
-///   `ln -s /external/config /project/.zed`
-/// makes `.zed` an intermediate symlink directory.
+///   `ln -s /external/config /project/.obake`
+/// makes `.obake` an intermediate symlink directory.
 pub async fn canonicalize_with_ancestors(path: &Path, fs: &dyn Fs) -> Option<PathBuf> {
     let mut current: Option<&Path> = Some(path);
     let mut suffix_components = Vec::new();

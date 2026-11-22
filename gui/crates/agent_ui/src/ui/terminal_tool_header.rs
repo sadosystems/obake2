@@ -329,7 +329,7 @@ impl Component for TerminalToolHeader {
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> AnyElement {
-        let working_dir = "/Users/you/projects/zed";
+        let working_dir = "/Users/you/projects/obake";
 
         let card = |_id: &'static str, header: TerminalToolHeader| {
             v_flex()

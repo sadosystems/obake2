@@ -127,7 +127,7 @@ mod tests {
         )?;
         registry.register_snippets(
             file_path,
-            r#"{"Hello": {"prefix": "hello", "body": "Hello ${1:Zed}"}}"#,
+            r#"{"Hello": {"prefix": "hello", "body": "Hello ${1:Obake}"}}"#,
         )?;
 
         let snippets = registry.get_snippets(&Some("ruby".to_owned()));
@@ -136,7 +136,7 @@ mod tests {
             1,
             "Registering the same file again should replace its snippets"
         );
-        assert_eq!(snippets[0].body, "Hello ${1:Zed}");
+        assert_eq!(snippets[0].body, "Hello ${1:Obake}");
         Ok(())
     }
 

@@ -1190,7 +1190,7 @@ mod imp {
             vec![],
             allow.clone(),
             Action::AbstractUnixServer {
-                name: "zed-sandbox-test",
+                name: "obake-sandbox-test",
             },
             Expected::Allowed,
             unix_policy,

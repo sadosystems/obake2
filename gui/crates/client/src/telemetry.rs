@@ -80,25 +80,25 @@ const FLUSH_INTERVAL: Duration = Duration::from_secs(1);
 
 #[cfg(not(debug_assertions))]
 const FLUSH_INTERVAL: Duration = Duration::from_secs(60 * 5);
-static ZED_CLIENT_CHECKSUM_SEED: LazyLock<Option<Vec<u8>>> = LazyLock::new(|| {
-    option_env!("ZED_CLIENT_CHECKSUM_SEED")
+static OBAKE_CLIENT_CHECKSUM_SEED: LazyLock<Option<Vec<u8>>> = LazyLock::new(|| {
+    option_env!("OBAKE_CLIENT_CHECKSUM_SEED")
         .map(|s| s.as_bytes().into())
         .or_else(|| {
-            env::var("ZED_CLIENT_CHECKSUM_SEED")
+            env::var("OBAKE_CLIENT_CHECKSUM_SEED")
                 .ok()
                 .map(|s| s.as_bytes().into())
         })
 });
 
 pub static MINIDUMP_ENDPOINT: LazyLock<Option<String>> = LazyLock::new(|| {
-    option_env!("ZED_MINIDUMP_ENDPOINT")
+    option_env!("OBAKE_MINIDUMP_ENDPOINT")
         .map(str::to_string)
-        .or_else(|| env::var("ZED_MINIDUMP_ENDPOINT").ok())
+        .or_else(|| env::var("OBAKE_MINIDUMP_ENDPOINT").ok())
 });
 
 pub fn should_install_crash_handler(channel: ReleaseChannel) -> bool {
     matches!(
-        env::var("ZED_GENERATE_MINIDUMPS").as_deref(),
+        env::var("OBAKE_GENERATE_MINIDUMPS").as_deref(),
         Ok("true" | "1")
     ) || (channel != ReleaseChannel::Dev && MINIDUMP_ENDPOINT.is_some())
 }
@@ -586,7 +586,7 @@ impl Telemetry {
         match &mut event {
             Event::Flexible(event) => event
                 .event_properties
-                .insert("event_source".into(), "zed".into()),
+                .insert("event_source".into(), "obake".into()),
         };
 
         if state.flush_events_task.is_none() {
@@ -660,11 +660,11 @@ impl Telemetry {
             .method(Method::POST)
             .uri(
                 self.http_client
-                    .build_zed_api_url("/telemetry/events", &[])?
+                    .build_obake_api_url("/telemetry/events", &[])?
                     .as_ref(),
             )
             .header("Content-Type", "application/json")
-            .header("x-zed-checksum", checksum)
+            .header("x-obake-checksum", checksum)
             .body(json_bytes.into())?)
     }
 
@@ -732,7 +732,7 @@ impl Telemetry {
 }
 
 pub fn calculate_json_checksum(json: &impl AsRef<[u8]>) -> Option<String> {
-    let checksum_seed = ZED_CLIENT_CHECKSUM_SEED.as_ref()?;
+    let checksum_seed = OBAKE_CLIENT_CHECKSUM_SEED.as_ref()?;
 
     let mut summer = Sha256::new();
     summer.update(checksum_seed);

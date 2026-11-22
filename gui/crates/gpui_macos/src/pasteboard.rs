@@ -42,7 +42,7 @@ impl Pasteboard {
 
     #[cfg(test)]
     pub fn unique() -> Self {
-        let name = NSString::from_str(&format!("zed-test-pasteboard-{}", Uuid::new_v4()));
+        let name = NSString::from_str(&format!("obake-test-pasteboard-{}", Uuid::new_v4()));
         Self::new(NSPasteboard::pasteboardWithName(&name))
     }
 
@@ -51,8 +51,8 @@ impl Pasteboard {
         // outlive the autorelease pool in which it was created.
         Self {
             inner,
-            text_hash_type: NSString::from_str("zed-text-hash"),
-            metadata_type: NSString::from_str("zed-metadata"),
+            text_hash_type: NSString::from_str("obake-text-hash"),
+            metadata_type: NSString::from_str("obake-metadata"),
         }
     }
 
@@ -350,8 +350,8 @@ mod tests {
     fn test_custom_types_survive_creation_autorelease_pool() {
         let pasteboard = autoreleasepool(|_| Pasteboard::unique());
 
-        assert_eq!(pasteboard.text_hash_type.to_string(), "zed-text-hash");
-        assert_eq!(pasteboard.metadata_type.to_string(), "zed-metadata");
+        assert_eq!(pasteboard.text_hash_type.to_string(), "obake-text-hash");
+        assert_eq!(pasteboard.metadata_type.to_string(), "obake-metadata");
 
         let item = ClipboardItem {
             entries: vec![ClipboardEntry::String(

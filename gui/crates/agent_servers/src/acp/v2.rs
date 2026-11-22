@@ -252,7 +252,7 @@ impl AcpV2Connection {
             })
             .shared();
         let info = cx.update(|cx| {
-            acp::Implementation::new("zed", release_channel::AppVersion::global(cx).to_string())
+            acp::Implementation::new("obake", release_channel::AppVersion::global(cx).to_string())
                 .title(
                     release_channel::ReleaseChannel::try_global(cx)
                         .map(|channel| channel.display_name().to_owned()),
@@ -357,7 +357,7 @@ impl AcpV2Connection {
         let (sender, received) = futures::channel::oneshot::channel();
         let cleanup = runtime::disconnect_cleanup(dispatch_tx.clone());
         let connection_future =
-            with_v2_client_ingress(Client.v2().name("zed-v2"), dispatch_tx.clone())
+            with_v2_client_ingress(Client.v2().name("obake-v2"), dispatch_tx.clone())
                 .on_close({
                     let cleanup = cleanup.clone();
                     async move |_connection: V2ConnectionTo<Agent>| cleanup.await
@@ -846,7 +846,7 @@ impl AcpV2Connection {
         Ok(())
     }
 
-    /// `session/options` is still a draft, so Zed only uses it with the ACP beta flag.
+    /// `session/options` is still a draft, so Obake only uses it with the ACP beta flag.
     fn supports_initial_config_options(&self, cx: &App) -> bool {
         cx.has_flag::<AcpBetaFeatureFlag>()
             && self

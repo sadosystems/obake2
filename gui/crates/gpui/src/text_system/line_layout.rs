@@ -867,7 +867,7 @@ mod tests {
         let text = SharedString::from("let value = compute_something(argument_one, argument_two);");
         let runs = [TextRun {
             len: text.len(),
-            font: font(".ZedMono"),
+            font: font(".ObakeMono"),
             ..Default::default()
         }];
 

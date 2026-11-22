@@ -1304,7 +1304,7 @@ mod tests {
 
     #[test]
     fn test_metadata_table_rows_parse_simple_colon_pairs() {
-        let source = "title: Post\nauthor: Zed\n";
+        let source = "title: Post\nauthor: Obake\n";
         let Some(rows) = parse_metadata_table_rows(source, 0..source.len()) else {
             panic!("expected metadata rows");
         };
@@ -1313,7 +1313,7 @@ mod tests {
             .map(|row| (&source[row.key], &source[row.value]))
             .collect::<Vec<_>>();
 
-        assert_eq!(pairs, vec![("title", "Post"), ("author", "Zed")]);
+        assert_eq!(pairs, vec![("title", "Post"), ("author", "Obake")]);
     }
 
     #[test]

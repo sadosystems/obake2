@@ -677,7 +677,7 @@ impl fmt::Display for SandboxError {
             }
             SandboxError::BwrapSetuidRejected => write!(
                 formatter,
-                "the only available `bwrap` is setuid-root, which Zed refuses to run"
+                "the only available `bwrap` is setuid-root, which Obake refuses to run"
             ),
             SandboxError::SandboxProbeFailed => {
                 write!(
@@ -761,13 +761,13 @@ pub struct Sandbox {
     /// with writable binds); a `Sandbox` normally wraps a single command.
     #[cfg(target_os = "linux")]
     validation_fd_sender: Option<linux_bubblewrap::ValidationFdSender>,
-    /// Windows only: `(release channel, version)` of the Linux `zed` to
+    /// Windows only: `(release channel, version)` of the Linux `obake` to
     /// provision inside WSL as the `--wsl-sandbox-helper` (version `latest` for
     /// dev builds). Set by the caller (which has the running release info);
     /// `None` falls back to exec'ing bwrap directly without in-sandbox bind
     /// validation.
     #[cfg(target_os = "windows")]
-    wsl_zed_release: Option<(String, String)>,
+    wsl_obake_release: Option<(String, String)>,
     #[cfg(target_os = "macos")]
     seatbelt_config: Option<macos_seatbelt::SeatbeltConfigFile>,
 }
@@ -907,7 +907,7 @@ impl Sandbox {
             #[cfg(target_os = "linux")]
             validation_fd_sender: None,
             #[cfg(target_os = "windows")]
-            wsl_zed_release: None,
+            wsl_obake_release: None,
             #[cfg(target_os = "macos")]
             seatbelt_config: None,
         })
@@ -940,15 +940,15 @@ impl Sandbox {
         Ok(sandbox)
     }
 
-    /// Windows only: record the `(release channel, version)` of the Linux `zed`
+    /// Windows only: record the `(release channel, version)` of the Linux `obake`
     /// to provision inside WSL as the sandbox helper (version `latest` for dev
     /// builds). The caller resolves these from the running app's release info
     /// (which this low-level crate can't read) and sets them before `wrap`. When
     /// unset, the WSL backend falls back to exec'ing bwrap directly without
     /// in-sandbox bind validation.
     #[cfg(target_os = "windows")]
-    pub fn set_wsl_zed_release(&mut self, channel: String, version: String) {
-        self.wsl_zed_release = Some((channel, version));
+    pub fn set_wsl_obake_release(&mut self, channel: String, version: String) {
+        self.wsl_obake_release = Some((channel, version));
     }
 
     /// Check whether the platform sandbox can be created on this host without
@@ -1306,7 +1306,7 @@ impl Sandbox {
             permissions,
             command.cwd.clone(),
             command.env.clone(),
-            self.wsl_zed_release.clone(),
+            self.wsl_obake_release.clone(),
         )
         .await
         .map_err(map_anyhow_error)?;
@@ -1917,7 +1917,7 @@ mod tests {
         // `/tmp` is a symlink, so this also checks that the grant names the
         // resolved path Seatbelt matches against.
         let socket_dir = tempfile::Builder::new()
-            .prefix("zed-sock-")
+            .prefix("obake-sock-")
             .tempdir_in("/tmp")
             .expect("create socket dir");
         let granted_socket = socket_dir.path().join("granted.sock");
@@ -2230,14 +2230,14 @@ mod tests {
 
     /// Whether this host can run commands under `policy`, which every platform
     /// supports. A Linux host without a usable Bubblewrap cannot; the test
-    /// then skips, unless `ZED_TEST_SANDBOX_REQUIRE_ENFORCED` is set, which
+    /// then skips, unless `OBAKE_TEST_SANDBOX_REQUIRE_ENFORCED` is set, which
     /// makes that a failure.
     fn host_can_run_sandbox(policy: &SandboxPolicy) -> bool {
         match Sandbox::can_create(policy) {
             Ok(()) => true,
             Err(error) => {
                 assert!(
-                    std::env::var_os("ZED_TEST_SANDBOX_REQUIRE_ENFORCED").is_none(),
+                    std::env::var_os("OBAKE_TEST_SANDBOX_REQUIRE_ENFORCED").is_none(),
                     "this host cannot run the sandbox: {error}"
                 );
                 eprintln!("skipping: this host cannot run the sandbox: {error}");

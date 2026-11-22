@@ -1,4 +1,4 @@
-//! Messages between Zed, the supervisor and the helper.
+//! Messages between Obake, the supervisor and the helper.
 //!
 //! Every channel is an anonymous `SOCK_SEQPACKET` socketpair, so each message
 //! is one packet: a JSON body plus any descriptors as `SCM_RIGHTS`. Packets
@@ -6,8 +6,8 @@
 //! (e.g. a big environment) travel in a memfd passed as the first fd.
 //!
 //! ```text
-//! Zed    <--control-->  supervisor  ZedMessage / SupervisorMessage
-//! Zed    --setup----->  helper      HelperSetup (once)
+//! Obake    <--control-->  supervisor  ObakeMessage / SupervisorMessage
+//! Obake    --setup----->  helper      HelperSetup (once)
 //! helper --attach---->  supervisor  AttachInfo + the seccomp listener (once)
 //! helper <-attach---->  supervisor  FactoryRequest / FactoryResponse (then)
 //! ```
@@ -37,7 +37,7 @@ pub(crate) type RequestId = u64;
 pub(crate) type PromptId = u64;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) enum ZedMessage {
+pub(crate) enum ObakeMessage {
     Request {
         id: RequestId,
         request: Request,
@@ -52,7 +52,7 @@ pub(crate) enum ZedMessage {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) enum Request {
-    /// `sandbox` is chosen by Zed, so it can register the policy's handlers
+    /// `sandbox` is chosen by Obake, so it can register the policy's handlers
     /// under it before the supervisor can ask any of them.
     CreateSandbox {
         sandbox: SandboxId,
@@ -101,7 +101,7 @@ pub(crate) enum Response {
 pub(crate) struct PromptRequest {
     pub prompt: PromptId,
     pub sandbox: SandboxId,
-    /// The handler (in Zed's table) that decides.
+    /// The handler (in Obake's table) that decides.
     pub handler: HandlerId,
     pub requests: Vec<RequestedAccess>,
     pub pid: i32,
@@ -265,7 +265,7 @@ pub(crate) fn receive_message<T: DeserializeOwned>(
 fn body_memfd(body: &[u8]) -> Result<OwnedFd> {
     // SAFETY: valid NUL-terminated name.
     let fd = crate::sys::cvt(unsafe {
-        libc::memfd_create(c"zed-sandbox-message".as_ptr(), libc::MFD_CLOEXEC)
+        libc::memfd_create(c"obake-sandbox-message".as_ptr(), libc::MFD_CLOEXEC)
     })?;
     // SAFETY: a freshly returned descriptor that nothing else owns.
     let mut file = std::fs::File::from(unsafe { OwnedFd::from_raw_fd(fd) });

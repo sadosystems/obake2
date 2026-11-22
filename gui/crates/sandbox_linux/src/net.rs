@@ -74,7 +74,7 @@ fn spawn_thread(name: &str, body: impl FnOnce() + Send + 'static) {
         .name(name.to_string())
         .spawn(body)
     {
-        eprintln!("zed sandbox supervisor: starting {name}: {error}");
+        eprintln!("obake sandbox supervisor: starting {name}: {error}");
     }
 }
 
@@ -363,7 +363,7 @@ pub(crate) fn serve_factory(socket: OwnedFd) {
             Ok(Some((request, _))) => request,
             Ok(None) => return,
             Err(error) => {
-                eprintln!("zed sandbox: {error:#}");
+                eprintln!("obake sandbox: {error:#}");
                 return;
             }
         };
@@ -392,7 +392,7 @@ pub(crate) fn serve_factory(socket: OwnedFd) {
             None => send_message(socket.as_fd(), &response, &[]),
         };
         if let Err(error) = sent {
-            eprintln!("zed sandbox: {error:#}");
+            eprintln!("obake sandbox: {error:#}");
             return;
         }
     }
@@ -635,7 +635,7 @@ pub(crate) fn start(shared: &Arc<Shared>, execution: &Arc<Execution>, dns_socket
             .is_ok_and(|kind| kind == libc::SOCK_STREAM);
         let socket = execution.network.watch(socket);
         let execution = execution.clone();
-        spawn_thread("zed-sandbox-dns", move || {
+        spawn_thread("obake-sandbox-dns", move || {
             if tcp {
                 dns::serve_tcp(&execution, &socket);
             } else {
@@ -668,12 +668,12 @@ fn ensure_udp_port(shared: &Arc<Shared>, execution: &Arc<Execution>, port: u16) 
                 let socket = network.watch(socket);
                 let shared = shared.clone();
                 let execution = execution.clone();
-                spawn_thread("zed-sandbox-udp", move || {
+                spawn_thread("obake-sandbox-udp", move || {
                     serve_udp_port(&shared, &execution, &socket, port)
                 });
             }
             Err(error) => {
-                eprintln!("zed sandbox supervisor: relaying UDP on {address}: {error}");
+                eprintln!("obake sandbox supervisor: relaying UDP on {address}: {error}");
             }
         }
     }
@@ -747,7 +747,7 @@ pub(crate) fn connect_tcp(
         let execution = execution.clone();
         let tid = caller.tid;
         std::thread::Builder::new()
-            .name("zed-sandbox-connect".to_string())
+            .name("obake-sandbox-connect".to_string())
             .spawn(move || {
                 let network = &execution.network;
                 let still_valid = || !network.is_closed();
@@ -993,8 +993,8 @@ fn relay(inside: TcpStream, outside: TcpStream) {
             }
         }
     };
-    spawn_thread("zed-sandbox-relay", pump(inside.clone(), outside.clone()));
-    spawn_thread("zed-sandbox-relay", pump(outside, inside));
+    spawn_thread("obake-sandbox-relay", pump(inside.clone(), outside.clone()));
+    spawn_thread("obake-sandbox-relay", pump(outside, inside));
 }
 
 /// Move bytes from `from` to `to` through a pipe, without copying them
@@ -1183,7 +1183,7 @@ fn serve_udp_port(
                 continue;
             }
             Err(error) => {
-                eprintln!("zed sandbox supervisor: receiving UDP on port {port}: {error}");
+                eprintln!("obake sandbox supervisor: receiving UDP on port {port}: {error}");
                 return;
             }
         };
@@ -1223,7 +1223,7 @@ fn relay_datagram(
                 let execution = execution.clone();
                 let socket = socket.clone();
                 let decided = flow.clone();
-                spawn_thread("zed-sandbox-udp-flow", move || {
+                spawn_thread("obake-sandbox-udp-flow", move || {
                     run_flow(&shared, &execution, &socket, key, &decided)
                 });
                 flow

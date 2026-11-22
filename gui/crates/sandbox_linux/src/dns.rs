@@ -87,7 +87,7 @@ pub(crate) fn serve_udp(execution: &Arc<Execution>, socket: &Arc<OwnedFd>) {
             Ok(None) => continue,
             Err(error) if error.raw_os_error() == Some(libc::EINTR) => continue,
             Err(error) => {
-                eprintln!("zed sandbox supervisor: receiving DNS queries: {error}");
+                eprintln!("obake sandbox supervisor: receiving DNS queries: {error}");
                 return;
             }
         };
@@ -104,7 +104,7 @@ pub(crate) fn serve_udp(execution: &Arc<Execution>, socket: &Arc<OwnedFd>) {
                         datagram.source,
                         datagram.destination,
                     ) {
-                        eprintln!("zed sandbox supervisor: answering a DNS query: {error}");
+                        eprintln!("obake sandbox supervisor: answering a DNS query: {error}");
                     }
                 }
             }
@@ -114,13 +114,13 @@ pub(crate) fn serve_udp(execution: &Arc<Execution>, socket: &Arc<OwnedFd>) {
         if in_flight.fetch_add(1, Ordering::SeqCst) < MAX_CONCURRENT_QUERIES {
             let in_flight = in_flight.clone();
             let spawned = std::thread::Builder::new()
-                .name("zed-sandbox-dns-query".to_string())
+                .name("obake-sandbox-dns-query".to_string())
                 .spawn(move || {
                     respond();
                     in_flight.fetch_sub(1, Ordering::SeqCst);
                 });
             if let Err(error) = spawned {
-                eprintln!("zed sandbox supervisor: answering a DNS query: {error}");
+                eprintln!("obake sandbox supervisor: answering a DNS query: {error}");
             }
         } else {
             in_flight.fetch_sub(1, Ordering::SeqCst);
@@ -133,7 +133,7 @@ pub(crate) fn serve_tcp(execution: &Arc<Execution>, socket: &Arc<OwnedFd>) {
     let listener = match socket.try_clone() {
         Ok(listener) => TcpListener::from(listener),
         Err(error) => {
-            eprintln!("zed sandbox supervisor: serving DNS over TCP: {error}");
+            eprintln!("obake sandbox supervisor: serving DNS over TCP: {error}");
             return;
         }
     };
@@ -142,10 +142,10 @@ pub(crate) fn serve_tcp(execution: &Arc<Execution>, socket: &Arc<OwnedFd>) {
             Ok((stream, _)) => {
                 let execution = execution.clone();
                 let spawned = std::thread::Builder::new()
-                    .name("zed-sandbox-dns-tcp".to_string())
+                    .name("obake-sandbox-dns-tcp".to_string())
                     .spawn(move || serve_tcp_connection(&execution.sandbox, stream));
                 if let Err(error) = spawned {
-                    eprintln!("zed sandbox supervisor: serving DNS over TCP: {error}");
+                    eprintln!("obake sandbox supervisor: serving DNS over TCP: {error}");
                 }
             }
             Err(error) if error.kind() == io::ErrorKind::Interrupted => {}

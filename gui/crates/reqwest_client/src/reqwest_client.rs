@@ -274,14 +274,14 @@ impl http_client::HttpClient for ReqwestClient {
     > {
         let (parts, body) = req.into_parts();
 
-        // obake: never phone home. Every outgoing request to Zed's servers is refused here,
+        // obake: never phone home. Every outgoing request to Obake's servers is refused here,
         // at the transport, so no feature can reach zed.dev regardless of what calls it.
         if let Some(host) = parts.uri.host() {
             let host = host.to_ascii_lowercase();
             if host == "zed.dev" || host.ends_with(".zed.dev") {
                 let uri = parts.uri.to_string();
                 return Box::pin(async move {
-                    Err(anyhow::anyhow!("obake: blocked request to Zed servers: {uri}"))
+                    Err(anyhow::anyhow!("obake: blocked request to Obake servers: {uri}"))
                 });
             }
         }

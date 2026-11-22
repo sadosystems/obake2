@@ -446,16 +446,16 @@ async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
         (
             TaskSourceKind::Worktree {
                 id: worktree_1,
-                directory_in_worktree: rel_path(".zed").into(),
-                id_base: "local worktree tasks from directory \".zed\"".into(),
+                directory_in_worktree: rel_path(".obake").into(),
+                id_base: "local worktree tasks from directory \".obake\"".into(),
             },
             common_name.to_string(),
         ),
         (
             TaskSourceKind::Worktree {
                 id: worktree_1,
-                directory_in_worktree: rel_path(".zed").into(),
-                id_base: "local worktree tasks from directory \".zed\"".into(),
+                directory_in_worktree: rel_path(".obake").into(),
+                id_base: "local worktree tasks from directory \".obake\"".into(),
             },
             "worktree_1".to_string(),
         ),
@@ -464,16 +464,16 @@ async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
         (
             TaskSourceKind::Worktree {
                 id: worktree_2,
-                directory_in_worktree: rel_path(".zed").into(),
-                id_base: "local worktree tasks from directory \".zed\"".into(),
+                directory_in_worktree: rel_path(".obake").into(),
+                id_base: "local worktree tasks from directory \".obake\"".into(),
             },
             common_name.to_string(),
         ),
         (
             TaskSourceKind::Worktree {
                 id: worktree_2,
-                directory_in_worktree: rel_path(".zed").into(),
-                id_base: "local worktree tasks from directory \".zed\"".into(),
+                directory_in_worktree: rel_path(".obake").into(),
+                id_base: "local worktree tasks from directory \".obake\"".into(),
             },
             "worktree_2".to_string(),
         ),
@@ -494,7 +494,7 @@ async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
             .update_file_based_tasks(
                 TaskSettingsLocation::Worktree(SettingsLocation {
                     worktree_id: worktree_1,
-                    path: rel_path(".zed"),
+                    path: rel_path(".obake"),
                 }),
                 Some(&mock_tasks_from_names(
                     worktree_1_tasks.iter().map(|(_, name)| name.as_str()),
@@ -505,7 +505,7 @@ async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
             .update_file_based_tasks(
                 TaskSettingsLocation::Worktree(SettingsLocation {
                     worktree_id: worktree_2,
-                    path: rel_path(".zed"),
+                    path: rel_path(".obake"),
                 }),
                 Some(&mock_tasks_from_names(
                     worktree_2_tasks.iter().map(|(_, name)| name.as_str()),
@@ -562,7 +562,7 @@ async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
-async fn test_zed_tasks_take_precedence_over_vscode(cx: &mut TestAppContext) {
+async fn test_obake_tasks_take_precedence_over_vscode(cx: &mut TestAppContext) {
     init_test(cx);
     let inventory = cx.update(|cx| Inventory::new(cx));
     let worktree_id = WorktreeId::from_usize(0);
@@ -589,23 +589,23 @@ async fn test_zed_tasks_take_precedence_over_vscode(cx: &mut TestAppContext) {
             .update_file_based_tasks(
                 TaskSettingsLocation::Worktree(SettingsLocation {
                     worktree_id,
-                    path: rel_path(".zed"),
+                    path: rel_path(".obake"),
                 }),
-                Some(&mock_tasks_from_names(["zed_task"])),
+                Some(&mock_tasks_from_names(["obake_task"])),
             )
             .unwrap();
     });
     assert_eq!(
         task_template_names(&inventory, Some(worktree_id), cx).await,
-        vec!["zed_task"],
-        "With both .zed and .vscode tasks, only .zed tasks should appear"
+        vec!["obake_task"],
+        "With both .obake and .vscode tasks, only .obake tasks should appear"
     );
 
-    register_worktree_task_used(&inventory, worktree_id, "zed_task", cx).await;
+    register_worktree_task_used(&inventory, worktree_id, "obake_task", cx).await;
     let resolved = resolved_task_names(&inventory, Some(worktree_id), cx).await;
     assert!(
         !resolved.iter().any(|name| name == "vscode_task"),
-        "Previously used .vscode tasks should not appear when .zed tasks exist, got: {resolved:?}"
+        "Previously used .vscode tasks should not appear when .obake tasks exist, got: {resolved:?}"
     );
 }
 
@@ -771,18 +771,18 @@ async fn test_worktree_tasks_file_update_keeps_history_of_unchanged_tasks(cx: &m
         });
     };
 
-    update_tasks(mock_tasks_from_names(["task"]), ".zed", cx);
+    update_tasks(mock_tasks_from_names(["task"]), ".obake", cx);
     register_worktree_task_used(&inventory, worktree_id, "task", cx).await;
     let task_id = newest_task(&inventory, cx).unwrap().id;
 
-    update_tasks(mock_tasks_from_names(["other"]), "nested/.zed", cx);
-    update_tasks(mock_tasks_from_names(["task", "new"]), ".zed", cx);
+    update_tasks(mock_tasks_from_names(["other"]), "nested/.obake", cx);
+    update_tasks(mock_tasks_from_names(["task", "new"]), ".obake", cx);
     assert_eq!(
         newest_task(&inventory, cx).map(|task| task.id),
         Some(task_id.clone()),
     );
 
-    update_tasks("[]".to_string(), ".zed", cx);
+    update_tasks("[]".to_string(), ".obake", cx);
     assert_eq!(newest_task(&inventory, cx).map(|task| task.id), None);
     assert_eq!(
         task_by_id(&inventory, &task_id, cx).map(|task| task.id),

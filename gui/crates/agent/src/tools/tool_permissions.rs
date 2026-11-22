@@ -81,28 +81,28 @@ pub fn global_skill_settings_kind(
 }
 
 /// Returns the kind of sensitive settings or agent skills location this path targets, if any:
-/// either inside a `.zed/` local-settings directory, inside `.agents/skills/`, or inside
+/// either inside a `.obake/` local-settings directory, inside `.agents/skills/`, or inside
 /// the global config dir.
 ///
 /// `canonical_worktree_roots` should be the result of
 /// [`canonicalize_worktree_roots`]; it's used to re-check the local
-/// `.zed/` and `.agents/skills/` protections against the canonical form
+/// `.obake/` and `.agents/skills/` protections against the canonical form
 /// of `path`, which catches two classes of bypass that the raw-component
 /// scan misses:
 ///
 ///   1. `..` traversal, e.g. `.agents/foo/../skills/SKILL.md`. The raw
 ///      components are `[.agents, foo, .., skills, SKILL.md]`, so the
 ///      consecutive-pair match in [`is_agents_skills_path`] fails.
-///   2. Intra-project symlinks, e.g. a symlink `safe -> .zed` followed
+///   2. Intra-project symlinks, e.g. a symlink `safe -> .obake` followed
 ///      by `safe/settings.json`. `resolve_project_path` correctly classes
 ///      this as *not* a symlink escape (it stays inside the project), so
 ///      the raw-path check is our only line of defense and it doesn't see
-///      `.zed` either.
+///      `.obake` either.
 ///
 /// After canonicalizing we strip the matching worktree root before
 /// re-scanning components, so that a worktree literally rooted at a path
-/// like `~/projects/.zed/foo` doesn't classify every file inside it as
-/// `.zed/` local-settings — only files that have `.zed` (or
+/// like `~/projects/.obake/foo` doesn't classify every file inside it as
+/// `.obake/` local-settings — only files that have `.obake` (or
 /// `.agents/skills`) inside the worktree are flagged.
 pub async fn sensitive_settings_kind(
     path: &Path,
@@ -113,7 +113,7 @@ pub async fn sensitive_settings_kind(
 
     // Fast path: scan the raw path components before any I/O. Covers the
     // common case where the agent passes a path that literally contains
-    // `.zed/` or `.agents/skills/`.
+    // `.obake/` or `.agents/skills/`.
     if path.components().any(|component| {
         component_matches_ignore_ascii_case(component.as_os_str(), local_settings_folder)
     }) {

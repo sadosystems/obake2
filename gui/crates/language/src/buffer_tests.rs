@@ -221,19 +221,19 @@ fn test_select_language(cx: &mut App) {
     // matching suffix that is not the full file extension or filename
     assert_eq!(
         registry
-            .language_for_file(&file("zed/cars"), None, cx)
+            .language_for_file(&file("obake/cars"), None, cx)
             .and_then(|id| registry.language_name_for_id(id)),
         None
     );
     assert_eq!(
         registry
-            .language_for_file(&file("zed/a.cars"), None, cx)
+            .language_for_file(&file("obake/a.cars"), None, cx)
             .and_then(|id| registry.language_name_for_id(id)),
         None
     );
     assert_eq!(
         registry
-            .language_for_file(&file("zed/sumk"), None, cx)
+            .language_for_file(&file("obake/sumk"), None, cx)
             .and_then(|id| registry.language_name_for_id(id)),
         None
     );
@@ -576,7 +576,7 @@ async fn test_extension_grammar_cannot_shadow_native_grammar(cx: &mut TestAppCon
 fn file(path: &str) -> Arc<dyn File> {
     Arc::new(TestFile {
         path: Arc::from(rel_path(path)),
-        root_name: "zed".into(),
+        root_name: "obake".into(),
         local_root: None,
     })
 }
@@ -5716,7 +5716,7 @@ fn test_chunks_seek_out_of_unnecessary_diagnostic(cx: &mut TestAppContext) {
 
 #[gpui::test]
 fn test_oversized_chunks_bypass_the_highlight_cache(cx: &mut TestAppContext) {
-    if std::env::var_os("ZED_DISABLE_HIGHLIGHT_CACHE").is_some() {
+    if std::env::var_os("OBAKE_DISABLE_HIGHLIGHT_CACHE").is_some() {
         return;
     }
     cx.update(|cx| init_settings(cx, |_| {}));

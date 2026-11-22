@@ -142,7 +142,7 @@ pub struct LanguageModel {
     pub supports_explicit_compaction_output_limit: bool,
     /// The provider-enforced input size required for explicit compaction.
     pub minimum_explicit_compaction_input_tokens: Option<u64>,
-    /// How Zed builds prompt-based compaction requests. This does not affect
+    /// How Obake builds prompt-based compaction requests. This does not affect
     /// provider-native compaction.
     pub prompt_compaction_strategy: PromptCompactionStrategy,
     pub supports_images: bool,
@@ -416,7 +416,7 @@ pub fn unavailable_error(model: &LanguageModel) -> LanguageModelCompletionError 
 /// Either a built-in icon name or a path to an external SVG.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IconOrSvg {
-    /// A built-in icon from Zed's icon set.
+    /// A built-in icon from Obake's icon set.
     Icon(IconName),
     /// Path to a custom SVG icon file.
     Svg(SharedString),
@@ -424,7 +424,7 @@ pub enum IconOrSvg {
 
 impl Default for IconOrSvg {
     fn default() -> Self {
-        Self::Icon(IconName::ZedAssistant)
+        Self::Icon(IconName::ObakeAssistant)
     }
 }
 

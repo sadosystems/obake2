@@ -719,15 +719,15 @@ impl UserStore {
 
     pub fn plan(&self) -> Option<Plan> {
         #[cfg(debug_assertions)]
-        if let Ok(plan) = std::env::var("ZED_SIMULATE_PLAN").as_ref() {
+        if let Ok(plan) = std::env::var("OBAKE_SIMULATE_PLAN").as_ref() {
             use cloud_api_client::Plan;
 
             return match plan.as_str() {
-                "free" => Some(Plan::ZedFree),
-                "trial" => Some(Plan::ZedProTrial),
-                "pro" => Some(Plan::ZedPro),
+                "free" => Some(Plan::ObakeFree),
+                "trial" => Some(Plan::ObakeProTrial),
+                "pro" => Some(Plan::ObakePro),
                 _ => {
-                    panic!("ZED_SIMULATE_PLAN must be one of 'free', 'trial', or 'pro'");
+                    panic!("OBAKE_SIMULATE_PLAN must be one of 'free', 'trial', or 'pro'");
                 }
             };
         }
@@ -798,11 +798,11 @@ impl UserStore {
         self.edit_prediction_usage
     }
 
-    /// Returns whether the current plan doesn't include Zed's hosted edit predictions. This is
+    /// Returns whether the current plan doesn't include Obake's hosted edit predictions. This is
     /// decided by plan rather than by the usage limit Cloud reports, because Cloud may still
     /// report a nonzero Free allowance while it denies requests.
     pub fn edit_predictions_excluded_from_plan(&self) -> bool {
-        self.plan() == Some(Plan::ZedFree)
+        self.plan() == Some(Plan::ObakeFree)
     }
 
     pub fn update_edit_prediction_usage(
@@ -829,7 +829,7 @@ impl UserStore {
         response: GetAuthenticatedUserResponse,
         cx: &mut Context<Self>,
     ) {
-        let staff = response.user.is_staff && !*feature_flags::ZED_DISABLE_STAFF;
+        let staff = response.user.is_staff && !*feature_flags::OBAKE_DISABLE_STAFF;
         cx.update_flags(staff, response.feature_flags);
         if let Some(client) = self.client.upgrade() {
             client
@@ -860,7 +860,7 @@ impl UserStore {
                     KnownOrUnknown::Known(plan) => plan,
                     KnownOrUnknown::Unknown(_) => {
                         // If we get a plan that we don't recognize, fall back to the Free plan.
-                        Plan::ZedFree
+                        Plan::ObakeFree
                     }
                 };
 
@@ -1118,11 +1118,11 @@ mod tests {
             response.default_organization_id = Some(OrganizationId("unsubscribed".into()));
             response.plans_by_organization.insert(
                 OrganizationId("personal".into()),
-                KnownOrUnknown::Known(Plan::ZedPro),
+                KnownOrUnknown::Known(Plan::ObakePro),
             );
             response.plans_by_organization.insert(
                 OrganizationId("paid".into()),
-                KnownOrUnknown::Known(Plan::ZedBusiness),
+                KnownOrUnknown::Known(Plan::ObakeBusiness),
             );
             store.update_authenticated_user(response, cx);
         });

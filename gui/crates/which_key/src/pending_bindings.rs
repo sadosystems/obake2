@@ -437,7 +437,7 @@ mod tests {
             let bindings = group_bindings(
                 sequences
                     .into_iter()
-                    .map(|sequence| binding(sequence, "zed: open settings"))
+                    .map(|sequence| binding(sequence, "obake: open settings"))
                     .collect(),
             );
 
@@ -460,23 +460,23 @@ mod tests {
         ];
         for bindings in [
             vec![
-                KeyBinding::new("cmd-k cmd-s", zed_actions::OpenKeymap, Some("Workspace"))
+                KeyBinding::new("cmd-k cmd-s", obake_actions::OpenKeymap, Some("Workspace"))
                     .with_meta(KeybindSource::User.meta()),
-                KeyBinding::new("cmd-k cmd-s", zed_actions::OpenSettings, Some("Workspace"))
+                KeyBinding::new("cmd-k cmd-s", obake_actions::OpenSettings, Some("Workspace"))
                     .with_meta(KeybindSource::User.meta()),
             ],
             vec![
-                KeyBinding::new("cmd-k cmd-s", zed_actions::OpenSettings, Some("Editor"))
+                KeyBinding::new("cmd-k cmd-s", obake_actions::OpenSettings, Some("Editor"))
                     .with_meta(KeybindSource::Default.meta()),
-                KeyBinding::new("cmd-k cmd-s", zed_actions::OpenKeymap, Some("Workspace"))
+                KeyBinding::new("cmd-k cmd-s", obake_actions::OpenKeymap, Some("Workspace"))
                     .with_meta(KeybindSource::User.meta()),
             ],
             vec![
-                KeyBinding::new("cmd-k cmd-s", zed_actions::OpenKeymap, Some("Workspace"))
+                KeyBinding::new("cmd-k cmd-s", obake_actions::OpenKeymap, Some("Workspace"))
                     .with_meta(KeybindSource::Default.meta()),
                 KeyBinding::load(
                     "cmd-k cmd-s",
-                    Box::new(zed_actions::OpenSettings),
+                    Box::new(obake_actions::OpenSettings),
                     Some(
                         gpui::KeyBindingContextPredicate::parse("Workspace")
                             .expect("valid context")
@@ -495,7 +495,7 @@ mod tests {
             let first_match = matches.first().expect("matching binding");
             assert_eq!(
                 first_match.action().name(),
-                zed_actions::OpenSettings.name()
+                obake_actions::OpenSettings.name()
             );
 
             let candidates = keymap.possible_next_bindings_for_input(&input[..1], &contexts);
@@ -505,8 +505,8 @@ mod tests {
                     .map(|binding| binding.action().name())
                     .collect::<Vec<_>>(),
                 vec![
-                    zed_actions::OpenSettings.name(),
-                    zed_actions::OpenKeymap.name()
+                    obake_actions::OpenSettings.name(),
+                    obake_actions::OpenKeymap.name()
                 ],
             );
             let pending = candidates
@@ -531,7 +531,7 @@ mod tests {
     fn test_prepare_pending_bindings_sorts_shorter_chords_first(cx: &mut App) {
         let bindings = prepare_pending_bindings(
             vec![
-                binding_after_first_keystroke("cmd-k z a", "zed::OpenSettings"),
+                binding_after_first_keystroke("cmd-k z a", "obake::OpenSettings"),
                 binding_after_first_keystroke("cmd-k cmd-shift-t", "theme::ToggleMode"),
             ],
             cx,
@@ -595,8 +595,8 @@ mod tests {
             // Custom bindings are needed to exercise a display collision: é and É
             // are distinct keys, but non-Vim formatting capitalizes both to "É".
             let mut bindings = vec![
-                binding_after_first_keystroke("cmd-k é", "zed::OpenSettings"),
-                binding_after_first_keystroke("cmd-k É", "zed::OpenKeymap"),
+                binding_after_first_keystroke("cmd-k é", "obake::OpenSettings"),
+                binding_after_first_keystroke("cmd-k É", "obake::OpenKeymap"),
             ];
             let first = bindings.first().expect("first binding");
             let second = bindings.last().expect("second binding");
@@ -615,7 +615,7 @@ mod tests {
                 .map(|row| row.action_name.as_ref())
                 .collect::<Vec<_>>();
             action_names.sort();
-            assert_eq!(action_names, vec!["zed: open keymap", "zed: open settings"]);
+            assert_eq!(action_names, vec!["obake: open keymap", "obake: open settings"]);
             assert!(rows.iter().all(|row| !row.is_group));
         }
     }
@@ -627,8 +627,8 @@ mod tests {
         ui::KeyBinding::set_vim_mode(cx, false);
         let rows = prepare_pending_bindings(
             vec![
-                binding_after_first_keystroke("cmd-k é", "zed::OpenSettings"),
-                binding_after_first_keystroke("cmd-k É", "zed::OpenSettings"),
+                binding_after_first_keystroke("cmd-k é", "obake::OpenSettings"),
+                binding_after_first_keystroke("cmd-k É", "obake::OpenSettings"),
             ],
             cx,
         );
@@ -638,7 +638,7 @@ mod tests {
         assert_eq!(keys, vec![vec!["É"], vec!["é"]]);
         for row in rows {
             assert_eq!(text_for_keybinding_keystrokes(&row.keystrokes, cx), "É");
-            assert_eq!(row.action_name.as_ref(), "zed: open settings");
+            assert_eq!(row.action_name.as_ref(), "obake: open settings");
             assert!(!row.is_group);
         }
     }
@@ -649,9 +649,9 @@ mod tests {
         // A user keymap can extend the default cmd-k cmd-s binding with longer chords.
         let rows = prepare_pending_bindings(
             vec![
-                binding_after_first_keystroke("cmd-k cmd-s", "zed::OpenKeymap"),
-                binding_after_first_keystroke("cmd-k cmd-s cmd-,", "zed::OpenSettings"),
-                binding_after_first_keystroke("cmd-k cmd-s cmd-.", "zed::OpenKeymapFile"),
+                binding_after_first_keystroke("cmd-k cmd-s", "obake::OpenKeymap"),
+                binding_after_first_keystroke("cmd-k cmd-s cmd-,", "obake::OpenSettings"),
+                binding_after_first_keystroke("cmd-k cmd-s cmd-.", "obake::OpenKeymapFile"),
                 binding_after_first_keystroke("cmd-k cmd-o", "workspace::Open"),
                 binding_after_first_keystroke("cmd-k cmd-o cmd-p", "workspace::ReopenLastPicker"),
                 binding_after_first_keystroke("cmd-k z a", "theme::ToggleMode"),
@@ -670,7 +670,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![
                 (parse_keystrokes("cmd-o"), "workspace: open", false),
-                (parse_keystrokes("cmd-s"), "zed: open keymap", false),
+                (parse_keystrokes("cmd-s"), "obake: open keymap", false),
                 (
                     parse_keystrokes("cmd-o cmd-p"),
                     "workspace: reopen last picker",
@@ -687,8 +687,8 @@ mod tests {
         // A longer chord can sit between two bindings for the same keys, so duplicates aren't
         // always adjacent.
         let rows = group_bindings(vec![
-            binding("a", "zed: open keymap"),
-            binding("a b", "zed: open settings"),
+            binding("a", "obake: open keymap"),
+            binding("a b", "obake: open settings"),
             binding("a", "theme selector: toggle"),
         ]);
 
@@ -697,8 +697,8 @@ mod tests {
                 .map(|row| (row.keystrokes.to_vec(), row.action_name.as_ref()))
                 .collect::<Vec<_>>(),
             vec![
-                (parse_keystrokes("a"), "zed: open keymap"),
-                (parse_keystrokes("a b"), "zed: open settings"),
+                (parse_keystrokes("a"), "obake: open keymap"),
+                (parse_keystrokes("a b"), "obake: open settings"),
             ],
         );
         assert!(rows.iter().all(|row| !row.is_group));
@@ -711,13 +711,13 @@ mod tests {
             KeyContext::parse("Editor").expect("valid context"),
         ];
         let keymap = Keymap::new(vec![
-            KeyBinding::new("cmd-k cmd-s", zed_actions::OpenKeymap, Some("Workspace")),
+            KeyBinding::new("cmd-k cmd-s", obake_actions::OpenKeymap, Some("Workspace")),
             KeyBinding::new(
                 "cmd-k cmd-s cmd-,",
-                zed_actions::OpenKeymapFile,
+                obake_actions::OpenKeymapFile,
                 Some("Workspace"),
             ),
-            KeyBinding::new("cmd-k cmd-s", zed_actions::OpenSettings, Some("Editor")),
+            KeyBinding::new("cmd-k cmd-s", obake_actions::OpenSettings, Some("Editor")),
         ]);
         let input = [
             Keystroke::parse("cmd-k").expect("valid keystroke"),
@@ -728,7 +728,7 @@ mod tests {
         let first_match = matches.first().expect("matching binding");
         assert_eq!(
             first_match.action().name(),
-            zed_actions::OpenSettings.name()
+            obake_actions::OpenSettings.name()
         );
 
         // The longer chord comes between the two cmd-k cmd-s bindings, so they aren't adjacent.
@@ -739,9 +739,9 @@ mod tests {
                 .map(|binding| binding.action().name())
                 .collect::<Vec<_>>(),
             vec![
-                zed_actions::OpenSettings.name(),
-                zed_actions::OpenKeymapFile.name(),
-                zed_actions::OpenKeymap.name(),
+                obake_actions::OpenSettings.name(),
+                obake_actions::OpenKeymapFile.name(),
+                obake_actions::OpenKeymap.name(),
             ],
         );
 
@@ -769,7 +769,7 @@ mod tests {
                 ),
                 (
                     parse_keystrokes("cmd-s cmd-,"),
-                    command_palette::humanize_action_name(zed_actions::OpenKeymapFile.name()),
+                    command_palette::humanize_action_name(obake_actions::OpenKeymapFile.name()),
                     false,
                 ),
             ],

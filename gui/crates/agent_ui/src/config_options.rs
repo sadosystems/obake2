@@ -22,7 +22,7 @@ use ui::{
 use unicode_segmentation::UnicodeSegmentation;
 use util::ResultExt as _;
 use workspace::Workspace;
-use zed_actions::agent::ToggleModelSelector;
+use obake_actions::agent::ToggleModelSelector;
 
 use crate::model_search;
 use crate::ui::{documentation_aside_side, fast_mode_button, thinking_effort_trigger};
@@ -2191,7 +2191,7 @@ mod tests {
 
     impl AgentServer for TestAgentServer {
         fn logo(&self) -> IconName {
-            IconName::ZedAssistant
+            IconName::ObakeAssistant
         }
 
         fn agent_id(&self) -> AgentId {

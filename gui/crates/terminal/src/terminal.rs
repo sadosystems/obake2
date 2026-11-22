@@ -644,14 +644,14 @@ const DEBUG_TERMINAL_HEIGHT: Pixels = px(30.);
 const DEBUG_CELL_WIDTH: Pixels = px(5.);
 const DEBUG_LINE_HEIGHT: Pixels = px(5.);
 
-/// Inserts Zed-specific environment variables for terminal sessions.
+/// Inserts Obake-specific environment variables for terminal sessions.
 /// Used by both local terminals and remote terminals (via SSH).
-pub fn insert_zed_terminal_env(
+pub fn insert_obake_terminal_env(
     env: &mut HashMap<String, String>,
     version: &impl std::fmt::Display,
 ) {
-    env.insert("ZED_TERM".to_string(), "true".to_string());
-    env.insert("TERM_PROGRAM".to_string(), "zed".to_string());
+    env.insert("OBAKE_TERM".to_string(), "true".to_string());
+    env.insert("TERM_PROGRAM".to_string(), "obake".to_string());
     env.insert("TERM".to_string(), "xterm-256color".to_string());
     env.insert("COLORTERM".to_string(), "truecolor".to_string());
     env.insert("TERM_PROGRAM_VERSION".to_string(), version.to_string());
@@ -885,7 +885,7 @@ const DEFAULT_SCROLL_HISTORY_LINES: usize = 10_000;
 pub const MAX_SCROLL_HISTORY_LINES: usize = 100_000;
 static NEXT_INIT_COMMAND_STARTUP_MARKER_ID: AtomicU64 = AtomicU64::new(1);
 
-const INIT_COMMAND_STARTUP_MARKER_PREFIX: &str = "__zed_init_command_ready_";
+const INIT_COMMAND_STARTUP_MARKER_PREFIX: &str = "__obake_init_command_ready_";
 const INIT_COMMAND_STARTUP_MARKER_SUFFIX: &str = "__";
 const INIT_COMMAND_STARTUP_MARKER_SEARCH_LINES: usize = 64;
 
@@ -902,7 +902,7 @@ fn init_command_startup_marker_command(shell_kind: ShellKind, marker_id: u64) ->
         ),
         ShellKind::Cmd => {
             format!(
-                "<nul set /p zed_init_ready={INIT_COMMAND_STARTUP_MARKER_PREFIX}&echo {marker_id}{INIT_COMMAND_STARTUP_MARKER_SUFFIX}"
+                "<nul set /p obake_init_ready={INIT_COMMAND_STARTUP_MARKER_PREFIX}&echo {marker_id}{INIT_COMMAND_STARTUP_MARKER_SUFFIX}"
             )
         }
         ShellKind::Nushell => {
@@ -1139,7 +1139,7 @@ impl TerminalBuilder {
                     .or_insert_with(|| "en_US.UTF-8".to_string());
             }
 
-            insert_zed_terminal_env(&mut env, &version);
+            insert_obake_terminal_env(&mut env, &version);
 
             #[derive(Default)]
             struct ShellParams {
@@ -2981,7 +2981,7 @@ impl Terminal {
     /// that's running inside the terminal.
     ///
     /// This does *not* return the working directory of the shell that runs on the
-    /// remote host, in case Zed is connected to a remote host.
+    /// remote host, in case Obake is connected to a remote host.
     fn client_side_working_directory(&self) -> Option<PathBuf> {
         match &self.terminal_type {
             TerminalType::Pty { info, .. } => info
@@ -3246,7 +3246,7 @@ impl Terminal {
         if !lines_to_show.is_empty() {
             // SAFETY: the invocation happens on non `TaskStatus::Running` tasks, once,
             // after either `AlacTermEvent::Exit` or `AlacTermEvent::ChildExit` events that are spawned
-            // when Zed task finishes and no more output is made.
+            // when Obake task finishes and no more output is made.
             // After the task summary is output once, no more text is appended to the terminal.
             unsafe { append_text_to_term(&mut self.term.lock(), &lines_to_show) };
         }
@@ -5825,17 +5825,17 @@ mod tests {
             let (terminal, cx) = init_terminal_test_with_window(cx, b"");
             let test_view = cx.new_window_entity(|window, cx| TestView::new(&terminal, window, cx));
             let test_entities = TestEntities::new(&terminal, &test_view);
-            let expected_hovered_word: HoveredWord = (ZED_DEV_STR, (0, 6)..=(0, 21), 0).into();
+            let expected_hovered_word: HoveredWord = (OBAKE_DEV_STR, (0, 6)..=(0, 21), 0).into();
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                 // Set initial expected hovered word
-                cx.write_output_lines(OUTPUT_ZED_DEV, 1);
+                cx.write_output_lines(OUTPUT_OBAKE_DEV, 1);
                 Some(Expected(Wakeups(2), Notifies(0)))
             });
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                 cx.assert_display_offset(0);
-                cx.assert_visible_lines_match(vec![OUTPUT_ZED_DEV]);
+                cx.assert_visible_lines_match(vec![OUTPUT_OBAKE_DEV]);
                 cx.set_window_secondary_key();
-                cx.ctrl_mouse_move_to(ZED_DEV_PT);
+                cx.ctrl_mouse_move_to(OBAKE_DEV_PT);
                 Some(Expected(Wakeups(0), Notifies(2)))
             });
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
@@ -5845,35 +5845,35 @@ mod tests {
             (test_entities, expected_hovered_word, cx)
         }
 
-        const OUTPUT_ZED_DEV: &str = "Visit https://zed.dev/ for more";
+        const OUTPUT_OBAKE_DEV: &str = "Visit https://zed.dev/ for more";
         const OUTPUT_NONE: &str = "None";
-        const ZED_DEV_STR: &str = "https://zed.dev/";
-        const ZED_DEV_PT: GpuiPoint<Pixels> = point(px(30.0), px(2.5));
+        const OBAKE_DEV_STR: &str = "https://zed.dev/";
+        const OBAKE_DEV_PT: GpuiPoint<Pixels> = point(px(30.0), px(2.5));
 
         #[gpui::test]
         async fn test_ctrl_hover_with_changing_content(cx: &mut TestAppContext) {
             let (test_entities, mut expected_hovered_word, cx) =
                 init_ctrl_hover_hyperlink_test_with_window(cx).await;
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
-                cx.write_output_lines(OUTPUT_ZED_DEV, 1);
+                cx.write_output_lines(OUTPUT_OBAKE_DEV, 1);
                 Some(Expected(Wakeups(2), Notifies(0)))
             });
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                 cx.assert_display_offset(0);
-                cx.assert_visible_lines_match(vec![OUTPUT_ZED_DEV, OUTPUT_ZED_DEV]);
+                cx.assert_visible_lines_match(vec![OUTPUT_OBAKE_DEV, OUTPUT_OBAKE_DEV]);
                 // Existing hovered_word IS reused when viewport is static
                 cx.assert_hovered_word(Some(&expected_hovered_word));
-                cx.write_output_lines(OUTPUT_ZED_DEV, 8);
+                cx.write_output_lines(OUTPUT_OBAKE_DEV, 8);
                 // Explicitly sync here, because the next sync will emit a wake up, which will
                 // trigger another sync, and we need to check in-between them.
                 cx.sync();
                 cx.assert_display_offset(0);
                 cx.assert_visible_lines_match(vec![
-                    OUTPUT_ZED_DEV,
-                    OUTPUT_ZED_DEV,
-                    OUTPUT_ZED_DEV,
-                    OUTPUT_ZED_DEV,
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
+                    OUTPUT_OBAKE_DEV,
+                    OUTPUT_OBAKE_DEV,
+                    OUTPUT_OBAKE_DEV,
+                    OUTPUT_OBAKE_DEV,
                 ]);
                 // Existing hovered_word IS NOT reused when viewport is changing (total lines changed,
                 // but display offset did not have a corresponding change)
@@ -5890,7 +5890,7 @@ mod tests {
                 cx.assert_hovered_word(Some(&expected_hovered_word));
                 cx.set_window_secondary_key();
                 for _ in 0..5 {
-                    cx.write_output_lines(OUTPUT_ZED_DEV, 1);
+                    cx.write_output_lines(OUTPUT_OBAKE_DEV, 1);
                     cx.write_output_lines(OUTPUT_NONE, 1);
                 }
                 Some(Expected(Wakeups(21), Notifies(1)))
@@ -5899,7 +5899,7 @@ mod tests {
                 update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                     // Should not have a hovered word from previous iteration
                     cx.assert_hovered_word(None);
-                    cx.write_output_lines(OUTPUT_ZED_DEV, 1);
+                    cx.write_output_lines(OUTPUT_OBAKE_DEV, 1);
                     // Explicitly sync here, because the next sync will emit a wake up, which will
                     // trigger another sync, and we need to check in-between them.
                     cx.sync();
@@ -5927,17 +5927,17 @@ mod tests {
                 cx.scroll_up_by_and_sync(3);
                 // Existing hovered word IS NOT reused when scrolling
                 cx.assert_hovered_word(None);
-                cx.ctrl_mouse_move_to(ZED_DEV_PT);
+                cx.ctrl_mouse_move_to(OBAKE_DEV_PT);
                 Some(Expected(Wakeups(0), Notifies(2)))
             });
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                 cx.assert_display_offset(3);
                 cx.assert_visible_lines_match(vec![
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
                 ]);
                 None
@@ -5948,18 +5948,18 @@ mod tests {
                 cx.assert_hovered_word(Some(&expected_hovered_word));
                 // Use an odd number of lines so the previous grid coordinate contains
                 // OUTPUT_NONE after the scrollback coordinates shift.
-                cx.write_output_lines(OUTPUT_ZED_DEV, 1);
+                cx.write_output_lines(OUTPUT_OBAKE_DEV, 1);
                 // All wakeups here are from write_output()
                 Some(Expected(Wakeups(2), Notifies(0)))
             });
             update_test_entities(&test_entities, cx, |cx: &mut HyperlinkVisualTestContext| {
                 cx.assert_display_offset(4);
                 cx.assert_visible_lines_match(vec![
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
-                    OUTPUT_ZED_DEV,
+                    OUTPUT_OBAKE_DEV,
                     OUTPUT_NONE,
                 ]);
                 // Existing hovered word IS reused (and adjusted) when total lines changed, but
@@ -5987,7 +5987,7 @@ mod tests {
                     },
                 ));
                 cx.assert_display_offset(0);
-                cx.assert_visible_lines_match(vec![OUTPUT_ZED_DEV]);
+                cx.assert_visible_lines_match(vec![OUTPUT_OBAKE_DEV]);
                 // Existing hovered word IS NOT reused when bounds change
                 cx.assert_hovered_word(None);
                 Some(Expected(Wakeups(1), Notifies(2)))

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 pub struct ElicitationRequest {
     pub request: v2::CreateElicitationRequest,
-    // v2 removed `pattern`, but Zed still validates it for v1 forms.
+    // v2 removed `pattern`, but Obake still validates it for v1 forms.
     pub v1_string_patterns: BTreeMap<String, String>,
 }
 

@@ -636,13 +636,13 @@ impl Platform for WindowsPlatform {
             return;
         };
         let script = r#"
-            $pidToWaitFor = $env:ZED_RESTART_PID
-            $exePath = $env:ZED_RESTART_EXECUTABLE
-            $argumentList = $env:ZED_RESTART_ARGUMENTS
+            $pidToWaitFor = $env:OBAKE_RESTART_PID
+            $exePath = $env:OBAKE_RESTART_EXECUTABLE
+            $argumentList = $env:OBAKE_RESTART_ARGUMENTS
 
-            [Environment]::SetEnvironmentVariable("ZED_RESTART_PID", $null)
-            [Environment]::SetEnvironmentVariable("ZED_RESTART_EXECUTABLE", $null)
-            [Environment]::SetEnvironmentVariable("ZED_RESTART_ARGUMENTS", $null)
+            [Environment]::SetEnvironmentVariable("OBAKE_RESTART_PID", $null)
+            [Environment]::SetEnvironmentVariable("OBAKE_RESTART_EXECUTABLE", $null)
+            [Environment]::SetEnvironmentVariable("OBAKE_RESTART_ARGUMENTS", $null)
 
             while ($true) {
                 $process = Get-Process -Id $pidToWaitFor -ErrorAction SilentlyContinue
@@ -674,9 +674,9 @@ impl Platform for WindowsPlatform {
                 command
                     .arg("-command")
                     .arg(script)
-                    .env("ZED_RESTART_PID", pid.to_string())
-                    .env("ZED_RESTART_EXECUTABLE", app_path)
-                    .env("ZED_RESTART_ARGUMENTS", arguments);
+                    .env("OBAKE_RESTART_PID", pid.to_string())
+                    .env("OBAKE_RESTART_EXECUTABLE", app_path)
+                    .env("OBAKE_RESTART_ARGUMENTS", arguments);
                 #[allow(
                     clippy::disallowed_methods,
                     reason = "We are restarting ourselves, using std command thus is fine"
@@ -1811,7 +1811,7 @@ fn handle_gpu_device_lost(
     Ok(())
 }
 
-const PLATFORM_WINDOW_CLASS_NAME: PCWSTR = w!("Zed::PlatformWindow");
+const PLATFORM_WINDOW_CLASS_NAME: PCWSTR = w!("Obake::PlatformWindow");
 
 fn register_platform_window_class() {
     let wc = WNDCLASSW {
@@ -1949,7 +1949,7 @@ mod tests {
 
     fn round_trip_credential(username: Option<&str>, secret: &[u8]) -> (String, Vec<u8>) {
         let mut target_name: Vec<u16> = format!(
-            "zed-test-{}-{}",
+            "obake-test-{}-{}",
             std::process::id(),
             username.unwrap_or_default()
         )
@@ -1990,9 +1990,9 @@ mod tests {
         assert_eq!(
             encode_restart_arguments(&[
                 OsString::from("--user-data-dir"),
-                OsString::from(r"C:\Zed Data"),
+                OsString::from(r"C:\Obake Data"),
             ]),
-            OsStr::new(r#""--user-data-dir" "C:\Zed Data""#)
+            OsStr::new(r#""--user-data-dir" "C:\Obake Data""#)
         );
         assert_eq!(
             encode_restart_arguments(&[OsString::from(r"C:\")]),

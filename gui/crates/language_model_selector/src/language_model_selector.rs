@@ -16,7 +16,7 @@ use picker::popover_menu::PickerPopoverMenu;
 use picker::{Picker, PickerDelegate};
 use settings::Settings;
 use ui::{PopoverMenuHandle, Tooltip, prelude::*};
-use zed_actions::agent::OpenSettings;
+use obake_actions::agent::OpenSettings;
 
 mod favorite_models;
 mod model_selector_components;
@@ -707,7 +707,7 @@ mod tests {
                     .any(|(fav_provider, fav_name)| *fav_provider == provider && *fav_name == name);
                 ModelInfo {
                     model: test_language_model(name, provider),
-                    icon: IconOrSvg::Icon(IconName::ZedAgent),
+                    icon: IconOrSvg::Icon(IconName::ObakeAgent),
                     is_favorite,
                 }
             })

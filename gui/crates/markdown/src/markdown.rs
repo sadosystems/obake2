@@ -3571,7 +3571,7 @@ fn image_fallback_element(
         .min_w_0()
         .child(Label::new(label).color(Color::Warning).underline())
         .tooltip(Tooltip::text(
-            "Image failed to load. Open `zed: log` for more details.",
+            "Image failed to load. Open `obake: log` for more details.",
         ))
         .when(open_image_url_on_click, |this| {
             this.cursor_pointer()
@@ -5464,29 +5464,29 @@ mod tests {
     fn test_copy_code_block_uses_parsed_text(cx: &mut TestAppContext) {
         for (source, expected) in [
             (
-                "> ```bash\n> echo \"Zed is awesome!\"\n> ```",
-                "echo \"Zed is awesome!\"\n",
+                "> ```bash\n> echo \"Obake is awesome!\"\n> ```",
+                "echo \"Obake is awesome!\"\n",
             ),
             (
-                "> Level 1\n> > Level 2\n> > ```bash\n> > echo \"Zed is awesome!\"\n> > ```",
-                "echo \"Zed is awesome!\"\n",
+                "> Level 1\n> > Level 2\n> > ```bash\n> > echo \"Obake is awesome!\"\n> > ```",
+                "echo \"Obake is awesome!\"\n",
             ),
             (
-                "> [!NOTE]\n> This is a note containing code:\n> ```bash\n> echo \"Zed is awesome!\"\n> ```",
-                "echo \"Zed is awesome!\"\n",
+                "> [!NOTE]\n> This is a note containing code:\n> ```bash\n> echo \"Obake is awesome!\"\n> ```",
+                "echo \"Obake is awesome!\"\n",
             ),
             (
-                "> * Indentation plus quote:\n>   ```bash\n>   echo \"Zed is awesome!\"\n>   ```",
-                "echo \"Zed is awesome!\"\n",
+                "> * Indentation plus quote:\n>   ```bash\n>   echo \"Obake is awesome!\"\n>   ```",
+                "echo \"Obake is awesome!\"\n",
             ),
             (
-                "* Here is a list item:\n  ```bash\n  echo \"Zed is awesome!\"\n  ```",
-                "echo \"Zed is awesome!\"\n",
+                "* Here is a list item:\n  ```bash\n  echo \"Obake is awesome!\"\n  ```",
+                "echo \"Obake is awesome!\"\n",
             ),
             ("> ~~~text\n> > comparison\n> ~~~", "> comparison\n"),
             (
-                "> ```bash\n> echo \"Zed is awesome!\"\n",
-                "echo \"Zed is awesome!\"\n",
+                "> ```bash\n> echo \"Obake is awesome!\"\n",
+                "echo \"Obake is awesome!\"\n",
             ),
             ("> ```text\n>\n> value\n>\n> ```", "\nvalue\n\n"),
         ] {
@@ -6971,8 +6971,8 @@ mod tests {
             collect_image_alt_text(&events[image_start..], markdown)
         };
 
-        assert_eq!(alt_text("![Zed logo](logo.png)"), Some("Zed logo".into()));
-        assert_eq!(alt_text("![Zed *logo*](logo.png)"), Some("Zed logo".into()));
+        assert_eq!(alt_text("![Obake logo](logo.png)"), Some("Obake logo".into()));
+        assert_eq!(alt_text("![Obake *logo*](logo.png)"), Some("Obake logo".into()));
         assert_eq!(
             alt_text("![logo](logo.png) trailing text"),
             Some("logo".into())

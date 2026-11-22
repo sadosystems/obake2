@@ -24,7 +24,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use task::{DebugScenario, TcpArgumentsTemplate, ZedDebugConfig};
+use task::{DebugScenario, TcpArgumentsTemplate, ObakeDebugConfig};
 use util::{archive::extract_zip, rel_path::RelPath};
 
 #[async_trait]
@@ -337,7 +337,7 @@ pub async fn download_adapter_from_github(
 pub trait DebugAdapter: 'static + Send + Sync {
     fn name(&self) -> DebugAdapterName;
 
-    async fn config_from_zed_format(&self, zed_scenario: ZedDebugConfig) -> Result<DebugScenario>;
+    async fn config_from_obake_format(&self, obake_scenario: ObakeDebugConfig) -> Result<DebugScenario>;
 
     async fn get_binary(
         &self,
@@ -427,12 +427,12 @@ impl DebugAdapter for FakeAdapter {
         None
     }
 
-    async fn config_from_zed_format(&self, zed_scenario: ZedDebugConfig) -> Result<DebugScenario> {
-        let config = serde_json::to_value(zed_scenario.request).unwrap();
+    async fn config_from_obake_format(&self, obake_scenario: ObakeDebugConfig) -> Result<DebugScenario> {
+        let config = serde_json::to_value(obake_scenario.request).unwrap();
 
         Ok(DebugScenario {
-            adapter: zed_scenario.adapter,
-            label: zed_scenario.label,
+            adapter: obake_scenario.adapter,
+            label: obake_scenario.label,
             build: None,
             config,
             tcp_connection: None,

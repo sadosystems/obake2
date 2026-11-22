@@ -805,7 +805,7 @@ struct CommitDataHandler {
     pending_requests: HashSet<Oid>,
 }
 
-/// Represents the handler of a git cat-file --batch process within Zed
+/// Represents the handler of a git cat-file --batch process within Obake
 /// It's used to lazily fetch commit data as needed (whatever a user is viewing)
 enum CommitDataHandlerState {
     /// The handler is open and processing requests
@@ -1310,7 +1310,7 @@ impl GitStore {
             .values()
             .filter(|repo| {
                 let repo_path = &repo.read(cx).work_directory_abs_path;
-                // The folder opened in Zed isn't necessarily the repo root; it may be
+                // The folder opened in Obake isn't necessarily the repo root; it may be
                 // a subdirectory of it, e.g. opening `~/code/myrepo/backend` when the
                 // repo lives at `~/code/myrepo`. So match any repo whose work directory
                 // contains the folder. Nested repos can produce multiple matches, e.g.
@@ -10816,7 +10816,7 @@ impl Repository {
         self.send_job("access", None, move |git_repo, _cx| async move {
             match git_repo {
                 // TODO: Correctly handle remote repositories, where the user
-                // that's running the Zed remote may not own the `.git/`
+                // that's running the Obake remote may not own the `.git/`
                 // directory. For now we just return `GitAccess::Yes` so that
                 // remoting continues working as expected.
                 RepositoryState::Remote(..) => GitAccess::Yes,
@@ -10993,7 +10993,7 @@ async fn remove_empty_managed_worktree_ancestors(fs: &dyn Fs, child_path: &Path,
 ///   normal checkout, or `.bare` for a bare clone), the parent directory is
 ///   returned. Both of these are internal Git directories; the parent is the
 ///   meaningful project root.
-/// - Otherwise (e.g. `zed.git` for a bare clone), `common_dir` itself is
+/// - Otherwise (e.g. `obake.git` for a bare clone), `common_dir` itself is
 ///   returned — it is already a meaningful on-disk path.
 pub fn repo_identity_path(common_dir: &Path, path_style: PathStyle) -> &Path {
     let is_dot_entry = path_style
@@ -13086,62 +13086,62 @@ mod tests {
         let cases = [
             // Normal clone (`.git`): the main worktree's checkout is the anchor.
             (
-                "/worktrees/zed/feature/zed",
-                "/repos/zed/.git/worktrees/feature",
-                "/worktrees/zed/feature/zed/.git",
-                "/repos/zed/.git",
+                "/worktrees/obake/feature/obake",
+                "/repos/obake/.git/worktrees/feature",
+                "/worktrees/obake/feature/obake/.git",
+                "/repos/obake/.git",
                 PathStyle::Unix,
-                Some("/repos/zed"),
-                "/repos/zed",
+                Some("/repos/obake"),
+                "/repos/obake",
             ),
             (
-                r"C:\worktrees\zed\feature\zed",
-                r"C:\repos\zed\.git\worktrees\feature",
-                r"C:\worktrees\zed\feature\zed\.git",
-                r"C:\repos\zed\.git",
+                r"C:\worktrees\obake\feature\obake",
+                r"C:\repos\obake\.git\worktrees\feature",
+                r"C:\worktrees\obake\feature\obake\.git",
+                r"C:\repos\obake\.git",
                 PathStyle::Windows,
-                Some(r"C:\repos\zed"),
-                r"C:\repos\zed",
+                Some(r"C:\repos\obake"),
+                r"C:\repos\obake",
             ),
             // Bare clone stored in `.bare`: there is no main worktree, so the parent
             // of `.bare` is the anchor.
             (
-                "/worktrees/zed/plum-warbler/zed",
-                "/repos/zed/.bare/worktrees/plum-warbler",
-                "/worktrees/zed/plum-warbler/zed/.git",
-                "/repos/zed/.bare",
+                "/worktrees/obake/plum-warbler/obake",
+                "/repos/obake/.bare/worktrees/plum-warbler",
+                "/worktrees/obake/plum-warbler/obake/.git",
+                "/repos/obake/.bare",
                 PathStyle::Unix,
                 None,
-                "/repos/zed",
+                "/repos/obake",
             ),
             (
-                r"C:\worktrees\zed\plum-warbler\zed",
-                r"C:\repos\zed\.bare\worktrees\plum-warbler",
-                r"C:\worktrees\zed\plum-warbler\zed\.git",
-                r"C:\repos\zed\.bare",
+                r"C:\worktrees\obake\plum-warbler\obake",
+                r"C:\repos\obake\.bare\worktrees\plum-warbler",
+                r"C:\worktrees\obake\plum-warbler\obake\.git",
+                r"C:\repos\obake\.bare",
                 PathStyle::Windows,
                 None,
-                r"C:\repos\zed",
+                r"C:\repos\obake",
             ),
             // Bare clone named `repo.git`: there is no main worktree and no parent to
             // strip, so the common directory itself is the anchor.
             (
-                "/worktrees/zed.git/plum-warbler/zed.git",
-                "/repos/zed.git/worktrees/plum-warbler",
-                "/worktrees/zed.git/plum-warbler/zed.git/.git",
-                "/repos/zed.git",
+                "/worktrees/obake.git/plum-warbler/obake.git",
+                "/repos/obake.git/worktrees/plum-warbler",
+                "/worktrees/obake.git/plum-warbler/obake.git/.git",
+                "/repos/obake.git",
                 PathStyle::Unix,
                 None,
-                "/repos/zed.git",
+                "/repos/obake.git",
             ),
             (
-                r"C:\worktrees\zed.git\plum-warbler\zed.git",
-                r"C:\repos\zed.git\worktrees\plum-warbler",
-                r"C:\worktrees\zed.git\plum-warbler\zed.git\.git",
-                r"C:\repos\zed.git",
+                r"C:\worktrees\obake.git\plum-warbler\obake.git",
+                r"C:\repos\obake.git\worktrees\plum-warbler",
+                r"C:\worktrees\obake.git\plum-warbler\obake.git\.git",
+                r"C:\repos\obake.git",
                 PathStyle::Windows,
                 None,
-                r"C:\repos\zed.git",
+                r"C:\repos\obake.git",
             ),
         ];
 

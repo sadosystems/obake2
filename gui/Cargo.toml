@@ -154,10 +154,10 @@ members = [
     "crates/windows_resources",
     "crates/workspace",
     "crates/worktree",
-    "crates/zed",
-    "crates/zed_actions",
-    "crates/zed_credentials_provider",
-    "crates/zed_env_vars",
+    "crates/obake",
+    "crates/obake_actions",
+    "crates/obake_credentials_provider",
+    "crates/obake_env_vars",
     "crates/zeta_prompt",
     "crates/zlog",
     "crates/zlog_settings",
@@ -172,7 +172,7 @@ members = [
     #
     "tooling/perf",
 ]
-default-members = ["crates/zed"]
+default-members = ["crates/obake"]
 
 [workspace.package]
 publish = false
@@ -337,9 +337,9 @@ which_key = { path = "crates/which_key" }
 windows_resources = { path = "crates/windows_resources" }
 workspace = { path = "crates/workspace" }
 worktree = { path = "crates/worktree" }
-zed_actions = { path = "crates/zed_actions" }
-zed_credentials_provider = { path = "crates/zed_credentials_provider" }
-zed_env_vars = { path = "crates/zed_env_vars" }
+obake_actions = { path = "crates/obake_actions" }
+obake_credentials_provider = { path = "crates/obake_credentials_provider" }
+obake_env_vars = { path = "crates/obake_env_vars" }
 zeta_prompt = { path = "crates/zeta_prompt" }
 zlog = { path = "crates/zlog" }
 zlog_settings = { path = "crates/zlog_settings" }
@@ -928,7 +928,7 @@ lto = "thin"
 codegen-units = 1
 
 [profile.release.package]
-zed = { codegen-units = 16 }
+obake = { codegen-units = 16 }
 
 [profile.release-fast]
 inherits = "release"
@@ -949,7 +949,7 @@ redundant_clone = "deny"
 disallowed_methods = "deny"
 
 # We currently do not restrict any style rules
-# as it slows down shipping code to Zed.
+# as it slows down shipping code to Obake.
 #
 # Running ./script/clippy can take several minutes, and so it's
 # common to skip that step and let CI do it. Any unexpected failures
@@ -957,7 +957,7 @@ disallowed_methods = "deny"
 # to an old branch, manual fixing, and re-pushing.
 #
 # In the future we could improve this by either making sure
-# Zed can surface clippy errors in diagnostics (in addition to the
+# Obake can surface clippy errors in diagnostics (in addition to the
 # rust-analyzer errors), or by having CI fix style nits automatically.
 style = { level = "allow", priority = -1 }
 

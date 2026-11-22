@@ -1,4 +1,4 @@
-//! Provides constructs for the Zed app version and release channel.
+//! Provides constructs for the Obake app version and release channel.
 
 #![deny(missing_docs)]
 
@@ -7,30 +7,30 @@ use std::{env, str::FromStr, sync::LazyLock};
 use gpui::{App, Global};
 use semver::Version;
 
-const ZED_DOCS_URL: &str = "https://zed.dev/docs";
+const OBAKE_DOCS_URL: &str = "https://zed.dev/docs";
 
 /// stable | dev | nightly | preview
 pub static RELEASE_CHANNEL_NAME: LazyLock<String> = LazyLock::new(|| {
     if cfg!(debug_assertions) {
-        env::var("ZED_RELEASE_CHANNEL").unwrap_or_else(|_| compile_time_release_channel_name())
+        env::var("OBAKE_RELEASE_CHANNEL").unwrap_or_else(|_| compile_time_release_channel_name())
     } else {
         compile_time_release_channel_name()
     }
 });
 
-/// When a crate in zed is used as a dependency that uses the `crane` nix
+/// When a crate in obake is used as a dependency that uses the `crane` nix
 /// library, it vendors each crate separately and builds it in isolation, which
 /// makes the `include_str!` fail.
 ///
-/// The build script checks for `$ZED_RELEASE_CHANNEL` and emits the `cfg`
-#[cfg(__do_not_set_zed_release_channel)]
+/// The build script checks for `$OBAKE_RELEASE_CHANNEL` and emits the `cfg`
+#[cfg(__do_not_set_obake_release_channel)]
 fn compile_time_release_channel_name() -> String {
-    env!("ZED_RELEASE_CHANNEL").trim().to_string()
+    env!("OBAKE_RELEASE_CHANNEL").trim().to_string()
 }
 
-#[cfg(not(__do_not_set_zed_release_channel))]
+#[cfg(not(__do_not_set_obake_release_channel))]
 fn compile_time_release_channel_name() -> String {
-    include_str!("../../zed/RELEASE_CHANNEL").trim().to_string()
+    include_str!("../../obake/RELEASE_CHANNEL").trim().to_string()
 }
 
 #[doc(hidden)]
@@ -44,14 +44,14 @@ pub static RELEASE_CHANNEL: LazyLock<ReleaseChannel> =
 #[cfg(target_os = "windows")]
 pub fn app_identifier() -> &'static str {
     match *RELEASE_CHANNEL {
-        ReleaseChannel::Dev => "Zed-Editor-Dev",
-        ReleaseChannel::Nightly => "Zed-Editor-Nightly",
-        ReleaseChannel::Preview => "Zed-Editor-Preview",
-        ReleaseChannel::Stable => "Zed-Editor-Stable",
+        ReleaseChannel::Dev => "Obake-Editor-Dev",
+        ReleaseChannel::Nightly => "Obake-Editor-Nightly",
+        ReleaseChannel::Preview => "Obake-Editor-Preview",
+        ReleaseChannel::Stable => "Obake-Editor-Stable",
     }
 }
 
-/// The Git commit SHA that Zed was built at.
+/// The Git commit SHA that Obake was built at.
 #[derive(Clone, Eq, Debug, PartialEq)]
 pub struct AppCommitSha(String);
 
@@ -91,7 +91,7 @@ struct GlobalAppVersion(Version);
 
 impl Global for GlobalAppVersion {}
 
-/// The version of Zed.
+/// The version of Obake.
 pub struct AppVersion;
 
 impl AppVersion {
@@ -101,8 +101,8 @@ impl AppVersion {
         build_id: Option<&str>,
         commit_sha: Option<AppCommitSha>,
     ) -> Version {
-        let mut version: Version = if let Ok(from_env) = env::var("ZED_APP_VERSION") {
-            from_env.parse().expect("invalid ZED_APP_VERSION")
+        let mut version: Version = if let Ok(from_env) = env::var("OBAKE_APP_VERSION") {
+            from_env.parse().expect("invalid OBAKE_APP_VERSION")
         } else {
             pkg_version.parse().expect("invalid version in Cargo.toml")
         };
@@ -134,12 +134,12 @@ impl AppVersion {
     }
 }
 
-/// A Zed release channel.
+/// A Obake release channel.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum ReleaseChannel {
     /// The development release channel.
     ///
-    /// Used for local debug builds of Zed.
+    /// Used for local debug builds of Obake.
     #[default]
     Dev,
 
@@ -169,7 +169,7 @@ pub fn init_test(app_version: Version, release_channel: ReleaseChannel, cx: &mut
     cx.set_global(GlobalReleaseChannel(release_channel))
 }
 
-/// Returns the Zed docs URL for the current release channel for the given
+/// Returns the Obake docs URL for the current release channel for the given
 /// `slug`.
 pub fn docs_url(slug: &str, cx: &App) -> String {
     ReleaseChannel::try_global(cx)
@@ -205,10 +205,10 @@ impl ReleaseChannel {
     /// Returns the display name for this [`ReleaseChannel`].
     pub fn display_name(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "Zed Dev",
-            ReleaseChannel::Nightly => "Zed Nightly",
-            ReleaseChannel::Preview => "Zed Preview",
-            ReleaseChannel::Stable => "Zed",
+            ReleaseChannel::Dev => "Obake Dev",
+            ReleaseChannel::Nightly => "Obake Nightly",
+            ReleaseChannel::Preview => "Obake Preview",
+            ReleaseChannel::Stable => "Obake",
         }
     }
 
@@ -224,13 +224,13 @@ impl ReleaseChannel {
 
     /// Returns the application ID that's used by Wayland as application ID
     /// and WM_CLASS on X11.
-    /// This also has to match the bundle identifier for Zed on macOS.
+    /// This also has to match the bundle identifier for Obake on macOS.
     pub fn app_id(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "dev.zed.Zed-Dev",
-            ReleaseChannel::Nightly => "dev.zed.Zed-Nightly",
-            ReleaseChannel::Preview => "dev.zed.Zed-Preview",
-            ReleaseChannel::Stable => "dev.zed.Zed",
+            ReleaseChannel::Dev => "dev.obake.Obake-Dev",
+            ReleaseChannel::Nightly => "dev.obake.Obake-Nightly",
+            ReleaseChannel::Preview => "dev.obake.Obake-Preview",
+            ReleaseChannel::Stable => "dev.obake.Obake",
         }
     }
 
@@ -244,7 +244,7 @@ impl ReleaseChannel {
         }
     }
 
-    /// Returns the Zed docs URL for this [`ReleaseChannel`] for the given
+    /// Returns the Obake docs URL for this [`ReleaseChannel`] for the given
     /// `slug`.
     pub fn docs_url(&self, slug: &str) -> String {
         let channel_path_segment = match self {
@@ -254,10 +254,10 @@ impl ReleaseChannel {
         };
 
         match channel_path_segment {
-            Some(channel) if slug.is_empty() => format!("{ZED_DOCS_URL}/{channel}"),
-            Some(channel) => format!("{ZED_DOCS_URL}/{channel}/{slug}"),
-            None if slug.is_empty() => ZED_DOCS_URL.to_string(),
-            None => format!("{ZED_DOCS_URL}/{slug}"),
+            Some(channel) if slug.is_empty() => format!("{OBAKE_DOCS_URL}/{channel}"),
+            Some(channel) => format!("{OBAKE_DOCS_URL}/{channel}/{slug}"),
+            None if slug.is_empty() => OBAKE_DOCS_URL.to_string(),
+            None => format!("{OBAKE_DOCS_URL}/{slug}"),
         }
     }
 }

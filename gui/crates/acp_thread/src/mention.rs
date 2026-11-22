@@ -39,7 +39,7 @@ pub enum MentionUri {
     },
     /// Deprecated: kept so threads from before rules became skills still
     /// deserialize. `id` (an opaque `prompt_store::PromptId`) is preserved
-    /// verbatim so re-saved threads stay loadable by older Zed versions.
+    /// verbatim so re-saved threads stay loadable by older Obake versions.
     Rule {
         #[serde(default = "default_deprecated_rule_id")]
         id: serde_json::Value,
@@ -147,7 +147,7 @@ impl MentionUri {
                     })
                 }
             }
-            "zed" => {
+            "obake" => {
                 if let Some(thread_id) = path.strip_prefix("/agent/thread/") {
                     let name = single_query_param(&url, "name")?.context("Missing thread name")?;
                     Ok(Self::Thread {
@@ -275,7 +275,7 @@ impl MentionUri {
                         skill_file_path: skill_file_path.context("missing skill file path")?,
                     })
                 } else {
-                    bail!("invalid zed url: {:?}", input);
+                    bail!("invalid obake url: {:?}", input);
                 }
             }
             "http" | "https" => Ok(MentionUri::Fetch { url }),
@@ -467,7 +467,7 @@ impl MentionUri {
                 url
             }
             MentionUri::PastedImage { name } => {
-                let mut url = Url::parse("zed:///agent/pasted-image").unwrap();
+                let mut url = Url::parse("obake:///agent/pasted-image").unwrap();
                 url.query_pairs_mut().append_pair("name", name);
                 url
             }
@@ -506,7 +506,7 @@ impl MentionUri {
                     url.set_path(&path.to_string_lossy());
                     url
                 } else {
-                    let mut url = Url::parse("zed:///").unwrap();
+                    let mut url = Url::parse("obake:///").unwrap();
                     url.set_path("/agent/untitled-buffer");
                     url
                 };
@@ -522,13 +522,13 @@ impl MentionUri {
                 url
             }
             MentionUri::Thread { name, id } => {
-                let mut url = Url::parse("zed:///").unwrap();
+                let mut url = Url::parse("obake:///").unwrap();
                 url.set_path(&format!("/agent/thread/{id}"));
                 url.query_pairs_mut().append_pair("name", name);
                 url
             }
             MentionUri::Rule { id, name } => {
-                let mut url = Url::parse("zed:///").unwrap();
+                let mut url = Url::parse("obake:///").unwrap();
                 let rule_id = id
                     .get("User")
                     .and_then(|user| user.get("uuid"))
@@ -542,7 +542,7 @@ impl MentionUri {
                 include_errors,
                 include_warnings,
             } => {
-                let mut url = Url::parse("zed:///").unwrap();
+                let mut url = Url::parse("obake:///").unwrap();
                 url.set_path("/agent/diagnostics");
                 if *include_warnings {
                     url.query_pairs_mut()
@@ -555,18 +555,18 @@ impl MentionUri {
             }
             MentionUri::Fetch { url } => url.clone(),
             MentionUri::TerminalSelection { line_count } => {
-                let mut url = Url::parse("zed:///agent/terminal-selection").unwrap();
+                let mut url = Url::parse("obake:///agent/terminal-selection").unwrap();
                 url.query_pairs_mut()
                     .append_pair("lines", &line_count.to_string());
                 url
             }
             MentionUri::GitDiff { base_ref } => {
-                let mut url = Url::parse("zed:///agent/git-diff").unwrap();
+                let mut url = Url::parse("obake:///agent/git-diff").unwrap();
                 url.query_pairs_mut().append_pair("base", base_ref);
                 url
             }
             MentionUri::MergeConflict { file_path } => {
-                let mut url = Url::parse("zed:///agent/merge-conflict").unwrap();
+                let mut url = Url::parse("obake:///agent/merge-conflict").unwrap();
                 url.query_pairs_mut().append_pair("path", file_path);
                 url
             }
@@ -575,7 +575,7 @@ impl MentionUri {
                 source,
                 skill_file_path,
             } => {
-                let mut url = Url::parse("zed:///").unwrap();
+                let mut url = Url::parse("obake:///").unwrap();
                 url.set_path("/agent/skill");
                 url.query_pairs_mut()
                     .append_pair("name", name)
@@ -813,7 +813,7 @@ fn default_include_errors() -> bool {
     true
 }
 
-/// Placeholder rule `id` for legacy mentions missing one, shaped so older Zed
+/// Placeholder rule `id` for legacy mentions missing one, shaped so older Obake
 /// versions can still deserialize it as a `prompt_store::PromptId`.
 fn default_deprecated_rule_id() -> serde_json::Value {
     serde_json::json!({ "User": { "uuid": "00000000-0000-0000-0000-000000000000" } })
@@ -1325,7 +1325,7 @@ mod tests {
 
     #[test]
     fn test_parse_untitled_selection_uri() {
-        let selection_uri = uri!("zed:///agent/untitled-buffer#L1:10");
+        let selection_uri = uri!("obake:///agent/untitled-buffer#L1:10");
         let parsed = MentionUri::parse(selection_uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::Selection {
@@ -1343,7 +1343,7 @@ mod tests {
 
     #[test]
     fn test_parse_thread_uri() {
-        let thread_uri = "zed:///agent/thread/session123?name=Thread+name";
+        let thread_uri = "obake:///agent/thread/session123?name=Thread+name";
         let parsed = MentionUri::parse(thread_uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::Thread {
@@ -1360,7 +1360,7 @@ mod tests {
 
     #[test]
     fn test_parse_legacy_rule_uri() {
-        let rule_uri = "zed:///agent/rule/d8694ff2-90d5-4b6f-be33-33c1763acd52?name=Some+rule";
+        let rule_uri = "obake:///agent/rule/d8694ff2-90d5-4b6f-be33-33c1763acd52?name=Some+rule";
         let parsed = MentionUri::parse(rule_uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::Rule { name, .. } => assert_eq!(name, "Some rule"),
@@ -1372,7 +1372,7 @@ mod tests {
 
     #[test]
     fn test_legacy_rule_mention_preserves_id() {
-        // The `id` older Zed versions require must survive a load + save.
+        // The `id` older Obake versions require must survive a load + save.
         let json = r#"{"Rule":{"id":{"User":{"uuid":"d8694ff2-90d5-4b6f-be33-33c1763acd52"}},"name":"Some rule"}}"#;
         let parsed: MentionUri = serde_json::from_str(json).unwrap();
         match &parsed {
@@ -1437,7 +1437,7 @@ mod tests {
 
     #[test]
     fn test_parse_diagnostics_uri() {
-        let uri = "zed:///agent/diagnostics?include_warnings=true";
+        let uri = "obake:///agent/diagnostics?include_warnings=true";
         let parsed = MentionUri::parse(uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::Diagnostics {
@@ -1454,7 +1454,7 @@ mod tests {
 
     #[test]
     fn test_parse_diagnostics_uri_warnings_only() {
-        let uri = "zed:///agent/diagnostics?include_warnings=true&include_errors=false";
+        let uri = "obake:///agent/diagnostics?include_warnings=true&include_errors=false";
         let parsed = MentionUri::parse(uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::Diagnostics {
@@ -1477,9 +1477,9 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_zed_path() {
-        assert!(MentionUri::parse("zed:///invalid/path", PathStyle::local()).is_err());
-        assert!(MentionUri::parse("zed:///agent/unknown/test", PathStyle::local()).is_err());
+    fn test_invalid_obake_path() {
+        assert!(MentionUri::parse("obake:///invalid/path", PathStyle::local()).is_err());
+        assert!(MentionUri::parse("obake:///agent/unknown/test", PathStyle::local()).is_err());
     }
 
     #[test]
@@ -1555,11 +1555,11 @@ mod tests {
 
     #[test]
     fn test_parse_absolute_windows_path() {
-        let file_path = "C:\\Users\\zed\\project\\main.rs";
+        let file_path = "C:\\Users\\obake\\project\\main.rs";
         let parsed = MentionUri::parse(file_path, PathStyle::Windows).unwrap();
         match &parsed {
             MentionUri::File { abs_path } => {
-                assert_eq!(abs_path, Path::new("C:\\Users\\zed\\project\\main.rs"));
+                assert_eq!(abs_path, Path::new("C:\\Users\\obake\\project\\main.rs"));
             }
             _ => panic!("Expected File variant"),
         }
@@ -1567,7 +1567,7 @@ mod tests {
 
     #[test]
     fn test_parse_absolute_windows_file_path_with_row() {
-        let file_path = "C:\\Users\\zed\\project\\main.rs:42";
+        let file_path = "C:\\Users\\obake\\project\\main.rs:42";
         let parsed = MentionUri::parse(file_path, PathStyle::Windows).unwrap();
         match &parsed {
             MentionUri::Selection {
@@ -1577,7 +1577,7 @@ mod tests {
             } => {
                 assert_eq!(
                     path.as_ref().unwrap(),
-                    Path::new("C:\\Users\\zed\\project\\main.rs")
+                    Path::new("C:\\Users\\obake\\project\\main.rs")
                 );
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
@@ -1588,7 +1588,7 @@ mod tests {
 
     #[test]
     fn test_parse_absolute_windows_file_path_with_fragment_line() {
-        let file_path = "C:\\Users\\zed\\project\\main.rs#L42";
+        let file_path = "C:\\Users\\obake\\project\\main.rs#L42";
         let parsed = MentionUri::parse(file_path, PathStyle::Windows).unwrap();
         match &parsed {
             MentionUri::Selection {
@@ -1598,7 +1598,7 @@ mod tests {
             } => {
                 assert_eq!(
                     path.as_ref().unwrap(),
-                    Path::new("C:\\Users\\zed\\project\\main.rs")
+                    Path::new("C:\\Users\\obake\\project\\main.rs")
                 );
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
@@ -1639,7 +1639,7 @@ mod tests {
 
     #[test]
     fn test_parse_backticked_absolute_windows_file_path_with_fragment_line() {
-        let file_path = "`C:\\Users\\zed\\project\\main.rs#L42`";
+        let file_path = "`C:\\Users\\obake\\project\\main.rs#L42`";
         let parsed = MentionUri::parse(file_path, PathStyle::Windows).unwrap();
         match &parsed {
             MentionUri::Selection {
@@ -1649,7 +1649,7 @@ mod tests {
             } => {
                 assert_eq!(
                     path.as_ref().unwrap(),
-                    Path::new("C:\\Users\\zed\\project\\main.rs")
+                    Path::new("C:\\Users\\obake\\project\\main.rs")
                 );
                 assert_eq!(line_range.start(), &41);
                 assert_eq!(line_range.end(), &41);
@@ -1713,7 +1713,7 @@ mod tests {
 
     #[test]
     fn test_parse_terminal_selection_uri() {
-        let terminal_uri = "zed:///agent/terminal-selection?lines=42";
+        let terminal_uri = "obake:///agent/terminal-selection?lines=42";
         let parsed = MentionUri::parse(terminal_uri, PathStyle::local()).unwrap();
         match &parsed {
             MentionUri::TerminalSelection { line_count } => {
@@ -1725,7 +1725,7 @@ mod tests {
         assert_eq!(parsed.name(), "Terminal (42 lines)");
 
         // Test single line
-        let single_line_uri = "zed:///agent/terminal-selection?lines=1";
+        let single_line_uri = "obake:///agent/terminal-selection?lines=1";
         let parsed_single = MentionUri::parse(single_line_uri, PathStyle::local()).unwrap();
         assert_eq!(parsed_single.name(), "Terminal (1 line)");
     }

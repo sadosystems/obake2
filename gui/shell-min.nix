@@ -1,5 +1,5 @@
-# Minimal obake dev shell for building the vendored Zed (gui/).
-# Zed's own flake devshell pre-builds a docs tool through Nix (slow, crashed the
+# Minimal obake dev shell for building the vendored Obake (gui/).
+# Obake's own flake devshell pre-builds a docs tool through Nix (slow, crashed the
 # daemon here), so this provides only the system libraries plus a fast linker.
 # Rust itself comes from rustup (rust-toolchain.toml).
 # GPU libraries (Vulkan loader, libglvnd) are deliberately NOT provided: they are

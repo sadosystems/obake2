@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use settings::{DefaultOpenBehavior, Settings};
 use ui::{ButtonLike, Divider, DividerColor, KeyBinding, Vector, VectorName, prelude::*};
 use util::ResultExt;
-use zed_actions::{
+use obake_actions::{
     Extensions, OpenKeymap, OpenOnboarding, OpenSettings, assistant::ToggleFocus, command_palette,
 };
 
@@ -30,9 +30,9 @@ pub struct OpenRecentProject {
 }
 
 actions!(
-    zed,
+    obake,
     [
-        /// Show the Zed welcome screen
+        /// Show the Obake welcome screen
         ShowWelcome
     ]
 );
@@ -322,7 +322,7 @@ impl WelcomePage {
                         })
                         .log_err();
                 } else {
-                    use zed_actions::OpenRecent;
+                    use obake_actions::OpenRecent;
                     window.dispatch_action(OpenRecent::default().boxed_clone(), cx);
                 }
             }
@@ -350,7 +350,7 @@ impl WelcomePage {
                 h_flex()
                     .gap_1p5()
                     .child(
-                        Icon::new(IconName::ZedAssistant)
+                        Icon::new(IconName::ObakeAssistant)
                             .color(Color::Muted)
                             .size(IconSize::Small),
                     )
@@ -451,9 +451,9 @@ impl Render for WelcomePage {
         };
 
         let welcome_label = if self.fallback_to_recent_projects {
-            "Welcome back to Zed"
+            "Welcome back to Obake"
         } else {
-            "Welcome to Zed"
+            "Welcome to Obake"
         };
 
         h_flex()
@@ -480,7 +480,7 @@ impl Render for WelcomePage {
                             .justify_center()
                             .mb_4()
                             .gap_4()
-                            .child(Vector::square(VectorName::ZedLogo, rems_from_px(45_f32)))
+                            .child(Vector::square(VectorName::ObakeLogo, rems_from_px(45_f32)))
                             .child(
                                 v_flex().child(Headline::new(welcome_label)).child(
                                     Label::new("The editor for what's next")
@@ -688,8 +688,8 @@ mod tests {
     #[test]
     fn test_project_name_multiple() {
         // PathList sorts lexicographically, so filenames appear in alpha order
-        let paths = PathList::new(&["/home/user/zed", "/home/user/api"]);
-        assert_eq!(project_name(&paths), "api, zed");
+        let paths = PathList::new(&["/home/user/obake", "/home/user/api"]);
+        assert_eq!(project_name(&paths), "api, obake");
     }
 
     #[test]

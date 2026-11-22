@@ -480,12 +480,12 @@ async fn test_edit_prediction_invalidation_range(cx: &mut gpui::TestAppContext) 
 }
 
 #[gpui::test]
-async fn test_edit_prediction_jump_disabled_for_non_zed_providers(cx: &mut gpui::TestAppContext) {
+async fn test_edit_prediction_jump_disabled_for_non_obake_providers(cx: &mut gpui::TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let provider = cx.new(|_| FakeNonZedEditPredictionDelegate::default());
-    assign_editor_completion_provider_non_zed(provider.clone(), &mut cx);
+    let provider = cx.new(|_| FakeNonObakeEditPredictionDelegate::default());
+    assign_editor_completion_provider_non_obake(provider.clone(), &mut cx);
 
     // Cursor is 2+ lines above the proposed edit
     cx.set_state(indoc! {"
@@ -496,7 +496,7 @@ async fn test_edit_prediction_jump_disabled_for_non_zed_providers(cx: &mut gpui:
         line
     "});
 
-    propose_edits_non_zed(
+    propose_edits_non_obake(
         &provider,
         vec![(Point::new(4, 3)..Point::new(4, 3), " 4")],
         &mut cx,
@@ -504,17 +504,17 @@ async fn test_edit_prediction_jump_disabled_for_non_zed_providers(cx: &mut gpui:
 
     cx.update_editor(|editor, window, cx| editor.update_visible_edit_prediction(window, cx));
 
-    // For non-Zed providers, there should be no move completion (jump functionality disabled)
+    // For non-Obake providers, there should be no move completion (jump functionality disabled)
     cx.editor(|editor, _, _| {
         if let Some(completion_state) = &editor.active_edit_prediction {
             // Should be an Edit prediction, not a Move prediction
             match &completion_state.completion {
                 EditPrediction::Edit { .. } => {
-                    // This is expected for non-Zed providers
+                    // This is expected for non-Obake providers
                 }
                 EditPrediction::MoveWithin { .. } | EditPrediction::MoveOutside { .. } => {
                     panic!(
-                        "Non-Zed providers should not show Move predictions (jump functionality)"
+                        "Non-Obake providers should not show Move predictions (jump functionality)"
                     );
                 }
             }
@@ -1655,8 +1655,8 @@ fn assign_editor_completion_menu_provider(cx: &mut EditorTestContext) {
     });
 }
 
-fn propose_edits_non_zed<T: ToOffset>(
-    provider: &Entity<FakeNonZedEditPredictionDelegate>,
+fn propose_edits_non_obake<T: ToOffset>(
+    provider: &Entity<FakeNonObakeEditPredictionDelegate>,
     edits: Vec<(Range<T>, &str)>,
     cx: &mut EditorTestContext,
 ) {
@@ -1678,8 +1678,8 @@ fn propose_edits_non_zed<T: ToOffset>(
     });
 }
 
-fn assign_editor_completion_provider_non_zed(
-    provider: Entity<FakeNonZedEditPredictionDelegate>,
+fn assign_editor_completion_provider_non_obake(
+    provider: Entity<FakeNonObakeEditPredictionDelegate>,
     cx: &mut EditorTestContext,
 ) {
     cx.update_editor(|editor, window, cx| {
@@ -1778,7 +1778,7 @@ impl EditPredictionDelegate for FakeEditPredictionDelegate {
     }
 
     fn icons(&self, _cx: &gpui::App) -> EditPredictionIconSet {
-        EditPredictionIconSet::new(IconName::ZedPredict)
+        EditPredictionIconSet::new(IconName::ObakePredict)
     }
 
     fn is_enabled(
@@ -1826,11 +1826,11 @@ impl EditPredictionDelegate for FakeEditPredictionDelegate {
 }
 
 #[derive(Default, Clone)]
-pub struct FakeNonZedEditPredictionDelegate {
+pub struct FakeNonObakeEditPredictionDelegate {
     pub completion: Option<edit_prediction_types::EditPrediction>,
 }
 
-impl FakeNonZedEditPredictionDelegate {
+impl FakeNonObakeEditPredictionDelegate {
     pub fn set_edit_prediction(
         &mut self,
         completion: Option<edit_prediction_types::EditPrediction>,
@@ -1839,13 +1839,13 @@ impl FakeNonZedEditPredictionDelegate {
     }
 }
 
-impl EditPredictionDelegate for FakeNonZedEditPredictionDelegate {
+impl EditPredictionDelegate for FakeNonObakeEditPredictionDelegate {
     fn name() -> &'static str {
-        "fake-non-zed-provider"
+        "fake-non-obake-provider"
     }
 
     fn display_name() -> &'static str {
-        "Fake Non-Zed Provider"
+        "Fake Non-Obake Provider"
     }
 
     fn show_predictions_in_menu() -> bool {
@@ -1857,7 +1857,7 @@ impl EditPredictionDelegate for FakeNonZedEditPredictionDelegate {
     }
 
     fn icons(&self, _cx: &gpui::App) -> EditPredictionIconSet {
-        EditPredictionIconSet::new(IconName::ZedPredict)
+        EditPredictionIconSet::new(IconName::ObakePredict)
     }
 
     fn is_enabled(

@@ -37,7 +37,7 @@ use crate::worktree_service::{
     RemoteBranchName, WorktreeCreateTarget, classify_worktrees, switch_worktree_paths,
     worktree_create_targets,
 };
-use zed_actions::{
+use obake_actions::{
     CreateWorktree, NewWorktreeBranchTarget, OpenWorktreeInNewWindow, OpenWorktreeSetupTasks,
     SwitchWorktree,
 };
@@ -2214,14 +2214,14 @@ mod tests {
     #[test]
     fn test_bare_repository_worktree_uses_generated_name() {
         let worktree = GitWorktree {
-            path: PathBuf::from("/worktrees/zed/plum-warbler/zed"),
+            path: PathBuf::from("/worktrees/obake/plum-warbler/obake"),
             ref_name: None,
             sha: "8166e3d".into(),
             is_main: false,
             is_bare: false,
         };
         let worktrees = [worktree.clone()];
-        let name_anchor = worktree_name_anchor(&worktrees, Some(Path::new("/repos/zed")));
+        let name_anchor = worktree_name_anchor(&worktrees, Some(Path::new("/repos/obake")));
 
         assert_eq!(
             worktree.directory_name(name_anchor, PathStyle::local()),

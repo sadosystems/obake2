@@ -5,7 +5,7 @@ mod llm_token;
 mod proxy;
 pub mod telemetry;
 pub mod user;
-pub mod zed_urls;
+pub mod obake_urls;
 
 use anyhow::{Context as _, Result, anyhow};
 use async_tungstenite::tungstenite::{
@@ -60,29 +60,29 @@ pub use rpc::*;
 pub use telemetry_events::Event;
 pub use user::*;
 
-static ZED_SERVER_URL: LazyLock<Option<String>> =
-    LazyLock::new(|| std::env::var("ZED_SERVER_URL").ok());
-static ZED_RPC_URL: LazyLock<Option<String>> = LazyLock::new(|| std::env::var("ZED_RPC_URL").ok());
+static OBAKE_SERVER_URL: LazyLock<Option<String>> =
+    LazyLock::new(|| std::env::var("OBAKE_SERVER_URL").ok());
+static OBAKE_RPC_URL: LazyLock<Option<String>> = LazyLock::new(|| std::env::var("OBAKE_RPC_URL").ok());
 
 pub static IMPERSONATE_LOGIN: LazyLock<Option<String>> = LazyLock::new(|| {
-    std::env::var("ZED_IMPERSONATE")
+    std::env::var("OBAKE_IMPERSONATE")
         .ok()
         .filter(|s| !s.is_empty())
 });
 
-pub static USE_WEB_LOGIN: LazyLock<bool> = LazyLock::new(|| std::env::var("ZED_WEB_LOGIN").is_ok());
+pub static USE_WEB_LOGIN: LazyLock<bool> = LazyLock::new(|| std::env::var("OBAKE_WEB_LOGIN").is_ok());
 
 pub static ADMIN_API_TOKEN: LazyLock<Option<String>> = LazyLock::new(|| {
-    std::env::var("ZED_ADMIN_API_TOKEN")
+    std::env::var("OBAKE_ADMIN_API_TOKEN")
         .ok()
         .filter(|s| !s.is_empty())
 });
 
-pub static ZED_APP_PATH: LazyLock<Option<PathBuf>> =
-    LazyLock::new(|| std::env::var("ZED_APP_PATH").ok().map(PathBuf::from));
+pub static OBAKE_APP_PATH: LazyLock<Option<PathBuf>> =
+    LazyLock::new(|| std::env::var("OBAKE_APP_PATH").ok().map(PathBuf::from));
 
-pub static ZED_ALWAYS_ACTIVE: LazyLock<bool> =
-    LazyLock::new(|| std::env::var("ZED_ALWAYS_ACTIVE").is_ok_and(|e| !e.is_empty()));
+pub static OBAKE_ALWAYS_ACTIVE: LazyLock<bool> =
+    LazyLock::new(|| std::env::var("OBAKE_ALWAYS_ACTIVE").is_ok_and(|e| !e.is_empty()));
 
 pub const INITIAL_RECONNECTION_DELAY: Duration = Duration::from_millis(500);
 pub const MAX_RECONNECTION_DELAY: Duration = Duration::from_secs(30);
@@ -91,9 +91,9 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(20);
 actions!(
     client,
     [
-        /// Signs in to Zed account.
+        /// Signs in to Obake account.
         SignIn,
-        /// Signs out of Zed account.
+        /// Signs out of Obake account.
         SignOut,
         /// Reconnects to the collaboration server.
         Reconnect
@@ -106,7 +106,7 @@ pub struct ClientSettings {
     /// Overrides the key used to store credentials in the system keychain.
     /// Defaults to `server_url` when unset.
     ///
-    /// Useful when running multiple Zed instances side by side without them
+    /// Useful when running multiple Obake instances side by side without them
     /// overwriting each other's keychain entries.
     ///
     /// Note: changing this after signing in will require signing in again, as
@@ -116,7 +116,7 @@ pub struct ClientSettings {
 
 impl Settings for ClientSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
-        if let Some(server_url) = &*ZED_SERVER_URL {
+        if let Some(server_url) = &*OBAKE_SERVER_URL {
             return Self {
                 server_url: server_url.clone(),
                 credentials_url: content.credentials_url.clone(),
@@ -357,7 +357,7 @@ pub struct ClientCredentialsProvider {
 impl ClientCredentialsProvider {
     pub fn new(cx: &App) -> Self {
         Self {
-            provider: zed_credentials_provider::global(cx),
+            provider: obake_credentials_provider::global(cx),
         }
     }
 
@@ -1030,7 +1030,7 @@ impl Client {
 
     /// Performs a sign-in and also (optionally) connects to Collab.
     ///
-    /// Only Zed staff automatically connect to Collab.
+    /// Only Obake staff automatically connect to Collab.
     pub async fn sign_in_with_optional_connect(
         self: &Arc<Self>,
         try_provider: bool,
@@ -1085,9 +1085,9 @@ impl Client {
         try_provider: bool,
         cx: &AsyncApp,
     ) -> ConnectionResult<()> {
-        // obake: never connect to Zed's collab server.
+        // obake: never connect to Obake's collab server.
         let _ = (try_provider, cx);
-        return ConnectionResult::Result(Err(anyhow::anyhow!("obake: Zed server connection disabled")));
+        return ConnectionResult::Result(Err(anyhow::anyhow!("obake: Obake server connection disabled")));
         #[allow(unreachable_code)]
         let was_disconnected = match *self.status().borrow() {
             Status::SignedOut | Status::Authenticated => true,
@@ -1290,7 +1290,7 @@ impl Client {
                 return Ok(url);
             }
 
-            if let Some(url) = &*ZED_RPC_URL {
+            if let Some(url) = &*OBAKE_RPC_URL {
                 return Url::parse(url).context("invalid rpc url");
             }
 
@@ -1389,22 +1389,22 @@ impl Client {
                 HeaderValue::from_str(&credentials.authorization_header())?,
             );
             request_headers.insert(
-                "x-zed-protocol-version",
+                "x-obake-protocol-version",
                 HeaderValue::from_str(&rpc::PROTOCOL_VERSION.to_string())?,
             );
-            request_headers.insert("x-zed-app-version", HeaderValue::from_str(&app_version)?);
+            request_headers.insert("x-obake-app-version", HeaderValue::from_str(&app_version)?);
             request_headers.insert(
-                "x-zed-release-channel",
+                "x-obake-release-channel",
                 HeaderValue::from_str(release_channel.map(|r| r.dev_name()).unwrap_or("unknown"))?,
             );
             if let Some(user_agent) = user_agent {
                 request_headers.insert(http::header::USER_AGENT, user_agent);
             }
             if let Some(system_id) = system_id {
-                request_headers.insert("x-zed-system-id", HeaderValue::from_str(&system_id)?);
+                request_headers.insert("x-obake-system-id", HeaderValue::from_str(&system_id)?);
             }
             if let Some(metrics_id) = metrics_id {
-                request_headers.insert("x-zed-metrics-id", HeaderValue::from_str(&metrics_id)?);
+                request_headers.insert("x-obake-metrics-id", HeaderValue::from_str(&metrics_id)?);
             }
 
             let (stream, _) = async_tungstenite::tokio::client_async_tls_with_connector_and_config(
@@ -1443,7 +1443,7 @@ impl Client {
                 .clone()
                 .spawn(async move {
                     // Generate a pair of asymmetric encryption keys. The public key will be used by the
-                    // zed server to encrypt the user's access token, so that it can'be intercepted by
+                    // obake server to encrypt the user's access token, so that it can'be intercepted by
                     // any other app running on the user's device.
                     let (public_key, private_key) =
                         rpc::auth::keypair().context("failed to generate keypair for auth")?;
@@ -1462,7 +1462,7 @@ impl Client {
                         }
                     }
 
-                    // Start an HTTP server to receive the redirect from Zed's sign-in page.
+                    // Start an HTTP server to receive the redirect from Obake's sign-in page.
                     let server = tiny_http::Server::http("127.0.0.1:0")
                         .map_err(|e| anyhow!(e).context("failed to bind callback port"))?;
                     let port = server
@@ -1478,8 +1478,8 @@ impl Client {
                         system_id: Option<Arc<str>>,
                     }
 
-                    // Open the Zed sign-in page in the user's browser, with query parameters that indicate
-                    // that the user is signing in from a Zed app running on the same device.
+                    // Open the Obake sign-in page in the user's browser, with query parameters that indicate
+                    // that the user is signing in from a Obake app running on the same device.
                     let url = http.build_url(&format!(
                         "/native_app_signin?{}",
                         serde_urlencoded::to_string(&NativeAppSignInQueryParams {
@@ -1573,7 +1573,7 @@ impl Client {
 
         let url = self
             .http
-            .build_zed_cloud_url("/internal/users/impersonate")?;
+            .build_obake_cloud_url("/internal/users/impersonate")?;
         let request = Request::post(url.as_str())
             .header("Content-Type", "application/json")
             .header("Authorization", format!("Bearer {api_token}"))
@@ -1617,7 +1617,7 @@ impl Client {
         result
     }
 
-    /// Sends an authenticated request to the Zed LLM service, retrying once
+    /// Sends an authenticated request to the Obake LLM service, retrying once
     /// with a refreshed token if the server signals that the cached LLM
     /// token is expired or otherwise rejected. Returns the raw response so
     /// callers can inspect headers and stream the body.
@@ -1922,13 +1922,13 @@ impl ProtoClient for Client {
     }
 }
 
-/// prefix for the zed:// url scheme
-pub const ZED_URL_SCHEME: &str = "zed";
+/// prefix for the obake:// url scheme
+pub const OBAKE_URL_SCHEME: &str = "obake";
 
-/// A parsed Zed link that can be handled internally by the application.
+/// A parsed Obake link that can be handled internally by the application.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ZedLink {
-    /// Join a channel: `zed.dev/channel/channel-name-123` or `zed://channel/channel-name-123`
+pub enum ObakeLink {
+    /// Join a channel: `zed.dev/channel/channel-name-123` or `obake://channel/channel-name-123`
     Channel { channel_id: u64 },
     /// Open channel notes: `zed.dev/channel/channel-name-123/notes` or with heading `notes#heading`
     ChannelNotes {
@@ -1937,18 +1937,18 @@ pub enum ZedLink {
     },
 }
 
-/// Parses the given link into a Zed link.
+/// Parses the given link into a Obake link.
 ///
-/// Returns a [`Some`] containing the parsed link if the link is a recognized Zed link
+/// Returns a [`Some`] containing the parsed link if the link is a recognized Obake link
 /// that should be handled internally by the application.
 /// Returns [`None`] for links that should be opened in the browser.
-pub fn parse_zed_link(link: &str, cx: &App) -> Option<ZedLink> {
+pub fn parse_obake_link(link: &str, cx: &App) -> Option<ObakeLink> {
     let server_url = &ClientSettings::get_global(cx).server_url;
     let path = link
         .strip_prefix(server_url)
         .and_then(|result| result.strip_prefix('/'))
         .or_else(|| {
-            link.strip_prefix(ZED_URL_SCHEME)
+            link.strip_prefix(OBAKE_URL_SCHEME)
                 .and_then(|result| result.strip_prefix("://"))
         })?;
 
@@ -1963,18 +1963,18 @@ pub fn parse_zed_link(link: &str, cx: &App) -> Option<ZedLink> {
     let channel_id = id_str.parse::<u64>().ok()?;
 
     let Some(next) = parts.next() else {
-        return Some(ZedLink::Channel { channel_id });
+        return Some(ObakeLink::Channel { channel_id });
     };
 
     if let Some(heading) = next.strip_prefix("notes#") {
-        return Some(ZedLink::ChannelNotes {
+        return Some(ObakeLink::ChannelNotes {
             channel_id,
             heading: Some(heading.to_string()),
         });
     }
 
     if next == "notes" {
-        return Some(ZedLink::ChannelNotes {
+        return Some(ObakeLink::ChannelNotes {
             channel_id,
             heading: None,
         });

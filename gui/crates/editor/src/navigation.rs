@@ -1155,9 +1155,9 @@ impl Editor {
 
             if let Some(url) = url {
                 cx.update(|window, cx| {
-                    if parse_zed_link(&url, cx).is_some() {
+                    if parse_obake_link(&url, cx).is_some() {
                         window.dispatch_action(
-                            Box::new(zed_actions::OpenZedUrl { url: url.into() }),
+                            Box::new(obake_actions::OpenObakeUrl { url: url.into() }),
                             cx,
                         );
                     } else {
@@ -1856,9 +1856,9 @@ impl Editor {
                 match first_url_or_file {
                     Some(Either::Left(url)) => {
                         cx.update(|window, cx| {
-                            if parse_zed_link(&url, cx).is_some() {
+                            if parse_obake_link(&url, cx).is_some() {
                                 window.dispatch_action(
-                                    Box::new(zed_actions::OpenZedUrl { url: url.into() }),
+                                    Box::new(obake_actions::OpenObakeUrl { url: url.into() }),
                                     cx,
                                 );
                             } else {

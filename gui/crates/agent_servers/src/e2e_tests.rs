@@ -26,7 +26,7 @@ where
     let project = Project::test(fs.clone(), [], cx).await;
     let thread = new_test_thread(server(&fs, cx).await, project.clone(), "/private/tmp", cx).await;
 
-    send_and_wait_for_turn(&thread, vec!["Hello from Zed!".into()], cx)
+    send_and_wait_for_turn(&thread, vec!["Hello from Obake!".into()], cx)
         .await
         .unwrap();
 

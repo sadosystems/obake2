@@ -125,7 +125,7 @@ pub struct ResolvedAgentServerCommand {
 }
 
 impl ResolvedAgentServerCommand {
-    /// For a command that doesn't run from an installation that Zed removes.
+    /// For a command that doesn't run from an installation that Obake removes.
     pub fn without_installation_lease(command: AgentServerCommand) -> Self {
         Self {
             command,
@@ -137,7 +137,7 @@ impl ResolvedAgentServerCommand {
 /// Keeps an installed agent version from being removed while an agent is running from it.
 ///
 /// The lease is a shared lock on a file next to the version's directory, so it is
-/// honored by every Zed process and released by the operating system if Zed crashes.
+/// honored by every Obake process and released by the operating system if Obake crashes.
 #[derive(Clone, Debug)]
 pub struct AgentInstallationLease {
     path: Arc<Path>,
@@ -1194,7 +1194,7 @@ struct StaleArchiveCacheEntries {
     /// Versions installed before the current one.
     version_dirs: Vec<PathBuf>,
     /// Lease files without a version. They are left by a failed installation, or by a
-    /// Zed build that removes versions without taking leases.
+    /// Obake build that removes versions without taking leases.
     orphaned_lease_paths: Vec<PathBuf>,
     /// Versions that an interrupted cleanup retired but didn't finish deleting.
     retired_dirs: Vec<PathBuf>,
@@ -1489,7 +1489,7 @@ impl ExternalAgentServer for LocalRegistryArchiveAgent {
                 }
 
                 // Installing replaces the version directory. If another connection or
-                // Zed process installed this version at the same time, it would remove
+                // Obake process installed this version at the same time, it would remove
                 // the directory that the first agent is already running from.
                 let _installation_lock = fs
                     .lock_file(

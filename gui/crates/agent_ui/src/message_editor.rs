@@ -43,7 +43,7 @@ use ui::{ContextMenu, prelude::*};
 use util::paths::PathStyle;
 use util::{ResultExt, debug_panic};
 use workspace::{CollaboratorId, Workspace};
-use zed_actions::agent::{Chat, PasteRaw};
+use obake_actions::agent::{Chat, PasteRaw};
 
 #[derive(Default)]
 pub struct SessionCapabilities {
@@ -251,7 +251,7 @@ impl EventEmitter<MessageEditorEvent> for MessageEditor {}
 
 /// Each command type defines how its entries are invoked, and only `command` entries are
 /// invoked as `/name`. ACP forbids showing any other type as a slash command, including
-/// types Zed doesn't know. `AcpThread` keeps the complete list.
+/// types Obake doesn't know. `AcpThread` keeps the complete list.
 fn slash_commands(commands: Vec<acp_v2::AvailableCommand>) -> Vec<acp_v2::AvailableCommand> {
     commands
         .into_iter()
@@ -2455,14 +2455,14 @@ mod tests {
             "/future",
             session_capabilities.available_commands(),
             session_capabilities.available_skills(),
-            &AgentId::from("Zed"),
+            &AgentId::from("Obake"),
         )
         .expect_err("other command kinds are not invoked as slash commands");
     }
 
     #[test]
     fn test_validate_slash_commands_accepts_scope_qualified_skill() {
-        let agent_id = AgentId::from("Zed");
+        let agent_id = AgentId::from("Obake");
         let make_skill = |name: &str, source: &str| AvailableSkill {
             name: name.into(),
             description: "desc".into(),
@@ -2478,14 +2478,14 @@ mod tests {
         let commands = vec![acp_v2::AvailableCommand::Command(acp_v2::Command::new(
             "help", "Get help",
         ))];
-        let skills = vec![make_skill("deploy", ""), make_skill("deploy", "zed")];
+        let skills = vec![make_skill("deploy", ""), make_skill("deploy", "obake")];
         let no_skills = Vec::new();
 
         // Bare name still works (current behavior — the resolver
         // applies project-overrides-global for unqualified commands).
         MessageEditor::validate_slash_commands("/deploy", &commands, &skills, &agent_id)
             .expect("bare /deploy should validate when a skill named `deploy` exists");
-        MessageEditor::validate_slash_commands("/zed:deploy", &commands, &no_skills, &agent_id)
+        MessageEditor::validate_slash_commands("/obake:deploy", &commands, &no_skills, &agent_id)
             .expect_err("scope-qualified skills should require a first-class available skill");
 
         // Scope-qualified forms both validate, each pointing at the
@@ -2494,8 +2494,8 @@ mod tests {
         // for a project-local skill.
         MessageEditor::validate_slash_commands("/:deploy", &commands, &skills, &agent_id)
             .expect("/:deploy should validate when a global skill named `deploy` exists");
-        MessageEditor::validate_slash_commands("/zed:deploy", &commands, &skills, &agent_id).expect(
-            "/zed:deploy should validate when a project skill named `deploy` exists in the `zed` worktree",
+        MessageEditor::validate_slash_commands("/obake:deploy", &commands, &skills, &agent_id).expect(
+            "/obake:deploy should validate when a project skill named `deploy` exists in the `obake` worktree",
         );
 
         // Hand-typed `/global:<name>` is NOT an alias for `/:<name>`.
@@ -2507,23 +2507,23 @@ mod tests {
             );
 
         // The `:` separator is what distinguishes a skill scope from
-        // an MCP server prefix — the dotted form `/zed.deploy` is an
+        // an MCP server prefix — the dotted form `/obake.deploy` is an
         // MCP-style lookup, which doesn't match here.
-        MessageEditor::validate_slash_commands("/zed.deploy", &commands, &skills, &agent_id)
-            .expect_err("/zed.deploy (dotted) should be treated as an MCP-style prefix and fail");
+        MessageEditor::validate_slash_commands("/obake.deploy", &commands, &skills, &agent_id)
+            .expect_err("/obake.deploy (dotted) should be treated as an MCP-style prefix and fail");
 
         // Wrong scope is rejected so the resolver doesn't silently
-        // fall through when the user meant a skill. `zed:help` looks
+        // fall through when the user meant a skill. `obake:help` looks
         // like a skill scope qualifier but no skill named `help`
-        // exists in the `zed` worktree (it's an MCP command).
+        // exists in the `obake` worktree (it's an MCP command).
         let err =
-            MessageEditor::validate_slash_commands("/zed:help", &commands, &skills, &agent_id)
+            MessageEditor::validate_slash_commands("/obake:help", &commands, &skills, &agent_id)
                 .expect_err(
-                    "/zed:help should fail — `help` is an MCP command, not a worktree skill",
+                    "/obake:help should fail — `help` is an MCP command, not a worktree skill",
                 );
         let err_message = err.to_string();
         assert!(
-            err_message.contains("/zed:help"),
+            err_message.contains("/obake:help"),
             "error should mention the typed command: {err_message}"
         );
         // Error listing shows qualified forms for skills so users see
@@ -2534,7 +2534,7 @@ mod tests {
             "error listing should show qualified global form: {err_message}"
         );
         assert!(
-            err_message.contains("/zed:deploy"),
+            err_message.contains("/obake:deploy"),
             "error listing should show qualified worktree form: {err_message}"
         );
         assert!(
@@ -2564,7 +2564,7 @@ mod tests {
     #[test]
     fn test_parse_mention_links() {
         // Single file mention
-        let text = "[@bundle-mac](file:///Users/test/zed/script/bundle-mac)";
+        let text = "[@bundle-mac](file:///Users/test/obake/script/bundle-mac)";
         let mentions = parse_mention_links(text, PathStyle::local());
         assert_eq!(mentions.len(), 1);
         assert_eq!(mentions[0].0, 0..text.len());
@@ -2746,7 +2746,7 @@ mod tests {
         fs.insert_tree(
             "/test",
             json!({
-                ".zed": {
+                ".obake": {
                     "tasks.json": r#"[{"label": "test", "command": "echo"}]"#
                 },
                 "src": {
@@ -5842,8 +5842,8 @@ mod tests {
             .decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
             .expect("decode png");
         let file_name = match extension {
-            Some(extension) => format!("zed-agent-ui-test-{}.{}", uuid::Uuid::new_v4(), extension),
-            None => format!("zed-agent-ui-test-{}", uuid::Uuid::new_v4()),
+            Some(extension) => format!("obake-agent-ui-test-{}.{}", uuid::Uuid::new_v4(), extension),
+            None => format!("obake-agent-ui-test-{}", uuid::Uuid::new_v4()),
         };
         let path = std::env::temp_dir().join(file_name);
         std::fs::write(&path, bytes).expect("write temp png");

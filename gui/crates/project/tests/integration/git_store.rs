@@ -1251,7 +1251,7 @@ mod git_worktrees {
 
         // Valid: subdirectory
         assert!(
-            worktrees_directory_for_repo(work_dir, ".git/zed-worktrees", PathStyle::Unix).is_ok()
+            worktrees_directory_for_repo(work_dir, ".git/obake-worktrees", PathStyle::Unix).is_ok()
         );
         assert!(worktrees_directory_for_repo(work_dir, "my-worktrees", PathStyle::Unix).is_ok());
 
@@ -1307,9 +1307,9 @@ mod git_worktrees {
         );
 
         assert_eq!(
-            worktrees_directory_for_repo(anchor, ".git\\zed-worktrees", PathStyle::Windows)
+            worktrees_directory_for_repo(anchor, ".git\\obake-worktrees", PathStyle::Windows)
                 .unwrap(),
-            PathBuf::from(r"C:\Users\user\dev\lsp-tests\.git\zed-worktrees")
+            PathBuf::from(r"C:\Users\user\dev\lsp-tests\.git\obake-worktrees")
         );
     }
 
@@ -1318,7 +1318,7 @@ mod git_worktrees {
         init_test(cx);
         let fs = FakeFs::new(cx.background_executor.clone());
         fs.insert_tree(
-            path!("/zed"),
+            path!("/obake"),
             json!({
                 ".bare": {
                     "worktrees": {
@@ -1328,14 +1328,14 @@ mod git_worktrees {
                     },
                 },
                 "main": {
-                    ".git": "gitdir: /zed/.bare/worktrees/main",
+                    ".git": "gitdir: /obake/.bare/worktrees/main",
                     "file.txt": "content",
                 },
             }),
         )
         .await;
 
-        let project = Project::test(fs, [path!("/zed/main").as_ref()], cx).await;
+        let project = Project::test(fs, [path!("/obake/main").as_ref()], cx).await;
         cx.executor().run_until_parked();
 
         let repository = project.read_with(cx, |project, cx| {
@@ -1354,11 +1354,11 @@ mod git_worktrees {
 
         assert_eq!(
             default_path,
-            PathBuf::from(path!("/worktrees/zed/plum-warbler/zed"))
+            PathBuf::from(path!("/worktrees/obake/plum-warbler/obake"))
         );
         assert_eq!(
             repository_relative_path,
-            PathBuf::from(path!("/zed/worktrees/plum-warbler/zed"))
+            PathBuf::from(path!("/obake/worktrees/plum-warbler/obake"))
         );
     }
 
@@ -1532,7 +1532,7 @@ mod git_worktrees {
         init_test(cx);
         let fs = FakeFs::new(cx.background_executor.clone());
         fs.insert_tree(
-            path!("/zed"),
+            path!("/obake"),
             json!({
                 ".bare": {
                     "worktrees": {
@@ -1542,14 +1542,14 @@ mod git_worktrees {
                     },
                 },
                 "main": {
-                    ".git": "gitdir: /zed/.bare/worktrees/main",
+                    ".git": "gitdir: /obake/.bare/worktrees/main",
                     "file.txt": "content",
                 },
             }),
         )
         .await;
 
-        let project = Project::test(fs.clone(), [path!("/zed/main").as_ref()], cx).await;
+        let project = Project::test(fs.clone(), [path!("/obake/main").as_ref()], cx).await;
         cx.executor().run_until_parked();
 
         let repository = project.read_with(cx, |project, cx| {
@@ -1560,13 +1560,13 @@ mod git_worktrees {
                 .path_for_new_linked_worktree("feature/nested", "../worktrees")
                 .unwrap()
         });
-        let worktree_parent = PathBuf::from(path!("/worktrees/zed/feature/nested"));
-        let worktree_intermediate_parent = PathBuf::from(path!("/worktrees/zed/feature"));
-        let worktree_base = PathBuf::from(path!("/worktrees/zed"));
+        let worktree_parent = PathBuf::from(path!("/worktrees/obake/feature/nested"));
+        let worktree_intermediate_parent = PathBuf::from(path!("/worktrees/obake/feature"));
+        let worktree_base = PathBuf::from(path!("/worktrees/obake"));
 
         assert_eq!(
             worktree_path,
-            PathBuf::from(path!("/worktrees/zed/feature/nested/zed"))
+            PathBuf::from(path!("/worktrees/obake/feature/nested/obake"))
         );
 
         cx.update(|cx| {
@@ -1932,11 +1932,11 @@ mod resolve_worktree_tests {
     fn test_repo_identity_path() {
         let examples = [
             // Normal checkout: `.git` starts with `.`, so parent is the worktree
-            ("/home/bob/zed/.git", "/home/bob/zed"),
+            ("/home/bob/obake/.git", "/home/bob/obake"),
             // Bare clone named `.bare`: starts with `.`, so parent is the project dir
             ("/repos/project/.bare", "/repos/project"),
             // Bare clone with `.git` extension: does not start with `.`, kept as-is
-            ("/repos/zed.git", "/repos/zed.git"),
+            ("/repos/obake.git", "/repos/obake.git"),
             // Bare clone with arbitrary plain name: kept as-is
             ("/repos/project", "/repos/project"),
         ];
@@ -1952,10 +1952,10 @@ mod resolve_worktree_tests {
     #[test]
     fn test_windows_remote_identity_path() {
         let examples = [
-            (r"C:\Users\zed\.git", r"C:\Users\zed"),
+            (r"C:\Users\obake\.git", r"C:\Users\obake"),
             (r"C:\Users\project\.bare", r"C:\Users\project"),
-            (r"C:\Users\zed.git", r"C:\Users\zed.git"),
-            (r"C:\Users\zed", r"C:\Users\zed"),
+            (r"C:\Users\obake.git", r"C:\Users\obake.git"),
+            (r"C:\Users\obake", r"C:\Users\obake"),
         ];
         for (common_dir, expected) in examples {
             assert_eq!(
@@ -1970,32 +1970,32 @@ mod resolve_worktree_tests {
     fn test_linked_worktree_short_name() {
         let examples = [
             (
-                "/home/bob/zed",
-                "/home/bob/worktrees/olivetti/zed",
+                "/home/bob/obake",
+                "/home/bob/worktrees/olivetti/obake",
                 PathStyle::Unix,
                 Some("olivetti".into()),
             ),
             (
-                "/home/bob/zed",
+                "/home/bob/obake",
                 "/home/bob/zed2",
                 PathStyle::Unix,
                 Some("zed2".into()),
             ),
             (
-                "/home/bob/zed",
-                "/home/bob/worktrees/zed/selectric",
+                "/home/bob/obake",
+                "/home/bob/worktrees/obake/selectric",
                 PathStyle::Unix,
                 Some("selectric".into()),
             ),
-            ("/home/bob/zed", "/home/bob/zed", PathStyle::Unix, None),
+            ("/home/bob/obake", "/home/bob/obake", PathStyle::Unix, None),
             (
-                r"C:\Users\bob\dev\zed",
-                r"C:\Users\bob\dev\worktrees\zed\olivetti\zed",
+                r"C:\Users\bob\dev\obake",
+                r"C:\Users\bob\dev\worktrees\obake\olivetti\obake",
                 PathStyle::Windows,
                 Some("olivetti".into()),
             ),
             (
-                r"C:\Users\bob\dev\zed",
+                r"C:\Users\bob\dev\obake",
                 r"C:\Users\bob\dev\zed2",
                 PathStyle::Windows,
                 Some("zed2".into()),
@@ -2018,15 +2018,15 @@ mod resolve_worktree_tests {
     fn test_delta_checkout_short_name() {
         let examples = [
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 false,
-                "/home/bob/zed/.delta/worktrees/olivetti/zed",
+                "/home/bob/obake/.delta/worktrees/olivetti/obake",
                 "olivetti",
             ),
             (
-                "/data/repositories/1/clones/olivetti/zed.git",
+                "/data/repositories/1/clones/olivetti/obake.git",
                 false,
-                "/data/repositories/1/worktrees/olivetti/zed",
+                "/data/repositories/1/worktrees/olivetti/obake",
                 "olivetti",
             ),
             (
@@ -2036,70 +2036,70 @@ mod resolve_worktree_tests {
                 "olivetti",
             ),
             (
-                "/home/runner/.delta/clones/zed.git",
+                "/home/runner/.delta/clones/obake.git",
                 false,
-                "/home/runner/zed",
-                "clones/zed",
+                "/home/runner/obake",
+                "clones/obake",
             ),
             (
-                "/home/runner/.delta/clones/zed-2.git",
+                "/home/runner/.delta/clones/obake-2.git",
                 false,
-                "/home/runner/zed-2",
-                "clones/zed-2",
+                "/home/runner/obake-2",
+                "clones/obake-2",
             ),
             (
-                "/mounts/olivetti/zed.git",
+                "/mounts/olivetti/obake.git",
                 false,
-                "/mounts/olivetti/zed",
+                "/mounts/olivetti/obake",
                 "olivetti",
             ),
             (
-                "/storage/clones/olivetti/zed.git",
+                "/storage/clones/olivetti/obake.git",
                 false,
-                "/storage/worktrees/olivetti/zed/crates/gpui",
+                "/storage/worktrees/olivetti/obake/crates/gpui",
                 "olivetti",
             ),
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 false,
-                "/home/bob/zed/.delta/worktrees/review-olivetti/zed",
-                "olivetti/zed",
+                "/home/bob/obake/.delta/worktrees/review-olivetti/obake",
+                "olivetti/obake",
             ),
             (
-                "/home/bob/zed/.delta/clones/lettera/zed.git",
+                "/home/bob/obake/.delta/clones/lettera/obake.git",
                 false,
-                "/home/bob/zed/.delta/worktrees/review-lettera/zed",
-                "lettera/zed",
+                "/home/bob/obake/.delta/worktrees/review-lettera/obake",
+                "lettera/obake",
             ),
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 true,
-                "/tmp/review/zed",
-                "olivetti/zed/review/zed",
+                "/tmp/review/obake",
+                "olivetti/obake/review/obake",
             ),
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 true,
-                "/tmp/other/zed",
-                "olivetti/zed/other/zed",
+                "/tmp/other/obake",
+                "olivetti/obake/other/obake",
             ),
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 true,
                 "/tmp/feature",
-                "olivetti/zed/feature",
+                "olivetti/obake/feature",
             ),
             (
-                "/home/bob/zed/.delta/clones/lettera/zed.git",
+                "/home/bob/obake/.delta/clones/lettera/obake.git",
                 true,
-                "/tmp/review/zed",
-                "lettera/zed/review/zed",
+                "/tmp/review/obake",
+                "lettera/obake/review/obake",
             ),
             (
-                "/home/bob/zed/.delta/clones/olivetti/zed.git",
+                "/home/bob/obake/.delta/clones/olivetti/obake.git",
                 true,
-                "/checkouts/olivetti/zed.git",
-                "olivetti/zed/olivetti/zed.git",
+                "/checkouts/olivetti/obake.git",
+                "olivetti/obake/olivetti/obake.git",
             ),
             (
                 "/storage/clones/olivetti/repo.git",

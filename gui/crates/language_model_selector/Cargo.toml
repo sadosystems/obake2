@@ -24,7 +24,7 @@ ordered-float.workspace = true
 picker.workspace = true
 settings.workspace = true
 ui.workspace = true
-zed_actions.workspace = true
+obake_actions.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

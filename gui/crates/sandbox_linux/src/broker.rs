@@ -606,7 +606,7 @@ impl Broker<'_> {
     }
 
     /// Until process rules exist, `/proc/<pid>` of anything outside this
-    /// execution is off limits (it would expose e.g. Zed's environment).
+    /// execution is off limits (it would expose e.g. Obake's environment).
     fn check_process_path(&self, path: &Path) -> io::Result<()> {
         match proc_path_pid(path) {
             Some(pid) if !self.execution.tree.contains(pid) => Err(errno(libc::EACCES)),
@@ -1044,7 +1044,7 @@ impl Broker<'_> {
     }
 
     /// `kill`. Process groups and `-1` may include processes outside the
-    /// sandbox (e.g. Zed itself, if the sandbox inherited its group), so
+    /// sandbox (e.g. Obake itself, if the sandbox inherited its group), so
     /// those are emulated by signalling only the members.
     fn kill(&self, pid: i32, signal: i32) -> io::Result<Response> {
         if pid > 0 {

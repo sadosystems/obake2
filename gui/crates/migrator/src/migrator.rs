@@ -697,14 +697,14 @@ mod tests {
             indoc! {r#"
                 {
                     "features": {
-                        "inline_completion_provider": "zed"
+                        "inline_completion_provider": "obake"
                     },
                 }
             "#},
             Some(indoc! {r#"
                 {
                     "edit_predictions": {
-                        "provider": "zed"
+                        "provider": "obake"
                     }
                 }
             "#}),
@@ -2626,7 +2626,7 @@ mod tests {
             indoc! {r#"
                 {
                     "features": {
-                        "edit_prediction_provider": "zed"
+                        "edit_prediction_provider": "obake"
                     },
                     "edit_predictions": {
                         "mode": "eager"
@@ -2636,7 +2636,7 @@ mod tests {
             Some(indoc! {r#"
                 {
                     "edit_predictions": {
-                        "provider": "zed",
+                        "provider": "obake",
                         "mode": "eager"
                     }
                 }
@@ -2673,7 +2673,7 @@ mod tests {
             indoc! {r#"
                 {
                     "edit_predictions": {
-                        "provider": "zed"
+                        "provider": "obake"
                     }
                 }
             "#},
@@ -2767,7 +2767,7 @@ mod tests {
                     },
                     "macos": {
                         "features": {
-                            "edit_prediction_provider": "zed"
+                            "edit_prediction_provider": "obake"
                         }
                     },
                     "profiles": {
@@ -2786,7 +2786,7 @@ mod tests {
                     },
                     "macos": {
                         "edit_predictions": {
-                            "provider": "zed"
+                            "provider": "obake"
                         }
                     },
                     "profiles": {
@@ -2884,7 +2884,7 @@ mod tests {
             indoc! {r#"
                 {
                     "edit_predictions": {
-                        "provider": "zed"
+                        "provider": "obake"
                     }
                 }
             "#},
@@ -2907,7 +2907,7 @@ mod tests {
             Some(indoc! {r#"
                 {
                     "edit_predictions": {
-                        "provider": "zed"
+                        "provider": "obake"
                     }
                 }
             "#}),
@@ -3512,7 +3512,7 @@ mod tests {
             Some(&"{\n    \"agent\": {\n        \n    }\n}\n"),
         );
 
-        // Project-local settings (.zed/settings.json) with always_allow_tool_actions
+        // Project-local settings (.obake/settings.json) with always_allow_tool_actions
         // These files have no platform/channel overrides or root-level profiles.
         assert_migrate_with_migrations(
             &[MigrationType::Json(
@@ -5283,8 +5283,8 @@ mod tests {
             indoc! {r#"
                 {
                     "markdown_preview_font_size": 15,
-                    "markdown_preview_font_family": "Zed Sans",
-                    "markdown_preview_code_font_family": "Zed Mono",
+                    "markdown_preview_font_family": "Obake Sans",
+                    "markdown_preview_code_font_family": "Obake Mono",
                     "markdown_preview_theme": "One Dark",
                     "markdown_preview": {
                         "font_size": 18,
@@ -5297,8 +5297,8 @@ mod tests {
                 {
                     "markdown_preview": {
                         "theme": "One Dark",
-                        "code_font_family": "Zed Mono",
-                        "font_family": "Zed Sans",
+                        "code_font_family": "Obake Mono",
+                        "font_family": "Obake Sans",
                         "font_size": 18,
                         "limit_content_width": false,
                         "max_width": 900
@@ -5379,8 +5379,8 @@ mod tests {
             indoc! {r#"
                 {
                     "markdown_preview_font_size": 15,
-                    "markdown_preview_font_family": "Zed Sans",
-                    "markdown_preview_code_font_family": "Zed Mono",
+                    "markdown_preview_font_family": "Obake Sans",
+                    "markdown_preview_code_font_family": "Obake Mono",
                     "markdown_preview_theme": "One Dark"
                 }
             "#},
@@ -5388,8 +5388,8 @@ mod tests {
                 {
                     "markdown_preview": {
                         "font_size": 15,
-                        "font_family": "Zed Sans",
-                        "code_font_family": "Zed Mono",
+                        "font_family": "Obake Sans",
+                        "code_font_family": "Obake Mono",
                         "theme": "One Dark"
                     }
                 }

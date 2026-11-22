@@ -1,4 +1,4 @@
-//! Which-key support for Zed.
+//! Which-key support for Obake.
 
 mod pending_bindings;
 mod pending_keystrokes_indicator;
@@ -93,8 +93,8 @@ fn collect_bindings_for_pending_input(
 }
 
 fn binding_label(action: &dyn Action) -> SharedString {
-    match action.as_any().downcast_ref::<zed_actions::Spawn>() {
-        Some(zed_actions::Spawn::ByName { task_name, .. }) => task_name.clone().into(),
+    match action.as_any().downcast_ref::<obake_actions::Spawn>() {
+        Some(obake_actions::Spawn::ByName { task_name, .. }) => task_name.clone().into(),
         _ => command_palette::humanize_action_name(action.name()).into(),
     }
 }
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_binding_label_uses_task_name_for_spawn_by_name() {
-        let action = zed_actions::Spawn::ByName {
+        let action = obake_actions::Spawn::ByName {
             task_name: "lazygit".to_string(),
             reveal_target: None,
         };

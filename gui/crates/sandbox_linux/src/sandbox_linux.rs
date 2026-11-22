@@ -56,7 +56,7 @@ pub use protocol::{Denial, OpenFile};
 
 use policy::{HandlerId, WireAccess, WireFsRule, WirePolicy};
 use protocol::{
-    HelperSetup, PromptId, Request, RequestId, Response, SandboxId, SupervisorMessage, ZedMessage,
+    HelperSetup, PromptId, Request, RequestId, Response, SandboxId, SupervisorMessage, ObakeMessage,
 };
 
 /// A command to run inside a sandbox.
@@ -108,13 +108,13 @@ impl Responder {
             .iter()
             .map(|rule| rule.to_wire(&mut register))
             .collect();
-        let reply = ZedMessage::PromptReply {
+        let reply = ObakeMessage::PromptReply {
             prompt: self.prompt,
             allow: decision.allow,
             remember,
         };
         if let Err(error) = protocol::send_message(self.control.as_fd(), &reply, &[]) {
-            eprintln!("zed sandbox: answering prompt failed: {error:#}");
+            eprintln!("obake sandbox: answering prompt failed: {error:#}");
         }
     }
 }
@@ -282,7 +282,7 @@ impl SandboxContext {
         let pending: Arc<Mutex<HashMap<RequestId, mpsc::Sender<Response>>>> = Arc::default();
         let handlers: Arc<HandlerTable> = Arc::default();
         let reader = std::thread::Builder::new()
-            .name("zed-sandbox-control".to_string())
+            .name("obake-sandbox-control".to_string())
             .spawn({
                 let control = control.clone();
                 let pending = pending.clone();
@@ -338,7 +338,7 @@ fn read_control(
             Ok(Some((message, _))) => message,
             Ok(None) => break,
             Err(error) => {
-                eprintln!("zed sandbox: reading from supervisor failed: {error:#}");
+                eprintln!("obake sandbox: reading from supervisor failed: {error:#}");
                 break;
             }
         };
@@ -359,13 +359,13 @@ fn read_control(
                     .get(request.handler)
                     .filter(|(owner, _)| *owner == request.sandbox);
                 let Some((_, handler)) = handler else {
-                    let reply = ZedMessage::PromptReply {
+                    let reply = ObakeMessage::PromptReply {
                         prompt: request.prompt,
                         allow: false,
                         remember: Vec::new(),
                     };
                     if let Err(error) = protocol::send_message(control.as_fd(), &reply, &[]) {
-                        eprintln!("zed sandbox: answering prompt failed: {error:#}");
+                        eprintln!("obake sandbox: answering prompt failed: {error:#}");
                     }
                     continue;
                 };
@@ -388,7 +388,7 @@ fn read_control(
                     (handler.0)(access_request, responder)
                 }));
                 if result.is_err() {
-                    eprintln!("zed sandbox: an access handler panicked; denying");
+                    eprintln!("obake sandbox: an access handler panicked; denying");
                 }
             }
             SupervisorMessage::PromptCancelled { prompt } => handlers.cancel_prompt(prompt),
@@ -397,7 +397,7 @@ fn read_control(
                     let result =
                         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| handler(denial)));
                     if result.is_err() {
-                        eprintln!("zed sandbox: a denial handler panicked");
+                        eprintln!("obake sandbox: a denial handler panicked");
                     }
                 }
             }
@@ -420,7 +420,7 @@ impl ContextInner {
             .insert(id, sender);
         protocol::send_message(
             self.control.as_fd(),
-            &ZedMessage::Request { id, request },
+            &ObakeMessage::Request { id, request },
             fds,
         )?;
         match receiver.recv().context("sandbox supervisor exited")? {
@@ -439,7 +439,7 @@ impl Drop for ContextInner {
         if let Ok(mut supervisor) = self.supervisor.lock()
             && let Err(error) = supervisor.wait()
         {
-            eprintln!("zed sandbox: waiting for supervisor failed: {error}");
+            eprintln!("obake sandbox: waiting for supervisor failed: {error}");
         }
         if let Some(reader) = self.reader.lock().ok().and_then(|mut reader| reader.take()) {
             reader.join().ok();
@@ -570,9 +570,9 @@ impl Sandbox {
         );
         // The setup message sits in the socket buffer until the helper reads
         // it, so it can be sent before spawning.
-        let (zed_setup, helper_setup) = seqpacket_pair()?;
-        protocol::send_message(zed_setup.as_fd(), &HelperSetup { command }, &[])?;
-        drop(zed_setup);
+        let (obake_setup, helper_setup) = seqpacket_pair()?;
+        protocol::send_message(obake_setup.as_fd(), &HelperSetup { command }, &[])?;
+        drop(obake_setup);
 
         let mut process = Command::new(&self.context.executable);
         process.arg(helper::HELPER_FLAG);
@@ -598,7 +598,7 @@ impl Drop for Sandbox {
                 .context
                 .call(Request::DestroySandbox { sandbox: self.id }, &[])
         {
-            eprintln!("zed sandbox: destroying sandbox failed: {error:#}");
+            eprintln!("obake sandbox: destroying sandbox failed: {error:#}");
         }
         // Only now: the destroy round trip went through the control thread
         // after every denial the supervisor sent before it, so all of them
@@ -610,7 +610,7 @@ impl Drop for Sandbox {
             .remove(&self.id);
         if let Err(error) = std::fs::remove_dir_all(&self.temp_dir) {
             eprintln!(
-                "zed sandbox: removing {} failed: {error}",
+                "obake sandbox: removing {} failed: {error}",
                 self.temp_dir.display()
             );
         }
@@ -656,7 +656,7 @@ fn create_temp_dir() -> Result<PathBuf> {
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.subsec_nanos());
     let path = base.join(format!(
-        "zed-sandbox-{}-{}-{nanos}",
+        "obake-sandbox-{}-{}-{nanos}",
         std::process::id(),
         COUNTER.fetch_add(1, Ordering::Relaxed)
     ));

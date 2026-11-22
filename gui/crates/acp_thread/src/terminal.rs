@@ -57,13 +57,13 @@ pub struct SandboxWrap {
     /// Allow unrestricted filesystem writes except for protected paths (ignores
     /// ordinary writable paths).
     pub allow_fs_write: bool,
-    /// Windows/WSL only: `(release channel, version)` of the Linux `zed` to
+    /// Windows/WSL only: `(release channel, version)` of the Linux `obake` to
     /// provision inside WSL as the sandbox helper (version `latest` for dev
     /// builds). Resolved by the agent (which can read the running app's release
     /// info) and forwarded to the sandbox. `None` on other platforms, or when
     /// the release can't be determined, in which case the WSL backend falls back
     /// to running bwrap without in-sandbox bind validation.
-    pub wsl_zed_release: Option<(String, String)>,
+    pub wsl_obake_release: Option<(String, String)>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -87,7 +87,7 @@ pub enum SandboxNetworkAccess {
 pub enum LinuxWslSandboxError {
     /// No usable `bwrap` binary was found on `PATH`.
     BwrapNotFound,
-    /// The only `bwrap` found is setuid-root, which Zed refuses to run.
+    /// The only `bwrap` found is setuid-root, which Obake refuses to run.
     SetuidRejected,
     /// `bwrap` is present but couldn't set up the sandbox (typically because
     /// unprivileged user namespaces are disabled).
@@ -118,7 +118,7 @@ impl LinuxWslSandboxError {
                     .to_string()
             }
             LinuxWslSandboxError::SetuidRejected => {
-                "The only `bwrap` available is setuid-root, which Zed refuses to run. Install \
+                "The only `bwrap` available is setuid-root, which Obake refuses to run. Install \
                  a non-setuid Bubblewrap to let the agent sandbox terminal commands."
                     .to_string()
             }
@@ -133,7 +133,7 @@ impl LinuxWslSandboxError {
 
     /// The slug of the sandboxing docs section that best explains how to resolve
     /// this failure, for deep-linking from the UI. Pair with
-    /// `client::zed_urls::sandboxing_docs`.
+    /// `client::obake_urls::sandboxing_docs`.
     pub fn docs_section(&self) -> &'static str {
         match self {
             // Both "no bwrap" and "only a setuid-root bwrap" are resolved by
@@ -387,11 +387,11 @@ pub(crate) async fn prepare_sandbox_wrap(
 
     let mut sandbox =
         sandbox::Sandbox::new(sandbox_wrap.to_policy()?).map_err(anyhow::Error::new)?;
-    // Windows/WSL only: tell the sandbox which Linux `zed` to provision inside
+    // Windows/WSL only: tell the sandbox which Linux `obake` to provision inside
     // WSL as its `--wsl-sandbox-helper`. A no-op (and a no-op setter) elsewhere.
     #[cfg(target_os = "windows")]
-    if let Some((channel, version)) = sandbox_wrap.wsl_zed_release.clone() {
-        sandbox.set_wsl_zed_release(channel, version);
+    if let Some((channel, version)) = sandbox_wrap.wsl_obake_release.clone() {
+        sandbox.set_wsl_obake_release(channel, version);
     }
     let command = sandbox::CommandAndArgs {
         program,
@@ -723,7 +723,7 @@ impl Terminal {
         }
     }
 
-    /// Whether Zed may stop this agent-run terminal with `terminal/cancel`: the agent
+    /// Whether Obake may stop this agent-run terminal with `terminal/cancel`: the agent
     /// advertises it and hasn't reported an exit status.
     pub fn can_cancel(&self) -> bool {
         self.output.is_none() && self.display_state().is_some_and(|state| state.can_cancel)
@@ -1018,7 +1018,7 @@ mod linux_tests {
 
     /// Regression test for the bug where enforcement-policy construction
     /// *created* missing write grants — famously turning a granted
-    /// `~/.config/zed/AGENTS.md` file path into a directory. A grant whose
+    /// `~/.config/obake/AGENTS.md` file path into a directory. A grant whose
     /// target no longer exists must fail policy construction with an error
     /// naming it, and nothing may be created — a required safety grant that
     /// can't be honored must stop the command, not silently shrink its access.

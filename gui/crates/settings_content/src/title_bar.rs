@@ -24,7 +24,7 @@ pub enum WindowButtonLayoutContent {
     /// Follow the system/desktop configuration.
     #[default]
     PlatformDefault,
-    /// Use Zed's built-in standard layout, regardless of system config.
+    /// Use Obake's built-in standard layout, regardless of system config.
     Standard,
     /// A raw GNOME-style layout string.
     Custom(String),
@@ -134,7 +134,7 @@ pub struct TitleBarSettingsContent {
     /// The layout of window control buttons in the title bar (Linux only).
     ///
     /// This can be set to "platform_default" to follow the system configuration, or
-    /// "standard" to use Zed's built-in layout. For custom layouts, use a
+    /// "standard" to use Obake's built-in layout. For custom layouts, use a
     /// GNOME-style layout string like "close:minimize,maximize".
     ///
     /// Default: "platform_default"

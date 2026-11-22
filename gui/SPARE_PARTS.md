@@ -1,7 +1,7 @@
 # Spare parts
 
-Zed crates and components that are unhooked, or slated to be unhooked, from the
-obake app (not initialized, not built as part of `zed`) but kept in the tree because
+Obake crates and components that are unhooked, or slated to be unhooked, from the
+obake app (not initialized, not built as part of `obake`) but kept in the tree because
 they look reusable. Entries marked "pending" are still hooked in.
 Add an entry whenever something useful gets unhooked, so it isn't forgotten.
 
@@ -26,7 +26,7 @@ Format: crate (or file) — what it is — possible obake use — how it was unh
   init and toolbar controls removed
 - **markdown_preview** / **svg_preview** / **tabular_data_preview** / **image_viewer** —
   preview panes — viewing reports, tables, frame images — init removed
-- **quick_action_bar** (`zed/src/zed/quick_action_bar*`) — per-pane toolbar of icon
+- **quick_action_bar** (`obake/src/obake/quick_action_bar*`) — per-pane toolbar of icon
   actions and menus — obake per-pane controls — no longer added to pane toolbars
 - **breadcrumbs** — path/location strip in the pane toolbar — run > frame > event
   location strip — no longer added to pane toolbars

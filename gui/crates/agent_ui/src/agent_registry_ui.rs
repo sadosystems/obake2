@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use client::zed_urls;
+use client::obake_urls;
 use collections::HashMap;
 use editor::{Editor, EditorElement, EditorStyle};
 use fs::Fs;
@@ -552,7 +552,7 @@ impl AgentRegistryPage {
                             }
                         });
                         window.dispatch_action(
-                            Box::new(zed_actions::agent::SelectAgent {
+                            Box::new(obake_actions::agent::SelectAgent {
                                 agent: agent_id.clone(),
                             }),
                             cx,
@@ -615,7 +615,7 @@ impl Render for AgentRegistryPage {
                                             .color(Color::Muted),
                                     )
                                     .on_click(move |_, _, cx| {
-                                        cx.open_url(&zed_urls::acp_registry_blog(cx))
+                                        cx.open_url(&obake_urls::acp_registry_blog(cx))
                                     }),
                             ),
                     )

@@ -316,7 +316,7 @@ impl ApplicationMenu {
 
 pub(crate) fn show_menus(cx: &mut App) -> bool {
     TitleBarSettings::get_global(cx).show_menus
-        && (cfg!(not(target_os = "macos")) || option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some())
+        && (cfg!(not(target_os = "macos")) || option_env!("OBAKE_USE_CROSS_PLATFORM_MENU").is_some())
 }
 
 pub(crate) fn open_menus_on_hover(cx: &mut App) -> bool {
@@ -525,7 +525,7 @@ mod tests {
 
         cx.update(|cx| {
             cx.set_menus(vec![
-                Menu::new("Zed").items([MenuItem::action(
+                Menu::new("Obake").items([MenuItem::action(
                     "Settings",
                     OpenApplicationMenu(String::new()),
                 )]),
@@ -535,25 +535,25 @@ mod tests {
 
         let (app_menu, cx) = cx.add_window_view(|window, cx| ApplicationMenu::new(window, cx));
 
-        let zed_handle = cx.update(|window, cx| {
-            let zed_handle = app_menu.read_with(cx, |app_menu, _| {
-                menu_entry(&app_menu.entries, "Zed").handle.clone()
+        let obake_handle = cx.update(|window, cx| {
+            let obake_handle = app_menu.read_with(cx, |app_menu, _| {
+                menu_entry(&app_menu.entries, "Obake").handle.clone()
             });
-            zed_handle.show(window, cx);
-            zed_handle
+            obake_handle.show(window, cx);
+            obake_handle
         });
         cx.run_until_parked();
-        assert!(zed_handle.is_deployed());
+        assert!(obake_handle.is_deployed());
 
         cx.update(|window, cx| {
             let view_handle = app_menu.read_with(cx, |app_menu, _| {
                 menu_entry(&app_menu.entries, "View").handle.clone()
             });
-            zed_handle.hide(cx);
+            obake_handle.hide(cx);
             view_handle.show(window, cx);
         });
         cx.run_until_parked();
-        assert!(!zed_handle.is_deployed());
+        assert!(!obake_handle.is_deployed());
 
         assert!(app_menu.read_with(cx, |app_menu, _| {
             menu_entry(&app_menu.entries, "View").handle.is_deployed()

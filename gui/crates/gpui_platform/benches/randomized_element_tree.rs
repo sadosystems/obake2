@@ -777,7 +777,7 @@ fn mixed(family: &TreeFamily, mut rng: StdRng, cx: &mut BenchAppContext) {
 }
 
 /// The same tree with every entity boundary wrapped in a definite-size `.cached()` view,
-/// as Zed does for panes and docks, so a frame can reuse clean entities' output.
+/// as Obake does for panes and docks, so a frame can reuse clean entities' output.
 fn cached_input(family: &TreeFamily, rng: &mut StdRng) -> TreeInput {
     let mut input = family.sample(rng);
     input.config = input.config.with_cached_views(true);

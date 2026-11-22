@@ -14,7 +14,7 @@ pub use typed_envelope::*;
 
 // obake: pre-generated from proto/*.proto (was a build script using protox +
 // prost-build, which delayed this crate in cold builds). Regenerate if .proto changes.
-include!("zed.messages.rs");
+include!("obake.messages.rs");
 
 pub const REMOTE_SERVER_PEER_ID: PeerId = PeerId { owner_id: 0, id: 0 };
 pub const REMOTE_SERVER_PROJECT_ID: u64 = 0;

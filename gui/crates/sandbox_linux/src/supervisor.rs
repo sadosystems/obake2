@@ -1,7 +1,7 @@
-//! The supervisor process (`zed --zed-sandbox-linux-supervisor`).
+//! The supervisor process (`obake --obake-sandbox-linux-supervisor`).
 //!
 //! One per [`SandboxContext`](crate::SandboxContext). The main thread polls:
-//! - the control socket from Zed ([`CONTROL_FD`]): requests, prompt replies;
+//! - the control socket from Obake ([`CONTROL_FD`]): requests, prompt replies;
 //! - pending attach sockets, each waiting for one helper's listener fd;
 //! - seccomp listeners, one per running execution, for when it ends.
 //!
@@ -12,7 +12,7 @@
 //! it, so the listener identifies the sandbox; nothing the sandboxed process
 //! sends can claim another identity.
 //!
-//! The process exits when Zed shuts down the control socket. Listeners close
+//! The process exits when Obake shuts down the control socket. Listeners close
 //! with it, after which every trapped syscall fails with `ENOSYS`.
 
 use std::collections::{HashMap, VecDeque};
@@ -31,11 +31,11 @@ use crate::policy::{HandlerId, Permission, RequestedAccess, WireAccess, WirePoli
 use crate::process::ProcessTree;
 use crate::protocol::{
     AttachInfo, Denial, OpenFile, PromptId, PromptRequest, Request, Response, SandboxId,
-    SupervisorMessage, ZedMessage, receive_message, send_message,
+    SupervisorMessage, ObakeMessage, receive_message, send_message,
 };
 use crate::sys;
 
-pub(crate) const SUPERVISOR_FLAG: &str = "--zed-sandbox-linux-supervisor";
+pub(crate) const SUPERVISOR_FLAG: &str = "--obake-sandbox-linux-supervisor";
 pub(crate) const CONTROL_FD: RawFd = 3;
 
 /// Per execution.
@@ -109,7 +109,7 @@ fn start_receiver(shared: &Arc<Shared>, execution: &Arc<Execution>) {
     }
     receivers.idle.fetch_add(1, Ordering::SeqCst);
     let spawned = std::thread::Builder::new()
-        .name("zed-sandbox-receiver".to_string())
+        .name("obake-sandbox-receiver".to_string())
         .spawn({
             let shared = shared.clone();
             let execution = execution.clone();
@@ -118,7 +118,7 @@ fn start_receiver(shared: &Arc<Shared>, execution: &Arc<Execution>) {
     if let Err(error) = spawned {
         receivers.threads.fetch_sub(1, Ordering::SeqCst);
         receivers.idle.fetch_sub(1, Ordering::SeqCst);
-        eprintln!("zed sandbox supervisor: starting a receiver: {error}");
+        eprintln!("obake sandbox supervisor: starting a receiver: {error}");
     }
 }
 
@@ -220,11 +220,11 @@ impl Shared {
         // SEQPACKET sends are atomic, so workers and the main thread can
         // share the socket.
         if let Err(error) = send_message(self.control.as_fd(), message, &[]) {
-            eprintln!("zed sandbox supervisor: {error:#}");
+            eprintln!("obake sandbox supervisor: {error:#}");
         }
     }
 
-    /// Ask Zed's `handler` whether to allow `requests`, through the
+    /// Ask Obake's `handler` whether to allow `requests`, through the
     /// handler's [`PromptQueue`]. Blocks until it answers, or the syscall is
     /// abandoned (`still_valid` turns false). There is no time limit: the
     /// handler may be waiting on a person.
@@ -360,7 +360,7 @@ impl Shared {
         allowed
     }
 
-    /// Tell Zed a policy rule (or a handler) denied an operation.
+    /// Tell Obake a policy rule (or a handler) denied an operation.
     pub fn report_denial(&self, sandbox: SandboxId, requests: Vec<RequestedAccess>, tid: i32) {
         self.send(&SupervisorMessage::Denied {
             sandbox,
@@ -390,21 +390,21 @@ pub(crate) fn run() -> ! {
     // SAFETY: plain signal disposition change.
     unsafe { libc::signal(libc::SIGPIPE, libc::SIG_IGN) };
     if let Err(error) = sys::set_parent_death_signal() {
-        eprintln!("zed sandbox supervisor: {error}");
+        eprintln!("obake sandbox supervisor: {error}");
         std::process::exit(1);
     }
-    // SAFETY: Zed spawns the supervisor with exactly this descriptor.
+    // SAFETY: Obake spawns the supervisor with exactly this descriptor.
     let control = match unsafe { sys::inherited_fd(CONTROL_FD) } {
         Ok(control) => control,
         Err(error) => {
-            eprintln!("zed sandbox supervisor: missing control socket: {error}");
+            eprintln!("obake sandbox supervisor: missing control socket: {error}");
             std::process::exit(1);
         }
     };
     let host_root = match sys::open(Path::new("/"), libc::O_PATH | libc::O_DIRECTORY) {
         Ok(root) => root,
         Err(error) => {
-            eprintln!("zed sandbox supervisor: opening /: {error}");
+            eprintln!("obake sandbox supervisor: opening /: {error}");
             std::process::exit(1);
         }
     };
@@ -453,7 +453,7 @@ impl Supervisor {
                 if error.raw_os_error() == Some(libc::EINTR) {
                     continue;
                 }
-                eprintln!("zed sandbox supervisor: poll failed: {error}");
+                eprintln!("obake sandbox supervisor: poll failed: {error}");
                 return;
             }
 
@@ -506,7 +506,7 @@ impl Supervisor {
                     // The helper exited (or misbehaved) before attaching. Its
                     // command never ran, since it attaches before exec.
                     Ok(_) => {}
-                    Err(error) => eprintln!("zed sandbox supervisor: attach failed: {error:#}"),
+                    Err(error) => eprintln!("obake sandbox supervisor: attach failed: {error:#}"),
                 }
             }
             if control_ready[0].revents != 0 && !self.handle_control() {
@@ -515,23 +515,23 @@ impl Supervisor {
         }
     }
 
-    /// Handle one control message. Returns `false` once Zed has gone away.
+    /// Handle one control message. Returns `false` once Obake has gone away.
     fn handle_control(&mut self) -> bool {
-        let (message, fds) = match receive_message::<ZedMessage>(self.shared.control.as_fd()) {
+        let (message, fds) = match receive_message::<ObakeMessage>(self.shared.control.as_fd()) {
             Ok(Some(message)) => message,
             Ok(None) => return false,
             Err(error) => {
-                eprintln!("zed sandbox supervisor: bad control message: {error:#}");
+                eprintln!("obake sandbox supervisor: bad control message: {error:#}");
                 return false;
             }
         };
         match message {
-            ZedMessage::PromptReply {
+            ObakeMessage::PromptReply {
                 prompt,
                 allow,
                 remember,
             } => self.shared.reply(prompt, PromptReply { allow, remember }),
-            ZedMessage::Request { id, request } => {
+            ObakeMessage::Request { id, request } => {
                 let response =
                     self.handle_request(request, fds)
                         .unwrap_or_else(|error| Response::Error {
