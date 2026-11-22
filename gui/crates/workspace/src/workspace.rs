@@ -6530,12 +6530,14 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Task<Option<Entity<Pane>>> {
-        let Some(item) = pane.read(cx).active_item() else {
-            return Task::ready(None);
+        // obake: panes are often empty (no editor items); splitting an empty pane, or
+        // one whose item can't be cloned, creates a new empty pane instead of doing nothing.
+        let item = pane.read(cx).active_item().filter(|item| item.can_split(cx));
+        let Some(item) = item else {
+            let new_pane = self.split_pane(pane, direction, window, cx);
+            window.focus(&new_pane.focus_handle(cx), cx);
+            return Task::ready(Some(new_pane));
         };
-        if !item.can_split(cx) {
-            return Task::ready(None);
-        }
         let task = item.clone_on_split(self.database_id(), window, cx);
         cx.spawn_in(window, async move |this, cx| {
             if let Some(clone) = task.await {
