@@ -9,7 +9,7 @@ const USAGE: &str = "usage:
   obake run [--record <movie.ltm> | --play <movie.ltm>] <binary> [args..]
                                launch under the shim; stdin commands:
                                p = pause/play, s = step, f = fast-forward, q = quit,
-                               r = toggle read-only, w = save movie,
+                               r = toggle recording, w = save movie,
                                kd/ku <hex keysym> = hold/release a key,
                                x = save the current frame as a .ppm
   obake smoke <binary>         launch, then verify pause / step / play / stop";
@@ -122,7 +122,7 @@ fn cmd_run(bin: &str, args: &[String], movie: MovieSpec) -> i32 {
                     }
                     None => eprintln!("no frame"),
                 },
-                "r" => r.set_read_only(r.status().recording != Recording::Read),
+                "r" => r.set_recording(r.status().recording == Recording::Read),
                 "w" => match r.save_movie() {
                     Ok(p) => eprintln!("Movie saved to {}", p.display()),
                     Err(e) => eprintln!("save failed: {e}"),
@@ -138,14 +138,14 @@ fn cmd_run(bin: &str, args: &[String], movie: MovieSpec) -> i32 {
             eprintln!("{}", line(&s));
             // libTAS asks whether to save a modified movie; there is no one to
             // ask here, so save it.
-            if s.recording != Recording::None && s.movie_modified {
+            if s.movie_path.is_some() && s.movie_modified {
                 match run.save_movie() {
                     Ok(p) => eprintln!("Movie saved to {}", p.display()),
                     Err(e) => eprintln!("save failed: {e}"),
                 }
             }
             if let Some(b) = &s.backup_movie {
-                eprintln!("No movie recording was selected. A backup movie was saved to {}", b.display());
+                eprintln!("No movie file was selected. A backup movie was saved to {}", b.display());
             }
             return code.unwrap_or(1);
         }

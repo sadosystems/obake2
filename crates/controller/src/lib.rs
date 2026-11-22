@@ -123,7 +123,9 @@ pub struct RunStatus {
     pub movie_frames: u64,
     /// Movie changed since last saved.
     pub movie_modified: bool,
-    /// Where the movie was saved when the game exited without one selected.
+    /// The movie's file, if it has one (opened, or saved once).
+    pub movie_path: Option<PathBuf>,
+    /// Where the movie was saved when the game exited without a file.
     pub backup_movie: Option<PathBuf>,
 }
 
@@ -145,7 +147,6 @@ struct Shared {
     /// Keys the game currently sees pressed.
     game_keys: BTreeSet<u32>,
     movie: Movie,
-    movie_path: Option<PathBuf>,
     on_movie_end: OnMovieEnd,
     pending_steps: u32,
     quit: bool,
@@ -171,6 +172,16 @@ pub struct Run {
     inner: Arc<Inner>,
     pub spec: Arc<LaunchSpec>,
     pub dir: PathBuf,
+}
+
+/// Reads a movie file without starting anything (e.g. to find its game).
+pub fn read_movie(path: &Path) -> Result<Movie, String> {
+    static SEQ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let scratch = runtime_dir().join(format!("read-{}-{n}", std::process::id()));
+    let r = Movie::load(path, &scratch);
+    let _ = std::fs::remove_dir_all(&scratch);
+    r
 }
 
 fn runtime_dir() -> PathBuf {
@@ -214,12 +225,14 @@ impl Run {
                 }
                 Err(e) => {
                     warning = Some(e);
-                    recording = Recording::None;
+                    recording = Recording::Write;
+                    spec.movie.path = None;
                 }
             }
         }
         if recording != Recording::Read {
             mv.md5 = md5;
+            mv.game_path = Some(spec.program.clone());
             mv.game_name = spec.program.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
             // libTAS adds one blank frame for the inputs between startup and
             // the first frame boundary, which can't be set.
@@ -269,12 +282,12 @@ impl Run {
                     recording,
                     movie_frames: mv.len(),
                     movie_modified: false,
+                    movie_path: spec.movie.path.clone(),
                     backup_movie: None,
                 },
                 pending_steps: 0,
                 held: BTreeSet::new(),
                 game_keys: BTreeSet::new(),
-                movie_path: spec.movie.path.clone(),
                 on_movie_end: spec.movie.on_movie_end,
                 movie: mv,
                 quit: false,
@@ -390,19 +403,15 @@ impl Run {
         self.update(|s| s.held.clear());
     }
 
-    /// libTAS's read-only toggle: switch a movie between playback and
-    /// recording. Recording from the middle of a movie truncates it there.
-    pub fn set_read_only(&self, read_only: bool) {
-        self.update(|s| {
-            if s.status.recording != Recording::None {
-                s.status.recording = if read_only { Recording::Read } else { Recording::Write };
-            }
-        });
+    /// Record live input (from the next frame on, replacing the rest of the
+    /// movie) or play the movie back. libTAS's read-only toggle.
+    pub fn set_recording(&self, on: bool) {
+        self.update(|s| s.status.recording = if on { Recording::Write } else { Recording::Read });
     }
 
     /// Save the movie to its file.
     pub fn save_movie(&self) -> Result<PathBuf, String> {
-        let path = self.inner.shared.lock().unwrap().movie_path.clone().ok_or("no movie file selected")?;
+        let path = self.status().movie_path.ok_or("the movie has no file yet")?;
         self.save_movie_as(&path)?;
         Ok(path)
     }
@@ -411,6 +420,9 @@ impl Run {
     pub fn save_movie_as(&self, path: &Path) -> Result<(), String> {
         let mut s = self.inner.shared.lock().unwrap();
         let r = s.movie.save(path, &self.dir.join("movie"));
+        if r.is_ok() {
+            s.status.movie_path = Some(path.to_path_buf());
+        }
         s.status.movie_modified = s.movie.modified;
         self.inner.cv.notify_all();
         r
@@ -468,11 +480,12 @@ impl Run {
         let child = self.inner.child.lock().unwrap().take();
         if let Some(mut child) = child {
             let code = child.wait().ok().and_then(|st| st.code());
-            // libTAS GameLoop::loopExit: without a movie, silently keep a backup.
-            if self.status().recording == Recording::None {
+            // libTAS GameLoop::loopExit: a movie without a file is kept as a backup.
+            if self.status().movie_path.is_none() {
                 let backup = self.dir.join("backup.ltm");
-                if self.save_movie_as(&backup).is_ok() {
-                    self.update(|s| s.status.backup_movie = Some(backup));
+                let mut s = self.inner.shared.lock().unwrap();
+                if s.movie.save(&backup, &self.dir.join("movie")).is_ok() {
+                    s.status.backup_movie = Some(backup);
                 }
             }
             self.update(|s| s.status.state = RunState::Exited(code));
@@ -614,7 +627,7 @@ impl Run {
     /// events relative to what the game already has pressed.
     fn process_inputs(&self, s: &mut Shared, frame: u64) -> Vec<(u32, bool)> {
         let inputs = match s.status.recording {
-            Recording::None | Recording::Write => {
+            Recording::Write => {
                 let inputs = FrameInputs { keys: s.held.iter().copied().take(movie::MAXKEYS).collect(), other: vec![] };
                 s.movie.set_inputs(frame, inputs.clone());
                 inputs
