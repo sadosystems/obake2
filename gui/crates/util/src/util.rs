@@ -689,7 +689,9 @@ pub fn dev_repo_root() -> Option<&'static std::path::Path> {
             Some(
                 start
                     .ancestors()
-                    .find(|dir| dir.join(".git").exists())?
+                    // obake: Zed is vendored under obake2/gui without its own .git, so the
+                    // vendored root is marked by VENDORED_FROM; fall back to .git upstream-style.
+                    .find(|dir| dir.join("VENDORED_FROM").exists() || dir.join(".git").exists())?
                     .to_path_buf(),
             )
         })
