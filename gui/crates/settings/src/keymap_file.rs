@@ -183,6 +183,21 @@ impl KeymapFile {
         cx: &App,
     ) -> anyhow::Result<Vec<KeyBinding>> {
         match Self::load(asset_str::<SettingsAssets>(asset_path).as_ref(), cx) {
+            // obake: built-in keymaps may bind actions from features pruned out of the
+            // build; skip those bindings (logged) instead of refusing the whole keymap.
+            KeymapFileLoadResult::SomeFailedToLoad {
+                mut key_bindings,
+                error_message,
+                ..
+            } if !key_bindings.is_empty() => {
+                log::debug!("skipped bindings in built-in keymap \"{asset_path}\": {error_message}");
+                if let Some(source) = source {
+                    for key_binding in &mut key_bindings {
+                        key_binding.set_meta(source.meta());
+                    }
+                }
+                Ok(key_bindings)
+            }
             KeymapFileLoadResult::Success { mut key_bindings } => match source {
                 Some(source) => Ok({
                     for key_binding in &mut key_bindings {

@@ -598,8 +598,6 @@ fn main() {
         #[cfg(target_os = "macos")]
         zed::move_to_applications::init(cx);
         project::Project::init(&client, cx);
-        debugger_ui::init(cx);
-        debugger_tools::init(cx);
         client::init(&client, cx);
         feature_flags::FeatureFlagStore::init(cx);
 
@@ -666,7 +664,6 @@ fn main() {
 
         watcher_debug::init(app_state.clone(), cx);
         auto_update::init(client.clone(), cx);
-        dap_adapters::init(cx);
         reliability::init(client.clone(), app_state.workspace_store.clone(), cx);
         extension_host::init(
             extension_host_proxy.clone(),
@@ -694,10 +691,7 @@ fn main() {
         acp_tools::init(cx);
         zed::telemetry_log::init(cx);
         zed::remote_debug::init(cx);
-        edit_prediction_ui::init(cx);
         web_search::init(cx);
-        snippet_provider::init(cx);
-        edit_prediction_registry::init(app_state.client.clone(), app_state.user_store.clone(), cx);
         let prompt_builder = PromptBuilder::load(app_state.fs.clone(), stdout_is_a_pty(), cx);
         project::AgentRegistryStore::init_global(
             cx,
@@ -713,8 +707,6 @@ fn main() {
             cx,
         );
         zed::watch_user_agents_md(app_state.fs.clone(), cx);
-
-        repl::init(app_state.fs.clone(), cx);
         recent_projects::init(cx);
         dev_container::init(cx);
 
@@ -723,59 +715,21 @@ fn main() {
         prewarm_fonts(cx);
 
         editor::init(cx);
-        image_viewer::init(cx);
         repl::notebook::init(cx);
-        diagnostics::init(cx);
 
         audio::init(cx);
         workspace::init(app_state.clone(), cx);
         ui_prompt::init(cx);
-
-        go_to_line::init(cx);
-        file_finder::init(cx);
         tab_switcher::init(cx);
-        outline::init(cx);
-        call_hierarchy::init(cx);
-        project_bookmarks::init(cx);
-        project_symbols::init(cx);
-        project_panel::init(cx);
-        outline_panel::init(cx);
-        tasks_ui::init(cx);
-        snippets_ui::init(cx);
-        search::init(cx);
-        lsp_locations::init(cx);
-        cx.set_global(workspace::PaneSearchBarCallbacks {
-            setup_search_bar: |languages, toolbar, window, cx| {
-                let search_bar = cx.new(|cx| search::BufferSearchBar::new(languages, window, cx));
-                toolbar.update(cx, |toolbar, cx| {
-                    toolbar.add_item(search_bar, window, cx);
-                });
-            },
-            wrap_div_with_search_actions: search::buffer_search::register_pane_search_actions,
-        });
-        vim::init(cx);
         terminal_view::init(cx);
-        journal::init(app_state.clone(), cx);
-        encoding_selector::init(cx);
-        language_selector::init(cx);
-        line_ending_selector::init(cx);
-        lsp_command_selector::init(cx);
-        toolchain_selector::init(cx);
         theme_selector::init(cx);
         settings_profile_selector::init(cx);
-        language_tools::init(cx);
         notifications::init(app_state.client.clone(), app_state.user_store.clone(), cx);
         // obake: was called from the removed collab_ui::init.
         title_bar::init(cx);
-        git_ui::init(cx);
-        markdown_preview::init(cx);
-        tabular_data_preview::init(cx);
-        svg_preview::init(cx);
         onboarding::init(cx);
         settings_ui::init(cx);
         keymap_editor::init(cx);
-        extensions_ui::init(cx);
-        edit_prediction::init(cx);
         inspector_ui::init(app_state.clone(), cx);
         json_schema_store::init(cx);
         miniprofiler_ui::init(*STARTUP_TIME.get().unwrap(), cx);

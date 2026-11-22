@@ -773,11 +773,7 @@ fn show_software_emulation_warning_if_needed(
 
 fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<anyhow::Result<()>> {
     cx.spawn_in(window, async move |workspace_handle, cx| {
-        let project_panel = ProjectPanel::load(workspace_handle.clone(), cx.clone());
-        let outline_panel = OutlinePanel::load(workspace_handle.clone(), cx.clone());
         let terminal_panel = TerminalPanel::load(workspace_handle.clone(), cx.clone());
-        let git_panel = GitPanel::load(workspace_handle.clone(), cx.clone());
-        let debug_panel = DebugPanel::load(workspace_handle.clone(), cx);
 
         async fn add_panel_when_ready(
             panel_task: impl Future<Output = anyhow::Result<Entity<impl workspace::Panel>>> + 'static,
@@ -795,11 +791,7 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
         }
 
         futures::join!(
-            add_panel_when_ready(project_panel, workspace_handle.clone(), cx.clone()),
-            add_panel_when_ready(outline_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(terminal_panel, workspace_handle.clone(), cx.clone()),
-            add_panel_when_ready(git_panel, workspace_handle.clone(), cx.clone()),
-            add_panel_when_ready(debug_panel, workspace_handle.clone(), cx.clone()),
             initialize_agent_panel(workspace_handle.clone(), cx.clone()).map(|r| r.log_err()),
         );
 
@@ -1462,64 +1454,15 @@ fn initialize_pane(
     let workspace_handle = cx.weak_entity();
     pane.update(cx, |pane, cx| {
         pane.toolbar().update(cx, |toolbar, cx| {
-            let multibuffer_hint = cx.new(|_| MultibufferHint::new());
-            toolbar.add_item(multibuffer_hint, window, cx);
-            let solo_diff_style_toolbar = cx.new(SoloDiffStyleToolbar::new);
-            toolbar.add_item(solo_diff_style_toolbar, window, cx);
-            let file_diff_style_toolbar = cx.new(FileDiffStyleToolbar::new);
-            toolbar.add_item(file_diff_style_toolbar, window, cx);
-            let breadcrumbs = cx.new(|_| Breadcrumbs::new());
-            toolbar.add_item(breadcrumbs, window, cx);
-            let buffer_search_bar = cx.new(|cx| {
-                search::BufferSearchBar::new(
-                    Some(workspace.project().read(cx).languages().clone()),
-                    window,
-                    cx,
-                )
-            });
-            toolbar.add_item(buffer_search_bar.clone(), window, cx);
-            let quick_action_bar =
-                cx.new(|cx| QuickActionBar::new(buffer_search_bar, workspace, cx));
-            toolbar.add_item(quick_action_bar, window, cx);
-            let diagnostic_editor_controls = cx.new(|_| diagnostics::ToolbarControls::new());
-            toolbar.add_item(diagnostic_editor_controls, window, cx);
-            let project_search_bar = cx.new(|_| ProjectSearchBar::new());
-            toolbar.add_item(project_search_bar, window, cx);
-            let lsp_log_item = cx.new(|_| LspLogToolbarItemView::new());
-            toolbar.add_item(lsp_log_item, window, cx);
-            let dap_log_item = cx.new(|_| debugger_tools::DapLogToolbarItemView::new());
-            toolbar.add_item(dap_log_item, window, cx);
+            // obake: code-editor toolbar items (search, breadcrumbs, quick actions,
+            // diagnostics, git/diff, LSP/DAP logs, syntax trees...) are unhooked.
             let acp_tools_item = cx.new(|_| acp_tools::AcpToolsToolbarItemView::new());
             toolbar.add_item(acp_tools_item, window, cx);
-            let telemetry_log_item =
-                cx.new(|cx| telemetry_log::TelemetryLogToolbarItemView::new(window, cx));
-            toolbar.add_item(telemetry_log_item, window, cx);
-            let syntax_tree_item = cx.new(|_| language_tools::SyntaxTreeToolbarItemView::new());
-            toolbar.add_item(syntax_tree_item, window, cx);
             let migration_banner =
                 cx.new(|inner_cx| MigrationBanner::new(workspace_handle.clone(), inner_cx));
             toolbar.add_item(migration_banner, window, cx);
-            let highlights_tree_item =
-                cx.new(|_| language_tools::HighlightsTreeToolbarItemView::new());
-            toolbar.add_item(highlights_tree_item, window, cx);
-            let project_diff_toolbar = cx.new(|cx| ProjectDiffToolbar::new(workspace, cx));
-            toolbar.add_item(project_diff_toolbar, window, cx);
-            let staged_diff_toolbar = cx.new(|cx| StagedDiffToolbar::new(workspace, cx));
-            toolbar.add_item(staged_diff_toolbar, window, cx);
-            let unstaged_diff_toolbar = cx.new(|cx| UnstagedDiffToolbar::new(workspace, cx));
-            toolbar.add_item(unstaged_diff_toolbar, window, cx);
-            let branch_diff_toolbar = cx.new(BranchDiffToolbar::new);
-            toolbar.add_item(branch_diff_toolbar, window, cx);
-            let solo_diff_git_toolbar = cx.new(SoloDiffGitToolbar::new);
-            toolbar.add_item(solo_diff_git_toolbar, window, cx);
-            let commit_view_toolbar = cx.new(|_| CommitViewToolbar::new());
-            toolbar.add_item(commit_view_toolbar, window, cx);
             let agent_diff_toolbar = cx.new(AgentDiffToolbar::new);
             toolbar.add_item(agent_diff_toolbar, window, cx);
-            let basedpyright_banner = cx.new(|cx| BasedPyrightBanner::new(workspace, cx));
-            toolbar.add_item(basedpyright_banner, window, cx);
-            let image_view_toolbar = cx.new(|_| image_viewer::ImageViewToolbarControls::new());
-            toolbar.add_item(image_view_toolbar, window, cx);
         })
     });
 }
