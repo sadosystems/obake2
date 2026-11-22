@@ -38,7 +38,6 @@ members = [
     "crates/editor",
     "crates/env_var",
     "crates/extension",
-    "crates/extension_host",
     "crates/feature_flags",
     "crates/feature_flags_macros",
     "crates/file_content",
@@ -226,7 +225,6 @@ edit_prediction_types = { path = "crates/edit_prediction_types" }
 editor = { path = "crates/editor" }
 env_var = { path = "crates/env_var" }
 extension = { path = "crates/extension" }
-extension_host = { path = "crates/extension_host" }
 feature_flags = { path = "crates/feature_flags" }
 file_content = { path = "crates/file_content" }
 file_icons = { path = "crates/file_icons" }

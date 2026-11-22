@@ -83,7 +83,7 @@ use zed::{
     open_paths_with_positions,
 };
 
-use crate::zed::{CrashHandler, OpenRequestKind, eager_load_active_theme_and_icon_theme};
+use crate::zed::{CrashHandler, OpenRequestKind};
 
 #[cfg(feature = "mimalloc")]
 #[global_allocator]
@@ -642,16 +642,8 @@ fn main() {
         watcher_debug::init(app_state.clone(), cx);
         auto_update::init(client.clone(), cx);
         reliability::init(client.clone(), app_state.workspace_store.clone(), cx);
-        extension_host::init(
-            extension_host_proxy.clone(),
-            app_state.fs.clone(),
-            app_state.client.clone(),
-            app_state.node_runtime.clone(),
-            cx,
-        );
 
         theme_settings::init(theme::LoadThemes::All(Box::new(Assets)), cx);
-        eager_load_active_theme_and_icon_theme(fs.clone(), cx);
         command_palette::init(cx);
         language_model::init(cx);
         RefreshLlmTokenListener::register(

@@ -3,7 +3,6 @@ use collections::HashMap;
 use context_server::{ContextServerCommand, ContextServerId};
 use editor::{Editor, EditorElement, EditorStyle};
 
-use extension_host::ExtensionStore;
 use gpui::{
     AsyncWindowContext, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, ScrollHandle,
     Subscription, Task, TextStyle, TextStyleRefinement, UnderlineStyle, WeakEntity, prelude::*,
@@ -378,12 +377,8 @@ fn resolve_context_server_extension(
         return Task::ready(None);
     };
 
-    let extension = ExtensionStore::global(cx)
-        .read(cx)
-        .installed_extensions()
-        .iter()
-        .find(|(_, entry)| entry.manifest.context_servers.contains_key(&id.0))
-        .map(|(id, entry)| (id.clone(), entry.manifest.clone()));
+    // obake: extensions removed, so no context server comes from one.
+    let extension: Option<(std::sync::Arc<str>, std::sync::Arc<extension::ExtensionManifest>)> = None;
     cx.spawn(async move |cx| {
         let installation = descriptor
             .configuration(worktree_store, cx)

@@ -188,7 +188,6 @@ dependencies = [
  "anyhow",
  "auto_update",
  "editor",
- "extension_host",
  "fs",
  "futures",
  "gpui",
@@ -465,7 +464,6 @@ dependencies = [
  "db",
  "editor",
  "extension",
- "extension_host",
  "feature_flags",
  "file_icons",
  "fs",
@@ -3622,56 +3620,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "extension_host"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-compression",
- "async-tar",
- "async-trait",
- "client",
- "cloud_api_types",
- "collections",
- "criterion",
- "ctor",
- "dap",
- "extension",
- "fs",
- "futures",
- "github_releases",
- "gpui",
- "gpui_tokio",
- "http_client",
- "language",
- "log",
- "lsp",
- "moka",
- "node_runtime",
- "parking_lot",
- "paths",
- "project",
- "release_channel",
- "remote",
- "reqwest_client",
- "semver",
- "serde",
- "serde_json",
- "serde_json_lenient",
- "settings",
- "task",
- "telemetry",
- "tempfile",
- "theme",
- "theme_settings",
- "toml 0.9.8",
- "tracing",
- "url",
- "util",
- "zlog",
- "ztracing",
-]
-
-[[package]]
 name = "failspot"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6136,7 +6084,6 @@ dependencies = [
  "credentials_provider",
  "db",
  "extension",
- "extension_host",
  "feature_flags",
  "fs",
  "futures",
@@ -6732,24 +6679,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "536bfad37a309d62069485248eeaba1e8d9853aaf951caaeaed0585a95346f08"
 dependencies = [
  "windows-sys 0.60.2",
-]
-
-[[package]]
-name = "moka"
-version = "0.12.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8261cd88c312e0004c1d51baad2980c66528dfdb2bee62003e643a4d8f86b077"
-dependencies = [
- "crossbeam-channel",
- "crossbeam-epoch",
- "crossbeam-utils",
- "equivalent",
- "parking_lot",
- "portable-atomic",
- "rustc_version",
- "smallvec",
- "tagptr",
- "uuid",
 ]
 
 [[package]]
@@ -9050,7 +8979,6 @@ dependencies = [
  "dev_container",
  "editor",
  "extension",
- "extension_host",
  "fs",
  "futures",
  "fuzzy_nucleo",
@@ -10963,12 +10891,6 @@ dependencies = [
  "slotmap",
  "smallvec",
 ]
-
-[[package]]
-name = "tagptr"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b2093cf4c8eb1e67749a6762251bc9cd836b6fc171623bd0a9d324d37af2417"
 
 [[package]]
 name = "task"
@@ -14244,7 +14166,6 @@ dependencies = [
  "editor",
  "env_logger",
  "extension",
- "extension_host",
  "feature_flags",
  "fs",
  "futures",

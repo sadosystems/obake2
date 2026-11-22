@@ -89,7 +89,6 @@ dev_container.workspace = true
 editor.workspace = true
 env_logger = { workspace = true, optional = true }
 extension.workspace = true
-extension_host.workspace = true
 feature_flags.workspace = true
 fs.workspace = true
 futures.workspace = true

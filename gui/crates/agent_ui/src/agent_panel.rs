@@ -67,7 +67,6 @@ use client::UserStore;
 use cloud_api_types::Plan;
 use collections::HashMap;
 use editor::{Editor, MultiBuffer};
-use extension_host::ExtensionStore;
 use feature_flags::{CreateThreadToolFeatureFlag, FeatureFlagAppExt as _};
 
 use fs::Fs;
@@ -1586,14 +1585,8 @@ impl AgentPanel {
         let _ = &client;
 
         // Subscribe to extension events to sync agent servers when extensions change
-        let extension_subscription = ExtensionStore::try_global(cx).map(|store| {
-            cx.subscribe(&store, |this, _source, event, cx| match event {
-                extension_host::Event::ExtensionUninstalled(id) => {
-                    this.migrate_agent_server_from_extensions(id.clone(), cx);
-                }
-                _ => {}
-            })
-        });
+        // obake: extensions removed.
+        let extension_subscription: Option<gpui::Subscription> = None;
 
         let connection_store = cx.new(|cx| AgentConnectionStore::new(project.clone(), cx));
         let _project_subscription =
