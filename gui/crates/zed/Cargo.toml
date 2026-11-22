@@ -25,7 +25,6 @@ test-support = [
     "terminal_view/test-support",
     "image_viewer/test-support",
     "recent_projects/test-support",
-    "repl/test-support",
     "title_bar/test-support",
 ]
 visual-tests = [
@@ -91,10 +90,8 @@ collections.workspace = true
 command_palette.workspace = true
 component_preview.workspace = true
 crashes.workspace = true
-dap_adapters.workspace = true
 db.workspace = true
 debug_adapter_extension.workspace = true
-debugger_tools.workspace = true
 debugger_ui.workspace = true
 dev_container.workspace = true
 diagnostics.workspace = true
@@ -103,7 +100,6 @@ encoding_selector.workspace = true
 env_logger = { workspace = true, optional = true }
 extension.workspace = true
 extension_host.workspace = true
-extensions_ui.workspace = true
 feature_flags.workspace = true
 file_finder.workspace = true
 fs.workspace = true
@@ -136,7 +132,6 @@ image_viewer.workspace = true
 input_latency_ui.workspace = true
 inspector_ui.workspace = true
 install_cli.workspace = true
-journal.workspace = true
 json_schema_store.workspace = true
 keymap_editor.workspace = true
 language.workspace = true
@@ -148,7 +143,6 @@ language_selector.workspace = true
 language_tools.workspace = true
 languages = { workspace = true, features = ["load-grammars"] }
 line_ending_selector.workspace = true
-lsp_command_selector.workspace = true
 log.workspace = true
 lsp_locations.workspace = true
 markdown.workspace = true
@@ -169,13 +163,11 @@ profiling.workspace = true
 project.workspace = true
 project_panel.workspace = true
 project_symbols.workspace = true
-project_bookmarks.workspace = true
 prompt_store.workspace = true
 proto.workspace = true
 recent_projects.workspace = true
 release_channel.workspace = true
 remote.workspace = true
-repl.workspace = true
 reqwest = { workspace = true, features = ["multipart"] }
 reqwest_client.workspace = true
 rope.workspace = true
@@ -190,8 +182,6 @@ settings_ui.workspace = true
 shellexpand.workspace = true
 sidebar.workspace = true
 smol.workspace = true
-snippet_provider.workspace = true
-snippets_ui.workspace = true
 svg_preview.workspace = true
 sysinfo.workspace = true
 tab_switcher.workspace = true
@@ -273,7 +263,6 @@ workspace = { workspace = true, features = ["test-support"] }
 image.workspace = true
 agent_ui = { workspace = true, features = ["test-support"] }
 search = { workspace = true, features = ["test-support"] }
-repl = { workspace = true, features = ["test-support"] }
 
 
 [package.metadata.bundle-dev]

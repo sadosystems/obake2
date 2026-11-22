@@ -955,12 +955,11 @@ impl LanguageRegistry {
                                     .file_stem()
                                     .and_then(OsStr::to_str)
                                     .context("invalid grammar filename")?;
-                                anyhow::Ok(with_parser(|parser| {
-                                    let mut store = parser.take_wasm_store().unwrap();
-                                    let grammar = store.load_language(grammar_name, &wasm_bytes);
-                                    parser.set_wasm_store(store).unwrap();
-                                    grammar
-                                })?)
+                                // obake: wasm grammars are unsupported (no wasmtime).
+                                let _ = wasm_bytes;
+                                Err::<tree_sitter::Language, _>(anyhow::anyhow!(
+                                    "wasm grammar {grammar_name} unsupported in obake"
+                                ))
                             })
                             .map_err(Arc::new);
 

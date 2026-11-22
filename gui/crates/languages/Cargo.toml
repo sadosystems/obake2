@@ -61,7 +61,7 @@ snippet.workspace = true
 task.workspace = true
 terminal.workspace = true
 theme.workspace = true
-tree-sitter = { workspace = true, optional = true , features = ["wasm"] }
+tree-sitter = { workspace = true, optional = true }
 url.workspace = true
 util.workspace = true
 
@@ -81,5 +81,5 @@ tree-sitter-go.workspace = true
 tree-sitter-python.workspace = true
 tree-sitter-rust.workspace = true
 tree-sitter-typescript.workspace = true
-tree-sitter = { workspace = true, features = ["wasm"] }
+tree-sitter.workspace = true
 unindent.workspace = true

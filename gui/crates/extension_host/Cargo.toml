@@ -52,9 +52,6 @@ toml = { workspace = true, features = ["display"] }
 tracing.workspace = true
 url.workspace = true
 util.workspace = true
-wasmparser.workspace = true
-wasmtime-wasi.workspace = true
-wasmtime.workspace = true
 ztracing.workspace = true
 
 [dev-dependencies]
@@ -72,10 +69,6 @@ theme = { workspace = true, features = ["test-support"] }
 theme_settings.workspace = true
 theme_extension.workspace = true
 zlog.workspace = true
-
-[[bench]]
-name = "extension_compilation_benchmark"
-harness = false
 
 [package.metadata.cargo-shear]
 ignored = ["tracing"]

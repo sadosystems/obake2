@@ -715,7 +715,6 @@ fn main() {
         prewarm_fonts(cx);
 
         editor::init(cx);
-        repl::notebook::init(cx);
 
         audio::init(cx);
         workspace::init(app_state.clone(), cx);

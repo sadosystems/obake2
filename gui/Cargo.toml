@@ -852,7 +852,7 @@ jupyter-zmq-client = { version = "3.0.0", default-features = false, features = [
 rust-embed = { version = "8.11", features = ["include-exclude", "compression"] }
 rustc-hash = "2.1.0"
 rustix = { version = "1.1", features = ["fs"] }
-rustls = "0.23.26"
+rustls = { version = "0.23.26", default-features = false, features = ["ring", "std", "logging", "tls12"] }
 rustls-platform-verifier = "0.7"
 # WARNING: If you change this, you must also publish a new version of zed-scap to crates.io
 scap = { git = "https://github.com/zed-industries/scap", rev = "b5c86ec58dd4b6b7732bf6ac8be03d6b1f190a82", default-features = false, package = "zed-scap", version = "0.0.8-zed" }
@@ -1068,18 +1068,11 @@ settings_macros = { opt-level = 3 }
 sqlez_macros = { opt-level = 3, codegen-units = 1 }
 ui_macros = { opt-level = 3 }
 util_macros = { opt-level = 3 }
-quote = { opt-level = 3 }
-syn = { opt-level = 3 }
-proc-macro2 = { opt-level = 3 }
 # proc-macros end
 
 tree-sitter = { opt-level = 3 }
 taffy = { opt-level = 3 }
 resvg = { opt-level = 3 }
-wasmtime = { opt-level = 3 }
-cranelift-codegen = { opt-level = 3 }
-wasmtime-environ = { opt-level = 3 }
-wasmtime-internal-cranelift = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 serde_json = { opt-level = 3 }
 # Build single-source-file crates with cg=1 as it helps make `cargo build` of a whole workspace a bit faster

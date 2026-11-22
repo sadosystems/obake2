@@ -7,7 +7,6 @@ mod migrate;
 pub(crate) mod move_to_applications;
 mod open_listener;
 mod open_url_modal;
-mod quick_action_bar;
 pub mod remote_debug;
 pub mod telemetry_log;
 #[cfg(all(target_os = "macos", feature = "visual-tests"))]
@@ -66,7 +65,6 @@ use project::{
     project_settings::{SettingsObserver, SettingsObserverEvent},
 };
 use project_panel::ProjectPanel;
-use quick_action_bar::QuickActionBar;
 use recent_projects::open_remote_project;
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
 use rope::Rope;
@@ -6484,8 +6482,6 @@ mod tests {
                 cx,
             );
 
-            repl::init(app_state.fs.clone(), cx);
-            repl::notebook::init(cx);
             tasks_ui::init(cx);
             project::debugger::breakpoint_store::BreakpointStore::init(
                 &app_state.client.clone().into(),

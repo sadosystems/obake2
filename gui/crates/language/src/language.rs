@@ -100,7 +100,7 @@ pub use toolchain::{
     LanguageToolchainStore, LocalLanguageToolchainStore, Toolchain, ToolchainList, ToolchainLister,
     ToolchainMetadata, ToolchainScope,
 };
-use tree_sitter::{self, QueryCursor, WasmStore, wasmtime};
+use tree_sitter::{self, QueryCursor};
 use util::paths::PathStyle;
 use util::rel_path::RelPath;
 
@@ -141,11 +141,8 @@ where
     F: FnOnce(&mut Parser) -> R,
 {
     let mut parser = PARSERS.lock().pop().unwrap_or_else(|| {
-        let mut parser = Parser::new();
-        parser
-            .set_wasm_store(WasmStore::new(&WASM_ENGINE).unwrap())
-            .unwrap();
-        parser
+        // obake: no wasm store (tree-sitter's wasm feature pulls wasmtime into the build).
+        Parser::new()
     });
     // Tree-sitter auto-resets the parser at the end of a successful parse,
     // but the cancellation paths (progress callback returning `Break`,
@@ -167,9 +164,6 @@ where
     func(cursor.deref_mut())
 }
 
-static WASM_ENGINE: LazyLock<wasmtime::Engine> = LazyLock::new(|| {
-    wasmtime::Engine::new(&wasmtime::Config::new()).expect("Failed to create Wasmtime engine")
-});
 
 /// A shared grammar for plain text, exposed for reuse by downstream crates.
 pub static PLAIN_TEXT: LazyLock<Arc<Language>> = LazyLock::new(|| {
