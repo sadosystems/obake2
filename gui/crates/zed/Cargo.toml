@@ -86,7 +86,6 @@ collections.workspace = true
 command_palette.workspace = true
 crashes.workspace = true
 db.workspace = true
-debug_adapter_extension.workspace = true
 dev_container.workspace = true
 editor.workspace = true
 env_logger = { workspace = true, optional = true }
@@ -114,14 +113,11 @@ system_specs.workspace = true
 tempfile = { workspace = true, optional = true }
 
 http_client.workspace = true
-input_latency_ui.workspace = true
 install_cli.workspace = true
 json_schema_store.workspace = true
 language.workspace = true
-language_extension.workspace = true
 language_model.workspace = true
 language_models.workspace = true
-languages = { workspace = true, features = ["load-grammars"] }
 log.workspace = true
 markdown.workspace = true
 markdown_preview.workspace = true
@@ -161,7 +157,6 @@ telemetry.workspace = true
 telemetry_events.workspace = true
 terminal_view.workspace = true
 theme.workspace = true
-theme_extension.workspace = true
 theme_selector.workspace = true
 theme_settings.workspace = true
 time.workspace = true
