@@ -6,7 +6,11 @@
 //! the controller ends it, so pausing is the controller withholding that reply
 //! (libTAS's model: the game parks inside its own buffer swap).
 
+pub mod movie;
+
+pub use movie::{FrameInputs, Movie, MovieSpec, OnMovieEnd, Recording};
 use obake_protocol::*;
+use std::collections::BTreeSet;
 use std::io::{Read, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
@@ -45,8 +49,10 @@ pub struct LaunchSpec {
     pub args: Vec<String>,
     pub cwd: PathBuf,
     pub env: Vec<(String, String)>,
-    /// `num/den` frames per second of virtual time.
+    /// `num/den` frames per second of virtual time. Playing a movie uses
+    /// the movie's framerate instead.
     pub framerate: (u32, u32),
+    pub movie: MovieSpec,
 }
 
 impl LaunchSpec {
@@ -77,7 +83,7 @@ impl LaunchSpec {
             env.push(("__GLX_VENDOR_LIBRARY_NAME".into(), "nvidia".into()));
             env.push(("__VK_LAYER_NV_optimus".into(), "NVIDIA_only".into()));
         }
-        Self { program, args: Vec::new(), cwd, env, framerate: (60, 1) }
+        Self { program, args: Vec::new(), cwd, env, framerate: (60, 1), movie: MovieSpec::default() }
     }
 }
 
@@ -109,6 +115,16 @@ pub struct RunStatus {
     pub game_pid: u32,
     pub log_path: PathBuf,
     pub error: Option<String>,
+    /// Something the user should know that didn't stop the run (libTAS
+    /// alerts: movie failed to load, game hash mismatch, ...).
+    pub warning: Option<String>,
+    pub recording: Recording,
+    /// Frames in the movie (libTAS `movie_framecount`).
+    pub movie_frames: u64,
+    /// Movie changed since last saved.
+    pub movie_modified: bool,
+    /// Where the movie was saved when the game exited without one selected.
+    pub backup_movie: Option<PathBuf>,
 }
 
 /// One captured game frame.
@@ -122,8 +138,15 @@ pub struct Frame {
 
 struct Shared {
     status: RunStatus,
-    /// Key events (X11 keysym, pressed) to deliver at the next frame boundary.
-    keys: Vec<(u32, bool)>,
+    /// Keys held in the frontend right now (X11 keysyms). Sampled at each
+    /// frame boundary into that frame's inputs, as libTAS samples the
+    /// keyboard state.
+    held: BTreeSet<u32>,
+    /// Keys the game currently sees pressed.
+    game_keys: BTreeSet<u32>,
+    movie: Movie,
+    movie_path: Option<PathBuf>,
+    on_movie_end: OnMovieEnd,
     pending_steps: u32,
     quit: bool,
     /// Display pacing: the frontend grants one game frame per tick of its own
@@ -163,6 +186,8 @@ impl Run {
             return Err(format!("{} is not a file", spec.program.display()));
         }
         let shim = find_shim()?;
+        let mut spec = spec;
+        let md5 = movie::md5_file(&spec.program);
         static SEQ: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let dir = runtime_dir().join(format!("run-{}-{n}", std::process::id()));
@@ -171,6 +196,36 @@ impl Run {
         let _ = std::fs::remove_file(&sock_path);
         let listener = UnixListener::bind(&sock_path).map_err(|e| format!("bind {}: {e}", sock_path.display()))?;
         listener.set_nonblocking(true).map_err(|e| e.to_string())?;
+
+        // libTAS GameLoop::init: open the movie before starting the game, so
+        // the game runs with the movie's settings.
+        let mut warning = None;
+        let mut recording = spec.movie.recording;
+        let mut mv = Movie::new(spec.framerate);
+        if recording == Recording::Read {
+            let path = spec.movie.path.clone().unwrap_or_default();
+            match Movie::load(&path, &dir.join("movie")) {
+                Ok(m) => {
+                    if !m.md5.is_empty() && m.md5 != md5 {
+                        warning = Some("Game executable hash does not match with the hash stored in the movie!".into());
+                    }
+                    spec.framerate = m.framerate;
+                    mv = m;
+                }
+                Err(e) => {
+                    warning = Some(e);
+                    recording = Recording::None;
+                }
+            }
+        }
+        if recording != Recording::Read {
+            mv.md5 = md5;
+            mv.game_name = spec.program.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            // libTAS adds one blank frame for the inputs between startup and
+            // the first frame boundary, which can't be set.
+            mv.set_inputs(0, FrameInputs::default());
+            mv.modified = false;
+        }
 
         let log_path = dir.join("game.log");
         let log = std::fs::File::create(&log_path).map_err(|e| e.to_string())?;
@@ -210,9 +265,18 @@ impl Run {
                     game_pid: pid,
                     log_path,
                     error: None,
+                    warning,
+                    recording,
+                    movie_frames: mv.len(),
+                    movie_modified: false,
+                    backup_movie: None,
                 },
                 pending_steps: 0,
-                keys: Vec::new(),
+                held: BTreeSet::new(),
+                game_keys: BTreeSet::new(),
+                movie_path: spec.movie.path.clone(),
+                on_movie_end: spec.movie.on_movie_end,
+                movie: mv,
                 quit: false,
                 display_credit: false,
                 last_display_tick: None,
@@ -308,9 +372,48 @@ impl Run {
         if self.status().pause_requested { self.play() } else { self.pause() }
     }
 
-    /// Queues a key press/release (X11 keysym) for the next frame.
+    /// A key went down or up in the frontend (X11 keysym). The game sees the
+    /// keys held at each frame boundary.
     pub fn key(&self, keysym: u32, pressed: bool) {
-        self.update(|s| s.keys.push((keysym, pressed)));
+        self.update(|s| {
+            if pressed {
+                s.held.insert(keysym);
+            } else {
+                s.held.remove(&keysym);
+            }
+        });
+    }
+
+    /// The frontend lost keyboard focus: nothing is held any more (libTAS
+    /// takes no input while the game window is unfocused).
+    pub fn release_all_keys(&self) {
+        self.update(|s| s.held.clear());
+    }
+
+    /// libTAS's read-only toggle: switch a movie between playback and
+    /// recording. Recording from the middle of a movie truncates it there.
+    pub fn set_read_only(&self, read_only: bool) {
+        self.update(|s| {
+            if s.status.recording != Recording::None {
+                s.status.recording = if read_only { Recording::Read } else { Recording::Write };
+            }
+        });
+    }
+
+    /// Save the movie to its file.
+    pub fn save_movie(&self) -> Result<PathBuf, String> {
+        let path = self.inner.shared.lock().unwrap().movie_path.clone().ok_or("no movie file selected")?;
+        self.save_movie_as(&path)?;
+        Ok(path)
+    }
+
+    /// Save the movie to `path`.
+    pub fn save_movie_as(&self, path: &Path) -> Result<(), String> {
+        let mut s = self.inner.shared.lock().unwrap();
+        let r = s.movie.save(path, &self.dir.join("movie"));
+        s.status.movie_modified = s.movie.modified;
+        self.inner.cv.notify_all();
+        r
     }
 
     /// While paused, advance exactly one frame.
@@ -365,6 +468,13 @@ impl Run {
         let child = self.inner.child.lock().unwrap().take();
         if let Some(mut child) = child {
             let code = child.wait().ok().and_then(|st| st.code());
+            // libTAS GameLoop::loopExit: without a movie, silently keep a backup.
+            if self.status().recording == Recording::None {
+                let backup = self.dir.join("backup.ltm");
+                if self.save_movie_as(&backup).is_ok() {
+                    self.update(|s| s.status.backup_movie = Some(backup));
+                }
+            }
             self.update(|s| s.status.state = RunState::Exited(code));
         }
     }
@@ -477,7 +587,7 @@ impl Run {
                     continue;
                 }
                 s.display_credit = false;
-                let keys = std::mem::take(&mut s.keys);
+                let keys = self.process_inputs(&mut s, frame);
                 // `running: false` = the shim must not sleep to pace this
                 // frame; we already did the waiting here.
                 return Reply::Continue { running: !display_paced, fastforward: s.status.fastforward, keys };
@@ -486,7 +596,7 @@ impl Run {
                 s.pending_steps -= 1;
                 s.status.state = RunState::Paused;
                 self.inner.cv.notify_all();
-                let keys = std::mem::take(&mut s.keys);
+                let keys = self.process_inputs(&mut s, frame);
                 return Reply::Continue { running: false, fastforward: s.status.fastforward, keys };
             }
             if s.status.state != RunState::Paused {
@@ -495,6 +605,41 @@ impl Run {
             }
             s = self.inner.cv.wait(s).unwrap();
         }
+    }
+}
+
+impl Run {
+    /// libTAS `GameLoop::processInputs` plus the end-of-movie pause: the
+    /// inputs for frame `frame`, recorded into or read from the movie, as key
+    /// events relative to what the game already has pressed.
+    fn process_inputs(&self, s: &mut Shared, frame: u64) -> Vec<(u32, bool)> {
+        let inputs = match s.status.recording {
+            Recording::None | Recording::Write => {
+                let inputs = FrameInputs { keys: s.held.iter().copied().take(movie::MAXKEYS).collect(), other: vec![] };
+                s.movie.set_inputs(frame, inputs.clone());
+                inputs
+            }
+            Recording::Read => {
+                if frame + 1 == s.movie.len() && s.on_movie_end == OnMovieEnd::Write {
+                    s.status.recording = Recording::Write;
+                }
+                s.movie.inputs(frame)
+            }
+        };
+        // Pause when the movie's last frame has been played.
+        if s.status.recording == Recording::Read && s.movie.len() == frame + 1 {
+            s.status.pause_requested = true;
+            s.status.fastforward = false;
+        }
+        s.status.movie_frames = s.movie.len();
+        s.status.movie_modified = s.movie.modified;
+        self.inner.cv.notify_all();
+
+        let now: BTreeSet<u32> = inputs.keys.into_iter().collect();
+        let mut events: Vec<(u32, bool)> = s.game_keys.difference(&now).map(|&k| (k, false)).collect();
+        events.extend(now.difference(&s.game_keys).map(|&k| (k, true)));
+        s.game_keys = now;
+        events
     }
 }
 
