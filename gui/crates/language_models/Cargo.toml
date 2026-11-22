@@ -31,8 +31,6 @@ cloud_api_types.workspace = true
 collections.workspace = true
 component.workspace = true
 convert_case.workspace = true
-copilot_chat.workspace = true
-copilot_ui.workspace = true
 credentials_provider.workspace = true
 deepseek = { workspace = true, features = ["schemars"] }
 extension.workspace = true
@@ -44,7 +42,6 @@ gpui.workspace = true
 gpui_tokio.workspace = true
 http_client.workspace = true
 language_model.workspace = true
-language_models_cloud.workspace = true
 llama_cpp = { workspace = true, features = ["schemars"] }
 lmstudio = { workspace = true, features = ["schemars"] }
 log.workspace = true

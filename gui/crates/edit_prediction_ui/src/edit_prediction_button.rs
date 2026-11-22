@@ -1,7 +1,6 @@
 use anyhow::Result;
 use client::{Client, UserStore, zed_urls};
 use cloud_llm_client::UsageLimit;
-use copilot::Status;
 use edit_prediction::EditPredictionStore;
 use edit_prediction_types::EditPredictionDelegateHandle;
 use editor::{
@@ -83,119 +82,7 @@ impl Render for EditPredictionButton {
         }
 
         match language_settings.edit_predictions.provider {
-            EditPredictionProvider::Copilot => {
-                let Some(copilot) = EditPredictionStore::try_global(cx)
-                    .and_then(|store| store.read(cx).copilot_for_project(&self.project.upgrade()?))
-                else {
-                    return div().hidden();
-                };
-                let status = copilot.read(cx).status();
-
-                let enabled = self.editor_enabled.unwrap_or(false);
-
-                let icon = match status {
-                    Status::Error(_) => IconName::CopilotError,
-                    Status::Authorized => {
-                        if enabled {
-                            IconName::Copilot
-                        } else {
-                            IconName::CopilotDisabled
-                        }
-                    }
-                    _ => IconName::CopilotInit,
-                };
-
-                if let Status::Error(e) = status {
-                    return div().child(
-                        IconButton::new("copilot-error", icon)
-                            .icon_size(IconSize::Small)
-                            .tab_index(0isize)
-                            .aria_label("GitHub Copilot")
-                            .on_click(cx.listener(move |_, _, window, cx| {
-                                if let Some(workspace) = Workspace::for_window(window, cx) {
-                                    workspace.update(cx, |workspace, cx| {
-                                        let copilot = copilot.clone();
-                                        workspace.show_toast(
-                                            Toast::new(
-                                                NotificationId::unique::<CopilotErrorToast>(),
-                                                format!(
-                                                    "Copilot Edit Predictions can't be started: {}",
-                                                    e
-                                                ),
-                                            )
-                                            .on_click(
-                                                "Reinstall Copilot Edit Predictions",
-                                                move |window, cx| {
-                                                    copilot_ui::reinstall_and_sign_in(
-                                                        copilot.clone(),
-                                                        window,
-                                                        cx,
-                                                    )
-                                                },
-                                            ),
-                                            cx,
-                                        );
-                                    });
-                                }
-                            }))
-                            .tooltip(|_window, cx| {
-                                Tooltip::for_action(
-                                    "GitHub Copilot Edit Predictions",
-                                    &ToggleMenu,
-                                    cx,
-                                )
-                            }),
-                    );
-                }
-                let this = cx.weak_entity();
-                let project = self.project.clone();
-                let file = self.file.clone();
-                let language = self.language.clone();
-                div().child(
-                    PopoverMenu::new("copilot")
-                        .on_open({
-                            let file = file.clone();
-                            let language = language;
-                            let project = project.clone();
-                            Rc::new(move |_window, cx| {
-                                emit_edit_prediction_menu_opened(
-                                    "copilot", &file, &language, &project, cx,
-                                );
-                            })
-                        })
-                        .menu(move |window, cx| {
-                            let current_status = EditPredictionStore::try_global(cx)
-                                .and_then(|store| {
-                                    store.read(cx).copilot_for_project(&project.upgrade()?)
-                                })?
-                                .read(cx)
-                                .status();
-                            match current_status {
-                                Status::Authorized => this.update(cx, |this, cx| {
-                                    this.build_copilot_context_menu(window, cx)
-                                }),
-                                _ => this.update(cx, |this, cx| {
-                                    this.build_copilot_start_menu(window, cx)
-                                }),
-                            }
-                            .ok()
-                        })
-                        .anchor(Anchor::BottomRight)
-                        .trigger_with_tooltip(
-                            IconButton::new("copilot-icon", icon)
-                                .tab_index(0isize)
-                                .aria_label("GitHub Copilot"),
-                            |_window, cx| {
-                                Tooltip::for_action(
-                                    "GitHub Copilot Edit Predictions",
-                                    &ToggleMenu,
-                                    cx,
-                                )
-                            },
-                        )
-                        .with_handle(self.popover_menu_handle.clone()),
-                )
-            }
+            EditPredictionProvider::Copilot => div().hidden(),
             EditPredictionProvider::Codestral => {
                 let enabled = self.editor_enabled.unwrap_or(true);
                 let has_api_key = codestral::codestral_api_key(cx).is_some();
@@ -571,12 +458,6 @@ impl EditPredictionButton {
         project: Entity<Project>,
         cx: &mut Context<Self>,
     ) -> Self {
-        let copilot = EditPredictionStore::try_global(cx).and_then(|store| {
-            store.update(cx, |this, cx| this.start_copilot_for_project(&project, cx))
-        });
-        if let Some(copilot) = copilot {
-            cx.observe(&copilot, |_, _, cx| cx.notify()).detach()
-        }
 
         cx.observe_global::<SettingsStore>(move |_, cx| {
             load_provider_credentials(cx);
@@ -699,53 +580,6 @@ impl EditPredictionButton {
         )
     }
 
-    pub fn build_copilot_start_menu(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<ContextMenu> {
-        let fs = self.fs.clone();
-        let project = self.project.clone();
-        ContextMenu::build(window, cx, |menu, _, cx| {
-            let menu = menu
-                .entry(
-                    "Sign In to Copilot Edit Predictions",
-                    None,
-                    move |window, cx| {
-                        telemetry::event!(
-                            "Edit Prediction Menu Action",
-                            action = "sign_in",
-                            provider = "copilot",
-                        );
-                        if let Some(copilot) =
-                            EditPredictionStore::try_global(cx).and_then(|store| {
-                                store.update(cx, |this, cx| {
-                                    this.start_copilot_for_project(&project.upgrade()?, cx)
-                                })
-                            })
-                        {
-                            copilot_ui::initiate_sign_in(copilot, window, cx);
-                        }
-                    },
-                )
-                .entry("Disable Copilot Edit Predictions", None, {
-                    let fs = fs.clone();
-                    move |_window, cx| {
-                        telemetry::event!(
-                            "Edit Prediction Menu Action",
-                            action = "disable_provider",
-                            provider = "copilot",
-                        );
-                        hide_copilot(fs.clone(), cx)
-                    }
-                });
-
-            let menu =
-                self.add_provider_switching_section(menu, EditPredictionProvider::Copilot, cx);
-            let menu = self.add_configure_providers_item(menu);
-            menu
-        })
-    }
 
     pub fn build_language_settings_menu(
         &self,
@@ -1073,64 +907,6 @@ impl EditPredictionButton {
         menu
     }
 
-    fn build_copilot_context_menu(
-        &self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<ContextMenu> {
-        let all_language_settings = all_language_settings(None, cx);
-        let next_edit_suggestions = all_language_settings
-            .edit_predictions
-            .copilot
-            .enable_next_edit_suggestions
-            .unwrap_or(true);
-        let settings_url = copilot_settings_url(
-            settings::CopilotSettings::get_global(cx)
-                .enterprise_uri
-                .as_deref(),
-        );
-
-        ContextMenu::build(window, cx, |menu, window, cx| {
-            let menu = self.build_language_settings_menu(menu, window, cx);
-            let menu =
-                self.add_provider_switching_section(menu, EditPredictionProvider::Copilot, cx);
-
-            let menu = self.add_configure_providers_item(menu);
-            let menu = menu
-                .separator()
-                .item(
-                    ContextMenuEntry::new("Copilot: Next Edit Suggestions")
-                        .toggleable(IconPosition::Start, next_edit_suggestions)
-                        .handler({
-                            let fs = self.fs.clone();
-                            move |_, cx| {
-                                update_settings_file(fs.clone(), cx, move |settings, _| {
-                                    settings
-                                        .project
-                                        .all_languages
-                                        .edit_predictions
-                                        .get_or_insert_default()
-                                        .copilot
-                                        .get_or_insert_default()
-                                        .enable_next_edit_suggestions =
-                                        Some(!next_edit_suggestions);
-                                });
-                            }
-                        }),
-                )
-                .separator()
-                .link(
-                    "Go to Copilot Settings",
-                    OpenBrowser { url: settings_url }.boxed_clone(),
-                )
-                .entry("Sign Out", None, |window, cx| {
-                    if let Some(auth) = copilot::GlobalCopilotAuth::try_global(cx) {
-                        copilot_ui::initiate_sign_out(auth.0.clone(), window, cx);
-                    }
-                });
-            menu
-        })
-    }
 
     fn build_codestral_context_menu(
         &self,
@@ -1585,12 +1361,6 @@ pub fn get_available_providers(cx: &mut App) -> Vec<EditPredictionProvider> {
 
     providers.push(EditPredictionProvider::Zed);
 
-    let app_state = workspace::AppState::global(cx);
-    if copilot::GlobalCopilotAuth::try_get_or_init(app_state, cx)
-        .is_some_and(|copilot| copilot.0.read(cx).is_authenticated())
-    {
-        providers.push(EditPredictionProvider::Copilot);
-    };
 
     if codestral::codestral_api_key(cx).is_some() {
         providers.push(EditPredictionProvider::Codestral);

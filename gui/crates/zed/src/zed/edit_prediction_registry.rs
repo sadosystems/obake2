@@ -1,7 +1,6 @@
 use client::{Client, UserStore};
 use codestral::{CodestralEditPredictionDelegate, load_codestral_api_key};
 use collections::HashMap;
-use copilot::CopilotEditPredictionDelegate;
 use edit_prediction::{EditPredictionModel, ZedEditPredictionDelegate, fim};
 use editor::{EditPredictionRequestTrigger, Editor};
 use gpui::{AnyWindowHandle, App, AppContext as _, Context, Entity, WeakEntity};
@@ -229,22 +228,9 @@ fn assign_edit_prediction_provider(
             );
         }
         Some(EditPredictionProviderConfig::Copilot) => {
-            let ep_store = edit_prediction::EditPredictionStore::global(client, &user_store, cx);
-            let Some(project) = editor.project().cloned() else {
-                return;
-            };
-            let copilot =
-                ep_store.update(cx, |this, cx| this.start_copilot_for_project(&project, cx));
-
-            if let Some(copilot) = copilot {
-                if let Some(buffer) = singleton_buffer {
-                    copilot.update(cx, |copilot, cx| {
-                        copilot.register_buffer(&buffer, cx);
-                    });
-                }
-                let provider = cx.new(|_| CopilotEditPredictionDelegate::new(copilot));
-                editor.set_edit_prediction_provider(Some(provider), trigger, window, cx);
-            }
+            editor.set_edit_prediction_provider::<ZedEditPredictionDelegate>(
+                None, trigger, window, cx,
+            );
         }
         Some(EditPredictionProviderConfig::Codestral) => {
             let http_client = client.http_client();

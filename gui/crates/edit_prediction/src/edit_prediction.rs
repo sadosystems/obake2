@@ -21,7 +21,6 @@ use cloud_llm_client::{
     ZED_VERSION_HEADER_NAME,
 };
 use collections::{HashMap, HashSet};
-use copilot::{Copilot, Reinstall};
 use credentials_provider::CredentialsProvider;
 use db::kvp::{Dismissable, KeyValueStore};
 use edit_prediction_context::{RelatedExcerptStore, RelatedExcerptStoreEvent, RelatedFile};
@@ -377,7 +376,6 @@ struct ProjectState {
     context: Entity<RelatedExcerptStore>,
     license_detection_watchers: HashMap<WorktreeId, Rc<LicenseDetectionWatcher>>,
     _subscriptions: [gpui::Subscription; 2],
-    copilot: Option<Entity<Copilot>>,
 }
 
 impl ProjectState {
@@ -1268,40 +1266,6 @@ impl EditPredictionStore {
             .unwrap_or_default()
     }
 
-    pub fn copilot_for_project(&self, project: &Entity<Project>) -> Option<Entity<Copilot>> {
-        self.projects
-            .get(&project.entity_id())
-            .and_then(|project| project.copilot.clone())
-    }
-
-    pub fn start_copilot_for_project(
-        &mut self,
-        project: &Entity<Project>,
-        cx: &mut Context<Self>,
-    ) -> Option<Entity<Copilot>> {
-        if DisableAiSettings::get(None, cx).disable_ai {
-            return None;
-        }
-        let state = self.get_or_init_project(project, cx);
-
-        if state.copilot.is_some() {
-            return state.copilot.clone();
-        }
-        let _project = project.clone();
-        let project = project.read(cx);
-
-        let node = project.node_runtime().cloned();
-        if let Some(node) = node {
-            let next_id = project.languages().next_language_server_id();
-            let fs = project.fs().clone();
-
-            let copilot = cx.new(|cx| Copilot::new(Some(_project), next_id, fs, node, cx));
-            state.copilot = Some(copilot.clone());
-            Some(copilot)
-        } else {
-            None
-        }
-    }
 
     pub fn context_for_project_with_buffers<'a>(
         &'a self,
@@ -1448,7 +1412,6 @@ impl EditPredictionStore {
                         cx.notify();
                     }),
                 ],
-                copilot: None,
             })
     }
 
@@ -3615,17 +3578,6 @@ pub fn init(cx: &mut App) {
                     .get_or_insert_default()
                     .provider = Some(EditPredictionProvider::None)
             });
-        });
-        fn copilot_for_project(project: &Entity<Project>, cx: &mut App) -> Option<Entity<Copilot>> {
-            EditPredictionStore::try_global(cx).and_then(|store| {
-                store.update(cx, |this, cx| this.start_copilot_for_project(project, cx))
-            })
-        }
-
-        workspace.register_action(|workspace, _: &Reinstall, window, cx| {
-            if let Some(copilot) = copilot_for_project(workspace.project(), cx) {
-                copilot_ui::reinstall_and_sign_in(copilot, window, cx);
-            }
         });
     })
     .detach();

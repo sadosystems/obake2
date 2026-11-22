@@ -32,8 +32,6 @@ pub(crate) fn render_edit_prediction_setup_page(
     let providers = [
         Some(render_provider_dropdown(window, cx)),
         Some(render_zed_provider(settings_window, window, cx).into_any_element()),
-        render_github_copilot_provider(settings_window, window, cx)
-            .map(IntoElement::into_any_element),
         Some(
             render_api_key_provider(
                 IconName::Inception,
@@ -967,39 +965,3 @@ fn copilot_settings() -> Box<[SettingsPageItem]> {
     })])
 }
 
-fn render_github_copilot_provider(
-    settings_window: &SettingsWindow,
-    window: &mut Window,
-    cx: &mut Context<SettingsWindow>,
-) -> Option<impl IntoElement> {
-    let configuration_view = window.use_state(cx, |_, cx| {
-        copilot_ui::ConfigurationView::new(
-            move |cx| {
-                let app_state = AppState::global(cx);
-                copilot::GlobalCopilotAuth::try_get_or_init(app_state, cx)
-                    .is_some_and(|copilot| copilot.0.read(cx).is_authenticated())
-            },
-            copilot_ui::ConfigurationMode::EditPrediction,
-            cx,
-        )
-    });
-
-    let additional_fields = settings_window
-        .render_sub_page_items_section(copilot_settings().iter().enumerate(), true, window, cx)
-        .into_any_element();
-
-    Some(
-        v_flex()
-            .id("github-copilot")
-            .min_w_0()
-            .pt_8()
-            .gap_1p5()
-            .child(
-                SettingsSectionHeader::new("GitHub Copilot")
-                    .icon(IconName::Copilot)
-                    .no_padding(true),
-            )
-            .child(configuration_view)
-            .child(div().px_neg_8().child(additional_fields)),
-    )
-}
