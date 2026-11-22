@@ -246,20 +246,10 @@ members = [
     #
     # Extensions
     #
-
-    "extensions/glsl",
-    "extensions/html",
-    "extensions/proto",
-    "extensions/test-extension",
-
     #
     # Tooling
     #
-
-    "tooling/compliance",
-    "tooling/crates_io_client",
     "tooling/perf",
-    "tooling/xtask",
 ]
 default-members = ["crates/zed"]
 
@@ -304,12 +294,10 @@ codestral = { path = "crates/codestral" }
 collections = { path = "crates/collections", version = "0.1.0" }
 command_palette = { path = "crates/command_palette" }
 command_palette_hooks = { path = "crates/command_palette_hooks" }
-compliance = { path = "tooling/compliance" }
 component = { path = "crates/component" }
 component_preview = { path = "crates/component_preview" }
 context_server = { path = "crates/context_server" }
 crashes = { path = "crates/crashes" }
-crates_io_client = { path = "tooling/crates_io_client" }
 credentials_provider = { path = "crates/credentials_provider" }
 dap = { path = "crates/dap" }
 dap_adapters = { path = "crates/dap_adapters" }
@@ -1190,9 +1178,3 @@ large_enum_variant = "allow"
 nonminimal_bool = "allow"
 
 
-# Dylint discovers our custom lints through this entry, so `cargo dylint --all`
-# runs them without a `--path` argument. The `lints` package pins its own
-# nightly toolchain (see `tooling/lints/rust-toolchain.toml`) and is kept out of
-# this workspace on purpose.
-[workspace.metadata.dylint]
-libraries = [{ path = "tooling/lints" }]
