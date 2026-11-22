@@ -1824,6 +1824,10 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
 }
 
 async fn authenticate(client: Arc<Client>, cx: &AsyncApp) -> Result<()> {
+    // obake: never sign in to Zed's servers.
+    let _ = (&client, cx);
+    return Ok(());
+    #[allow(unreachable_code)]
     if stdout_is_a_pty() {
         if client::IMPERSONATE_LOGIN.is_some() {
             client.sign_in_with_optional_connect(false, cx).await?;

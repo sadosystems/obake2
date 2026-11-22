@@ -1085,6 +1085,10 @@ impl Client {
         try_provider: bool,
         cx: &AsyncApp,
     ) -> ConnectionResult<()> {
+        // obake: never connect to Zed's collab server.
+        let _ = (try_provider, cx);
+        return ConnectionResult::Result(Err(anyhow::anyhow!("obake: Zed server connection disabled")));
+        #[allow(unreachable_code)]
         let was_disconnected = match *self.status().borrow() {
             Status::SignedOut | Status::Authenticated => true,
             Status::ConnectionError

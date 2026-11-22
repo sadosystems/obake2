@@ -301,6 +301,10 @@ async fn upload_minidump(
     minidump: Vec<u8>,
     metadata: &crashes::CrashInfo,
 ) -> Result<()> {
+    // obake: crash reports are never uploaded.
+    let _ = (&client, endpoint, &minidump, metadata);
+    return Ok(());
+    #[allow(unreachable_code)]
     if metadata.init.commit_sha == "no sha" {
         log::warn!("No commit sha set, skipping minidump upload");
         return Ok(());

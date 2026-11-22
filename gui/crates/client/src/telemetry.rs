@@ -571,6 +571,10 @@ impl Telemetry {
     }
 
     fn report_event(self: &Arc<Self>, mut event: Event) {
+        // obake: telemetry is never queued or sent.
+        let _ = &mut event;
+        return;
+        #[allow(unreachable_code)]
         let mut state = self.state.lock();
         // RUST_LOG=telemetry=trace to debug telemetry events
         log::trace!(target: "telemetry", "{:?}", event);
@@ -665,6 +669,9 @@ impl Telemetry {
     }
 
     pub async fn flush_events_inner(self: &Arc<Self>) -> Result<()> {
+        // obake: telemetry is never sent.
+        return Ok(());
+        #[allow(unreachable_code)]
         let (json_bytes, request_body) = {
             let mut state = self.state.lock();
             state.first_event_date_time = None;
