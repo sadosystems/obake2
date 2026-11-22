@@ -110,6 +110,11 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             disabled: false,
             items: vec![
                 MenuItem::action("Launch Game...", obake_actions::obake::LaunchGame),
+                MenuItem::action("Record Movie...", obake_actions::obake::RecordMovie),
+                MenuItem::action("Play Movie...", obake_actions::obake::PlayMovie),
+                MenuItem::separator(),
+                MenuItem::action("Save Movie", obake_actions::obake::SaveMovie),
+                MenuItem::action("Read-only", obake_actions::obake::ToggleReadOnly),
                 MenuItem::separator(),
                 MenuItem::action("Play / Pause", obake_actions::obake::TogglePause),
                 MenuItem::action("Step Frame", obake_actions::obake::StepFrame),

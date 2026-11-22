@@ -294,6 +294,14 @@ pub mod obake {
             StepFrame,
             /// Asks the game to quit (killed after two seconds).
             StopGame,
+            /// Picks a game, then a movie file to record its inputs into (libTAS .ltm).
+            RecordMovie,
+            /// Picks a movie file (libTAS .ltm), then the game to play it back on.
+            PlayMovie,
+            /// Saves the focused game's movie to its file.
+            SaveMovie,
+            /// Switches the focused game's movie between playback and recording.
+            ToggleReadOnly,
         ]
     );
 }

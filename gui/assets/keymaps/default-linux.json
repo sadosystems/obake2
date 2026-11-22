@@ -633,6 +633,12 @@
     },
   },
   {
+    "context": "GameView",
+    "bindings": {
+      "ctrl-s": "obake::SaveMovie",
+    },
+  },
+  {
     "context": "Workspace",
     "bindings": {
       "ctrl-alt-l": "obake::LaunchGame",
