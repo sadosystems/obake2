@@ -3,8 +3,6 @@
 rustflags = ["-C", "symbol-mangling-version=v0", "--cfg", "tokio_unstable", "-Zthreads=8"]
 
 [alias]
-# Full test suite: LLVM opt-level=1 build, ~5x faster test runs than the dev build.
-t = "nextest run --workspace --cargo-profile test-fast -P llvm"
 perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", "--all-features", "--config", "target.'cfg(true)'.runner='cargo run -p perf --release'", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]"]
 # Keep similar flags here to share some ccache
 perf-compare = ["run", "--profile", "release-fast", "-p", "perf", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]", "--", "compare"]
