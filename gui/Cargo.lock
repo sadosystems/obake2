@@ -13787,7 +13787,6 @@ dependencies = [
  "serde_json",
  "serde_json_lenient",
  "serde_path_to_error",
- "settings_json",
  "settings_macros",
  "strum",
  "util",

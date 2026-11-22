@@ -27,7 +27,6 @@ use serde::de::DeserializeOwned;
 pub use serde_helper::{
     serialize_f32_with_two_decimal_places, serialize_optional_f32_with_two_decimal_places,
 };
-use settings_json::parse_json_with_comments;
 pub use terminal::*;
 pub use theme::*;
 pub use title_bar::*;
@@ -1699,4 +1698,15 @@ impl std::str::FromStr for DelayMs {
             .map(DelayMs)
             .with_context(|| format!("failed to parse delay duration: {s}"))
     }
+}
+
+/// obake: local copy of `settings_json::parse_json_with_comments`, so this crate
+/// doesn't wait on settings_json's tree-sitter build in cold builds.
+pub(crate) fn parse_json_with_comments<T: serde::de::DeserializeOwned>(
+    content: &str,
+) -> anyhow::Result<T> {
+    let mut deserializer = serde_json_lenient::Deserializer::from_str(content);
+    let value = serde_path_to_error::deserialize(&mut deserializer)?;
+    deserializer.end()?;
+    Ok(value)
 }

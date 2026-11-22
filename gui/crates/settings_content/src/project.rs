@@ -8,7 +8,7 @@ use collections::{BTreeMap, HashMap};
 use gpui_rgba::Rgba;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use settings_json::parse_json_with_comments;
+use crate::parse_json_with_comments;
 use settings_macros::{MergeFrom, with_fallible_options};
 use util::serde::default_true;
 
