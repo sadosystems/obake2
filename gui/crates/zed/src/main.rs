@@ -686,7 +686,6 @@ fn main() {
 
         editor::init(cx);
 
-        audio::init(cx);
         workspace::init(app_state.clone(), cx);
         ui_prompt::init(cx);
         tab_switcher::init(cx);
