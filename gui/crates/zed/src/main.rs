@@ -765,6 +765,8 @@ fn main() {
         settings_profile_selector::init(cx);
         language_tools::init(cx);
         notifications::init(app_state.client.clone(), app_state.user_store.clone(), cx);
+        // obake: was called from the removed collab_ui::init.
+        title_bar::init(cx);
         git_ui::init(cx);
         markdown_preview::init(cx);
         tabular_data_preview::init(cx);
