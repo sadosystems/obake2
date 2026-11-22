@@ -3091,18 +3091,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deepseek"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "http_client",
- "schemars 1.0.4",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "deflate64"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6442,7 +6430,6 @@ dependencies = [
  "convert_case 0.11.0",
  "credentials_provider",
  "db",
- "deepseek",
  "extension",
  "extension_host",
  "feature_flags",
@@ -6453,16 +6440,9 @@ dependencies = [
  "gpui_tokio",
  "http_client",
  "language_model",
- "llama_cpp",
- "lmstudio",
  "log",
  "menu",
- "mistral",
  "ollama",
- "open_ai",
- "open_router",
- "openai_subscribed",
- "opencode",
  "parking_lot",
  "paths",
  "rand 0.9.4",
@@ -6476,8 +6456,6 @@ dependencies = [
  "ui",
  "ui_input",
  "util",
- "x_ai",
- "x_ai_subscribed",
 ]
 
 [[package]]
@@ -6600,20 +6578,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
-name = "llama_cpp"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "http_client",
- "language_model_core",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "url",
-]
-
-[[package]]
 name = "lmdb-master-sys"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6622,19 +6586,6 @@ dependencies = [
  "cc",
  "doxygen-rs",
  "libc",
-]
-
-[[package]]
-name = "lmstudio"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "http_client",
- "language_model_core",
- "schemars 1.0.4",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -7231,19 +7182,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "536bfad37a309d62069485248eeaba1e8d9853aaf951caaeaed0585a95346f08"
 dependencies = [
  "windows-sys 0.60.2",
-]
-
-[[package]]
-name = "mistral"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "http_client",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "strum",
 ]
 
 [[package]]
@@ -8192,25 +8130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "open_ai"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "collections",
- "futures",
- "http_client",
- "language_model_core",
- "log",
- "pretty_assertions",
- "rand 0.9.4",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "strum",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "open_path_prompt"
 version = "0.1.0"
 dependencies = [
@@ -8230,63 +8149,6 @@ dependencies = [
  "ui",
  "util",
  "workspace",
-]
-
-[[package]]
-name = "open_router"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "http_client",
- "language_model_core",
- "open_ai",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "settings",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "openai_subscribed"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "credentials_provider",
- "futures",
- "gpui",
- "gpui_util",
- "http_client",
- "language_model",
- "log",
- "oauth_callback_server",
- "open_ai",
- "parking_lot",
- "rand 0.9.4",
- "serde",
- "serde_json",
- "sha2",
- "smol",
- "url",
-]
-
-[[package]]
-name = "opencode"
-version = "0.1.0"
-dependencies = [
- "anthropic",
- "anyhow",
- "futures",
- "google_ai",
- "http_client",
- "language_model_core",
- "log",
- "open_ai",
- "schemars 1.0.4",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -14827,41 +14689,6 @@ name = "x11rb-protocol"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea6fc2961e4ef194dcbfe56bb845534d0dc8098940c7e5c012a258bfec6701bd"
-
-[[package]]
-name = "x_ai"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "schemars 1.0.4",
- "serde",
- "strum",
-]
-
-[[package]]
-name = "x_ai_subscribed"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "credentials_provider",
- "futures",
- "gpui",
- "gpui_util",
- "http_client",
- "language_model",
- "log",
- "oauth_callback_server",
- "open_ai",
- "parking_lot",
- "rand 0.9.4",
- "serde",
- "serde_json",
- "sha2",
- "smol",
- "url",
- "x_ai",
-]
 
 [[package]]
 name = "xattr"

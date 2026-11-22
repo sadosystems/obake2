@@ -31,7 +31,6 @@ collections.workspace = true
 component.workspace = true
 convert_case.workspace = true
 credentials_provider.workspace = true
-deepseek = { workspace = true, features = ["schemars"] }
 extension.workspace = true
 extension_host.workspace = true
 fs.workspace = true
@@ -41,16 +40,9 @@ gpui.workspace = true
 gpui_tokio.workspace = true
 http_client.workspace = true
 language_model.workspace = true
-llama_cpp = { workspace = true, features = ["schemars"] }
-lmstudio = { workspace = true, features = ["schemars"] }
 log.workspace = true
 menu.workspace = true
-mistral = { workspace = true, features = ["schemars"] }
 ollama = { workspace = true, features = ["schemars"] }
-open_ai = { workspace = true, features = ["schemars"] }
-openai_subscribed.workspace = true
-opencode = { workspace = true, features = ["schemars"] }
-open_router.workspace = true
 paths.workspace = true
 rand.workspace = true
 release_channel.workspace = true
@@ -63,9 +55,6 @@ strum.workspace = true
 ui.workspace = true
 ui_input.workspace = true
 util.workspace = true
-x_ai = { workspace = true, features = ["schemars"] }
-x_ai_subscribed.workspace = true
-
 [dev-dependencies]
 client = { workspace = true, features = ["test-support"] }
 clock = { workspace = true, features = ["test-support"] }

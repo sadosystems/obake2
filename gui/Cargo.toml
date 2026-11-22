@@ -36,7 +36,6 @@ members = [
     "crates/credentials_provider",
     "crates/dap",
     "crates/db",
-    "crates/deepseek",
     "crates/dev_container",
     "crates/edit_prediction_types",
     "crates/editor",
@@ -83,26 +82,19 @@ members = [
     "crates/language_model_core",
     "crates/language_model_selector",
     "crates/language_models",
-    "crates/llama_cpp",
-    "crates/lmstudio",
     "crates/lsp",
     "crates/markdown",
     "crates/markdown_preview",
     "crates/menu",
     "crates/mermaid_render",
     "crates/migrator",
-    "crates/mistral",
     "crates/multi_buffer",
     "crates/net",
     "crates/node_runtime",
     "crates/notifications",
     "crates/oauth_callback_server",
     "crates/ollama",
-    "crates/open_ai",
     "crates/open_path_prompt",
-    "crates/open_router",
-    "crates/openai_subscribed",
-    "crates/opencode",
     "crates/path",
     "crates/paths",
     "crates/picker",
@@ -169,8 +161,6 @@ members = [
     "crates/windows_resources",
     "crates/workspace",
     "crates/worktree",
-    "crates/x_ai",
-    "crates/x_ai_subscribed",
     "crates/zed",
     "crates/zed_actions",
     "crates/zed_credentials_provider",
@@ -242,7 +232,6 @@ crashes = { path = "crates/crashes" }
 credentials_provider = { path = "crates/credentials_provider" }
 dap = { path = "crates/dap" }
 db = { path = "crates/db" }
-deepseek = { path = "crates/deepseek" }
 dev_container = { path = "crates/dev_container" }
 edit_prediction_types = { path = "crates/edit_prediction_types" }
 editor = { path = "crates/editor" }
@@ -286,26 +275,19 @@ language_model = { path = "crates/language_model" }
 language_model_core = { path = "crates/language_model_core" }
 language_model_selector = { path = "crates/language_model_selector" }
 language_models = { path = "crates/language_models" }
-llama_cpp = { path = "crates/llama_cpp" }
-lmstudio = { path = "crates/lmstudio" }
 lsp = { path = "crates/lsp" }
 markdown = { path = "crates/markdown" }
 markdown_preview = { path = "crates/markdown_preview" }
 menu = { path = "crates/menu" }
 mermaid_render = { path = "crates/mermaid_render" }
 migrator = { path = "crates/migrator" }
-mistral = { path = "crates/mistral" }
 multi_buffer = { path = "crates/multi_buffer" }
 net = { path = "crates/net" }
 node_runtime = { path = "crates/node_runtime" }
 notifications = { path = "crates/notifications" }
 oauth_callback_server = { path = "crates/oauth_callback_server" }
 ollama = { path = "crates/ollama" }
-open_ai = { path = "crates/open_ai" }
 open_path_prompt = { path = "crates/open_path_prompt" }
-open_router = { path = "crates/open_router", features = ["schemars"] }
-openai_subscribed = { path = "crates/openai_subscribed" }
-opencode = { path = "crates/opencode" }
 path = { path = "crates/path" }
 paths = { path = "crates/paths" }
 perf = { path = "tooling/perf", default-features = false }
@@ -369,8 +351,6 @@ which_key = { path = "crates/which_key" }
 windows_resources = { path = "crates/windows_resources" }
 workspace = { path = "crates/workspace" }
 worktree = { path = "crates/worktree" }
-x_ai = { path = "crates/x_ai" }
-x_ai_subscribed = { path = "crates/x_ai_subscribed" }
 zed_actions = { path = "crates/zed_actions" }
 zed_credentials_provider = { path = "crates/zed_credentials_provider" }
 zed_env_vars = { path = "crates/zed_env_vars" }
