@@ -1216,6 +1216,20 @@ fn register_actions(
         .register_action(|workspace: &mut Workspace, _: &NewFile, window, cx| {
             let blank = workspace::BlankView::new(cx);
             workspace.add_item_to_active_pane(Box::new(blank), None, true, window, cx);
+        })
+        // obake: split the active pane even when focus is outside it (e.g. in the
+        // project panel). The pane's own handlers still win when it has focus.
+        .register_action(|workspace: &mut Workspace, _: &workspace::pane::SplitLeft, window, cx| {
+            obake_split_active(workspace, workspace::SplitDirection::Left, window, cx)
+        })
+        .register_action(|workspace: &mut Workspace, _: &workspace::pane::SplitRight, window, cx| {
+            obake_split_active(workspace, workspace::SplitDirection::Right, window, cx)
+        })
+        .register_action(|workspace: &mut Workspace, _: &workspace::pane::SplitUp, window, cx| {
+            obake_split_active(workspace, workspace::SplitDirection::Up, window, cx)
+        })
+        .register_action(|workspace: &mut Workspace, _: &workspace::pane::SplitDown, window, cx| {
+            obake_split_active(workspace, workspace::SplitDirection::Down, window, cx)
         });
 
     #[cfg(not(target_os = "windows"))]
@@ -10449,4 +10463,22 @@ mod tests {
             .iter()
             .any(|item| matches!(item, OwnedMenuItem::Action { name, .. } if name == item_name))
     }
+}
+
+fn obake_split_active(
+    workspace: &mut Workspace,
+    direction: workspace::SplitDirection,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let pane = workspace.active_pane().clone();
+    let task = workspace.split_and_clone(pane, direction, window, cx);
+    cx.spawn_in(window, async move |_, cx| {
+        if let Some(new_pane) = task.await {
+            new_pane
+                .update_in(cx, |pane, window, cx| window.focus(&pane.focus_handle(cx), cx))
+                .ok();
+        }
+    })
+    .detach();
 }
