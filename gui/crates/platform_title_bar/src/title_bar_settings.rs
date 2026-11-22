@@ -44,7 +44,28 @@ impl Settings for TitleBarSettings {
             show_user_menu: content.show_user_menu.unwrap(),
             show_menus: content.show_menus.unwrap(),
             open_menus_on_hover: content.open_menus_on_hover.unwrap(),
-            button_layout: content.button_layout.unwrap_or_default().into_layout(),
+            button_layout: into_layout(content.button_layout.unwrap_or_default()),
         }
     }
+}
+
+// obake: moved here from settings_content so that crate doesn't depend on gpui.
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+fn into_layout(content: settings::WindowButtonLayoutContent) -> Option<gpui::WindowButtonLayout> {
+    use util::ResultExt;
+
+    match content {
+        settings::WindowButtonLayoutContent::PlatformDefault => None,
+        settings::WindowButtonLayoutContent::Standard => {
+            Some(gpui::WindowButtonLayout::linux_default())
+        }
+        settings::WindowButtonLayoutContent::Custom(layout) => {
+            gpui::WindowButtonLayout::parse(&layout).log_err()
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
+fn into_layout(_content: settings::WindowButtonLayoutContent) -> Option<gpui::WindowButtonLayout> {
+    None
 }

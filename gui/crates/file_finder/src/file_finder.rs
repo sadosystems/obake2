@@ -358,7 +358,15 @@ impl FileFinder {
 
     pub fn modal_max_width(width_setting: ModalWidthContent, window: &mut Window) -> Pixels {
         let small_width = picker::DEFAULT_MODAL_WIDTH.to_pixels(window.rem_size());
-        width_setting.to_pixels(small_width, window.viewport_size().width)
+        // obake: moved from settings_content (which no longer depends on gpui).
+        let window_width = window.viewport_size().width;
+        match width_setting {
+            ModalWidthContent::Small => small_width,
+            ModalWidthContent::Full => window_width,
+            ModalWidthContent::XLarge => (window_width - gpui::px(512.)).max(small_width),
+            ModalWidthContent::Large => (window_width - gpui::px(768.)).max(small_width),
+            ModalWidthContent::Medium => (window_width - gpui::px(1024.)).max(small_width),
+        }
     }
 }
 
