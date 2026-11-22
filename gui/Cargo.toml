@@ -997,3 +997,16 @@ codegen-backend = "llvm"
 
 [profile.test-llvm.package.zmij]
 codegen-backend = "llvm"
+
+# Tests: LLVM with light optimization runs the suite much faster than unoptimized Cranelift.
+[profile.test-fast]
+inherits = "dev"
+codegen-backend = "llvm"
+opt-level = 1
+
+[profile.test-fast.build-override]
+codegen-backend = "llvm"
+opt-level = 0
+
+[profile.test-fast.package.zmij]
+codegen-backend = "llvm"

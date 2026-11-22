@@ -22,3 +22,7 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 [env]
 MACOSX_DEPLOYMENT_TARGET = "12.0"
 
+
+[alias]
+# Full test suite: LLVM opt-level=1 build, ~5x faster test runs than the dev build.
+t = "nextest run --workspace --cargo-profile test-fast -P llvm"
