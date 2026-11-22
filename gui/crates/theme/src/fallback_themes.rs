@@ -58,48 +58,48 @@ pub fn apply_theme_color_defaults(
 }
 
 pub(crate) fn obake_default_dark() -> Theme {
-    let bg = hsla(215. / 360., 12. / 100., 15. / 100., 1.);
-    let editor = hsla(220. / 360., 12. / 100., 18. / 100., 1.);
-    let elevated_surface = hsla(225. / 360., 12. / 100., 17. / 100., 1.);
-    let hover = hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 1.0);
+    let bg = hsla(0., 0., 14.5 / 100., 1.);
+    let editor = hsla(0., 0., 17.2 / 100., 1.);
+    let elevated_surface = hsla(0., 0., 16.0 / 100., 1.);
+    let hover = hsla(0., 0., 25.2 / 100., 1.0);
 
-    let blue = hsla(207.8 / 360., 81. / 100., 66. / 100., 1.0);
-    let gray = hsla(218.8 / 360., 10. / 100., 40. / 100., 1.0);
-    let green = hsla(95. / 360., 38. / 100., 62. / 100., 1.0);
-    let orange = hsla(29. / 360., 54. / 100., 61. / 100., 1.0);
-    let purple = hsla(286. / 360., 51. / 100., 64. / 100., 1.0);
-    let red = hsla(355. / 360., 65. / 100., 65. / 100., 1.0);
-    let teal = hsla(187. / 360., 47. / 100., 55. / 100., 1.0);
-    let yellow = hsla(39. / 360., 67. / 100., 69. / 100., 1.0);
+    let blue = hsla(0., 0., 65.3 / 100., 1.0);
+    let gray = hsla(0., 0., 38.7 / 100., 1.0);
+    let green = hsla(0., 0., 70.4 / 100., 1.0);
+    let orange = hsla(0., 0., 65.3 / 100., 1.0);
+    let purple = hsla(0., 0., 58.7 / 100., 1.0);
+    let red = hsla(0., 0., 58.5 / 100., 1.0);
+    let teal = hsla(0., 0., 64.8 / 100., 1.0);
+    let yellow = hsla(0., 0., 77.4 / 100., 1.0);
 
     const ADDED_COLOR: Hsla = Hsla {
-        h: 134. / 360.,
-        s: 0.55,
-        l: 0.40,
+        h: 0.,
+        s: 0.,
+        l: 0.523,
         a: 1.0,
     };
     const WORD_ADDED_COLOR: Hsla = Hsla {
-        h: 134. / 360.,
-        s: 0.55,
-        l: 0.40,
+        h: 0.,
+        s: 0.,
+        l: 0.523,
         a: 0.35,
     };
     const MODIFIED_COLOR: Hsla = Hsla {
-        h: 48. / 360.,
-        s: 0.76,
-        l: 0.47,
+        h: 0.,
+        s: 0.,
+        l: 0.697,
         a: 1.0,
     };
     const REMOVED_COLOR: Hsla = Hsla {
-        h: 350. / 360.,
-        s: 0.88,
-        l: 0.25,
+        h: 0.,
+        s: 0.,
+        l: 0.245,
         a: 1.0,
     };
     const WORD_DELETED_COLOR: Hsla = Hsla {
-        h: 350. / 360.,
-        s: 0.88,
-        l: 0.25,
+        h: 0.,
+        s: 0.,
+        l: 0.245,
         a: 0.80,
     };
 
@@ -115,37 +115,37 @@ pub(crate) fn obake_default_dark() -> Theme {
                 blue, orange, purple, teal, red, green, yellow,
             ])),
             colors: ThemeColors {
-                border: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                border_variant: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                border_focused: hsla(223. / 360., 78. / 100., 65. / 100., 1.),
-                border_selected: hsla(222.6 / 360., 77.5 / 100., 65.1 / 100., 1.0),
+                border: hsla(0., 0., 11.3 / 100., 1.),
+                border_variant: hsla(0., 0., 23.9 / 100., 1.),
+                border_focused: hsla(0., 0., 55.3 / 100., 1.),
+                border_selected: hsla(0., 0., 55.7 / 100., 1.0),
                 border_transparent: SystemColors::default().transparent,
-                border_disabled: hsla(222.0 / 360., 11.6 / 100., 33.7 / 100., 1.0),
+                border_disabled: hsla(0., 0., 32.1 / 100., 1.0),
                 elevated_surface_background: elevated_surface,
                 surface_background: bg,
                 background: bg,
-                element_background: hsla(223.0 / 360., 13. / 100., 21. / 100., 1.0),
+                element_background: hsla(0., 0., 19.8 / 100., 1.0),
                 element_hover: hover,
-                element_active: hsla(220.0 / 360., 11.8 / 100., 20.0 / 100., 1.0),
-                element_selected: hsla(224.0 / 360., 11.3 / 100., 26.1 / 100., 1.0),
+                element_active: hsla(0., 0., 19.2 / 100., 1.0),
+                element_selected: hsla(0., 0., 24.8 / 100., 1.0),
                 element_disabled: SystemColors::default().transparent,
                 element_selection_background: player.local().selection.alpha(0.25),
-                drop_target_background: hsla(220.0 / 360., 8.3 / 100., 21.4 / 100., 1.0),
-                drop_target_border: hsla(221. / 360., 11. / 100., 86. / 100., 1.0),
+                drop_target_background: hsla(0., 0., 20.8 / 100., 1.0),
+                drop_target_border: hsla(0., 0., 85.4 / 100., 1.0),
                 ghost_element_background: SystemColors::default().transparent,
                 ghost_element_hover: hover,
-                ghost_element_active: hsla(220.0 / 360., 11.8 / 100., 20.0 / 100., 1.0),
-                ghost_element_selected: hsla(224.0 / 360., 11.3 / 100., 26.1 / 100., 1.0),
+                ghost_element_active: hsla(0., 0., 19.2 / 100., 1.0),
+                ghost_element_selected: hsla(0., 0., 24.8 / 100., 1.0),
                 ghost_element_disabled: SystemColors::default().transparent,
-                text: hsla(221. / 360., 11. / 100., 86. / 100., 1.0),
-                text_muted: hsla(218.0 / 360., 7. / 100., 46. / 100., 1.0),
-                text_placeholder: hsla(220.0 / 360., 6.6 / 100., 44.5 / 100., 1.0),
-                text_disabled: hsla(220.0 / 360., 6.6 / 100., 44.5 / 100., 1.0),
-                text_accent: hsla(222.6 / 360., 77.5 / 100., 65.1 / 100., 1.0),
-                icon: hsla(222.9 / 360., 9.9 / 100., 86.1 / 100., 1.0),
-                icon_muted: hsla(220.0 / 360., 12.1 / 100., 66.1 / 100., 1.0),
-                icon_disabled: hsla(220.0 / 360., 6.4 / 100., 45.7 / 100., 1.0),
-                icon_placeholder: hsla(220.0 / 360., 6.4 / 100., 45.7 / 100., 1.0),
+                text: hsla(0., 0., 85.4 / 100., 1.0),
+                text_muted: hsla(0., 0., 45.0 / 100., 1.0),
+                text_placeholder: hsla(0., 0., 43.4 / 100., 1.0),
+                text_disabled: hsla(0., 0., 43.4 / 100., 1.0),
+                text_accent: hsla(0., 0., 55.7 / 100., 1.0),
+                icon: hsla(0., 0., 85.5 / 100., 1.0),
+                icon_muted: hsla(0., 0., 64.6 / 100., 1.0),
+                icon_disabled: hsla(0., 0., 44.6 / 100., 1.0),
+                icon_placeholder: hsla(0., 0., 44.6 / 100., 1.0),
                 icon_accent: blue,
                 debugger_accent: red,
                 status_bar_background: bg,
@@ -161,28 +161,18 @@ pub(crate) fn obake_default_dark() -> Theme {
                 editor_background: editor,
                 editor_gutter_background: editor,
                 editor_subheader_background: bg,
-                editor_active_line_background: hsla(222.9 / 360., 13.5 / 100., 20.4 / 100., 1.0),
-                editor_highlighted_line_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.1),
-                editor_debugger_active_line_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
-                editor_line_number: hsla(222.0 / 360., 11.5 / 100., 34.1 / 100., 1.0),
-                editor_active_line_number: hsla(216.0 / 360., 5.9 / 100., 49.6 / 100., 1.0),
-                editor_hover_line_number: hsla(216.0 / 360., 5.9 / 100., 56.7 / 100., 1.0),
-                editor_invisible: hsla(222.0 / 360., 11.5 / 100., 34.1 / 100., 1.0),
-                editor_wrap_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_active_wrap_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_indent_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_indent_guide_active: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                editor_document_highlight_read_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
+                editor_active_line_background: hsla(0., 0., 19.2 / 100., 1.0),
+                editor_highlighted_line_background: hsla(0., 0., 65.3 / 100., 0.1),
+                editor_debugger_active_line_background: hsla(0., 0., 65.3 / 100., 0.2),
+                editor_line_number: hsla(0., 0., 32.5 / 100., 1.0),
+                editor_active_line_number: hsla(0., 0., 48.8 / 100., 1.0),
+                editor_hover_line_number: hsla(0., 0., 56.0 / 100., 1.0),
+                editor_invisible: hsla(0., 0., 32.5 / 100., 1.0),
+                editor_wrap_guide: hsla(0., 0., 23.9 / 100., 1.),
+                editor_active_wrap_guide: hsla(0., 0., 23.9 / 100., 1.),
+                editor_indent_guide: hsla(0., 0., 23.9 / 100., 1.),
+                editor_indent_guide_active: hsla(0., 0., 11.3 / 100., 1.),
+                editor_document_highlight_read_background: hsla(0., 0., 65.3 / 100., 0.2),
                 editor_document_highlight_write_background: gpui::red(),
                 editor_document_highlight_bracket_background: gpui::green(),
                 editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12),
@@ -224,29 +214,24 @@ pub(crate) fn obake_default_dark() -> Theme {
                 terminal_ansi_dim_white: crate::neutral().dark().step_10(),
                 panel_background: bg,
                 panel_focused_border: blue,
-                panel_indent_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                panel_indent_guide_hover: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                panel_indent_guide_active: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
+                panel_indent_guide: hsla(0., 0., 23.9 / 100., 1.),
+                panel_indent_guide_hover: hsla(0., 0., 11.3 / 100., 1.),
+                panel_indent_guide_active: hsla(0., 0., 11.3 / 100., 1.),
                 panel_overlay_background: bg,
                 panel_overlay_hover: hover,
                 pane_focused_border: blue,
-                pane_group_border: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
+                pane_group_border: hsla(0., 0., 11.3 / 100., 1.),
                 scrollbar_thumb_background: gpui::transparent_black(),
                 scrollbar_thumb_hover_background: hover,
-                scrollbar_thumb_active_background: hsla(
-                    225.0 / 360.,
-                    11.8 / 100.,
-                    26.7 / 100.,
-                    1.0,
-                ),
-                scrollbar_thumb_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
+                scrollbar_thumb_active_background: hsla(0., 0., 25.2 / 100., 1.0),
+                scrollbar_thumb_border: hsla(0., 0., 23.9 / 100., 1.),
                 scrollbar_track_background: gpui::transparent_black(),
-                scrollbar_track_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                minimap_thumb_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_hover_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_active_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_foreground: hsla(218. / 360., 14. / 100., 71. / 100., 1.),
+                scrollbar_track_border: hsla(0., 0., 23.9 / 100., 1.),
+                minimap_thumb_background: hsla(0., 0., 25.2 / 100., 0.7),
+                minimap_thumb_hover_background: hsla(0., 0., 25.2 / 100., 0.7),
+                minimap_thumb_active_background: hsla(0., 0., 25.2 / 100., 0.7),
+                minimap_thumb_border: hsla(0., 0., 23.9 / 100., 1.),
+                editor_foreground: hsla(0., 0., 69.7 / 100., 1.),
                 editor_code_lens_foreground: None,
                 link_text_hover: blue,
                 version_control_added: ADDED_COLOR,
@@ -266,7 +251,7 @@ pub(crate) fn obake_default_dark() -> Theme {
                 vim_visual_background: SystemColors::default().transparent,
                 vim_visual_line_background: SystemColors::default().transparent,
                 vim_visual_block_background: SystemColors::default().transparent,
-                vim_yank_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.2),
+                vim_yank_background: hsla(0., 0., 65.3 / 100., 0.2),
                 vim_helix_jump_label_foreground: red,
                 vim_helix_normal_background: SystemColors::default().transparent,
                 vim_helix_select_background: SystemColors::default().transparent,
