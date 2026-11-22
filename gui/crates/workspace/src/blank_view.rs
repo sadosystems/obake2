@@ -60,6 +60,8 @@ impl Render for BlankView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .size_full()
+            // Match the active tab, which is drawn in the editor background color.
+            .bg(cx.theme().colors().editor_background)
             .track_focus(&self.focus_handle(cx))
             .flex()
             .items_center()
