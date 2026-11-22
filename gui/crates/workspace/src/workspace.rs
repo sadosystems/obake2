@@ -2,6 +2,8 @@ pub mod active_file_name;
 pub mod dock;
 pub mod history_manager;
 pub mod invalid_item_view;
+pub mod blank_view;
+pub use blank_view::BlankView;
 pub mod item;
 mod modal_layer;
 mod multi_workspace;
@@ -6535,7 +6537,10 @@ impl Workspace {
         let item = pane.read(cx).active_item().filter(|item| item.can_split(cx));
         let Some(item) = item else {
             let new_pane = self.split_pane(pane, direction, window, cx);
-            window.focus(&new_pane.focus_handle(cx), cx);
+            let blank = BlankView::new(cx);
+            new_pane.update(cx, |pane, cx| {
+                pane.add_item(Box::new(blank), true, true, None, window, cx)
+            });
             return Task::ready(Some(new_pane));
         };
         let task = item.clone_on_split(self.database_id(), window, cx);

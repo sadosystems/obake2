@@ -1941,7 +1941,10 @@ pub(crate) async fn restore_or_create_workspace(
                             WorkspaceSettings::get_global(cx).restore_on_startup;
                         match restore_on_startup {
                             workspace::RestoreOnStartupBehavior::Launchpad => {}
-                            _ => {}
+                            _ => {
+                                let blank = workspace::BlankView::new(cx);
+                                workspace.add_item_to_active_pane(Box::new(blank), None, true, window, cx);
+                            }
                         }
                     },
                 )
@@ -1960,7 +1963,10 @@ pub(crate) async fn restore_or_create_workspace(
                     let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
                     match restore_on_startup {
                         workspace::RestoreOnStartupBehavior::Launchpad => {}
-                        _ => {}
+                        _ => {
+                            let blank = workspace::BlankView::new(cx);
+                            workspace.add_item_to_active_pane(Box::new(blank), None, true, window, cx);
+                        }
                     }
                 },
             )

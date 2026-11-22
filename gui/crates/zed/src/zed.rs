@@ -1355,7 +1355,11 @@ fn register_actions(
                 .detach_and_log_err(cx);
             }
         })
-;
+        // obake: "new" opens a blank, draggable placeholder view in the active pane.
+        .register_action(|workspace: &mut Workspace, _: &NewFile, window, cx| {
+            let blank = workspace::BlankView::new(cx);
+            workspace.add_item_to_active_pane(Box::new(blank), None, true, window, cx);
+        });
 
     #[cfg(not(target_os = "windows"))]
     workspace.register_action(install_cli);
