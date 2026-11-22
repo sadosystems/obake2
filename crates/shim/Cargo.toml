@@ -1,0 +1,13 @@
+[package]
+name = "obake-shim"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[lib]
+name = "obake_shim"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc.workspace = true
+obake-protocol = { path = "../protocol" }

@@ -1,0 +1,9 @@
+[package]
+name = "obake-controller"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+libc.workspace = true
+obake-protocol = { path = "../protocol" }

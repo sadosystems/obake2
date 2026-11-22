@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["crates/protocol", "crates/shim", "crates/controller", "crates/cli"]
+exclude = ["gui"]
+
+[workspace.package]
+edition = "2021"
+license = "GPL-3.0-or-later"
+version = "0.1.0"
+
+[workspace.dependencies]
+libc = "0.2"
+
+[profile.release]
+debug = 1

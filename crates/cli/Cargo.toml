@@ -1,0 +1,12 @@
+[package]
+name = "obake-cli"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "obake"
+path = "src/main.rs"
+
+[dependencies]
+obake-controller = { path = "../controller" }
