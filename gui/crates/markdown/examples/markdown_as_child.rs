@@ -27,7 +27,7 @@ pub fn main() {
         let node_runtime = NodeRuntime::unavailable();
         let language_registry = Arc::new(LanguageRegistry::new(cx.background_executor().clone()));
         let fs = fs::FakeFs::new(cx.background_executor().clone());
-        languages::init(language_registry, fs, node_runtime, cx);
+        let _ = (&language_registry, fs, node_runtime); // obake: built-in languages removed
         theme_settings::init(LoadThemes::JustBase, cx);
         Assets.load_fonts(cx).unwrap();
 

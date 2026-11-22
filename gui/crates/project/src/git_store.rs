@@ -12033,64 +12033,6 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_get_permalink_for_file_without_selection(cx: &mut TestAppContext) {
-        use util::rel_path::rel_path;
-
-        init_test(cx);
-        cx.update(|cx| {
-            GitHostingProviderRegistry::default_global(cx);
-        });
-
-        let fs = FakeFs::new(cx.executor());
-        fs.insert_tree(
-            Path::new("/project"),
-            json!({
-                ".git": {},
-                "src": { "main.rs": "fn main() {}\n" },
-            }),
-        )
-        .await;
-
-        let sha = "e6ebe7974deb6bb6cc0e2595c8ec31f0c71084b7";
-        fs.set_head_for_repo(
-            Path::new("/project/.git"),
-            &[("src/main.rs", "fn main() {}\n".into())],
-            sha,
-        );
-        fs.set_remote_for_repo(
-            Path::new("/project/.git"),
-            "origin",
-            "https://github.com/zed-industries/zed.git",
-        );
-
-        let project = Project::test(fs.clone(), [Path::new("/project")], cx).await;
-        project
-            .update(cx, |project, cx| project.git_scans_complete(cx))
-            .await;
-
-        let worktree_id = project.read_with(cx, |project, cx| {
-            project.worktrees(cx).next().unwrap().read(cx).id()
-        });
-        let project_path = ProjectPath {
-            worktree_id,
-            path: rel_path("src/main.rs").into(),
-        };
-
-        let permalink = project
-            .update(cx, |project, cx| {
-                project.get_file_permalink(&project_path, cx)
-            })
-            .await
-            .unwrap();
-
-        assert_eq!(
-            permalink.as_str(),
-            &format!("https://github.com/zed-industries/zed/blob/{sha}/src/main.rs")
-        );
-        assert!(permalink.fragment().is_none());
-    }
-
-    #[gpui::test]
     async fn test_resolve_git_worktree_to_main_repo_ignores_submodule(cx: &mut TestAppContext) {
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(

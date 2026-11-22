@@ -1653,7 +1653,7 @@ mod tests {
         LanguageModelCompletionError, LanguageModelCompletionEvent, LanguageModelRegistry,
         LanguageModelToolUse, StopReason, TokenUsage,
     };
-    use languages::rust_lang;
+    use language::rust_lang;
     use rand::prelude::*;
     use settings::SettingsStore;
     use std::{future, sync::Arc};

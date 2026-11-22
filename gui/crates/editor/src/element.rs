@@ -12274,7 +12274,7 @@ mod tests {
         let diagnostic_point = PointUtf16::new(0, 0);
         let buffer = point_diagnostic_buffer("", [(diagnostic_point..diagnostic_point, ERROR)], cx);
         buffer.update(cx, |buffer, cx| {
-            buffer.set_language(Some(languages::rust_lang()), cx);
+            buffer.set_language(Some(language::rust_lang()), cx);
             buffer.edit(
                 [(
                     0..0,
@@ -12814,7 +12814,7 @@ mod tests {
     async fn test_layout_line_numbers_with_folded_lines(cx: &mut TestAppContext) {
         init_test(cx, |_| {});
 
-        let python_lang = languages::language("python", tree_sitter_python::LANGUAGE.into());
+        let python_lang = language::test_language("python", tree_sitter_python::LANGUAGE.into());
 
         let window = cx.add_window(|window, cx| {
             let buffer = cx.new(|cx| {

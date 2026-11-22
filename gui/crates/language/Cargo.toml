@@ -16,6 +16,7 @@ doctest = false
 test-support = [
     "rand",
     "collections/test-support",
+    "grammars",
     "lsp/test-support",
     "text/test-support",
     "tree-sitter-rust",
@@ -28,6 +29,7 @@ test-support = [
 ]
 
 [dependencies]
+grammars = { workspace = true, optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
 clock.workspace = true
@@ -81,6 +83,7 @@ ztracing.workspace = true
 [dev-dependencies]
 collections = { workspace = true, features = ["test-support"] }
 ctor.workspace = true
+grammars.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
 indoc.workspace = true
 lsp = { workspace = true, features = ["test-support"] }

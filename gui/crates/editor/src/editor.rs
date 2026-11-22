@@ -365,6 +365,13 @@ pub fn init(cx: &mut App) {
     // obake: not a code editor. Files never open as editors, editors aren't restored
     // from previous sessions, and there are no "new file" actions. The Editor type stays
     // as a widget (agent panel input, diffs).
+    // Tests still exercise the widget by opening files, so keep the opener there.
+    #[cfg(any(test, feature = "test-support"))]
+    {
+        workspace::register_project_item::<Editor>(cx);
+        workspace::FollowableViewRegistry::register::<Editor>(cx);
+        workspace::register_serializable_item::<Editor>(cx);
+    }
 
     cx.observe_new(
         |workspace: &mut Workspace, window: Option<&mut Window>, cx: &mut Context<Workspace>| {

@@ -405,7 +405,7 @@ mod tests {
     use indoc::indoc;
     use itertools::Itertools;
     use language::{Buffer, Capability, markdown_lang};
-    use languages::rust_lang;
+    use language::rust_lang;
     use multi_buffer::{MultiBuffer, PathKey};
     use pretty_assertions::assert_eq;
     use project::Project;

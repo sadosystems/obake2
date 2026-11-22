@@ -17,6 +17,7 @@ members = [
     "crates/assets",
     "crates/auto_update",
     "crates/breadcrumbs",
+    "crates/bench_metrics",
     "crates/buffer_diff",
     "crates/cli",
     "crates/client",
@@ -50,6 +51,7 @@ members = [
     "crates/github_releases",
     "crates/google_ai",
     "crates/gpui",
+    "crates/grammars",
     "crates/gpui_rgba",
     "crates/gpui_apple",
     "crates/gpui_ios",
@@ -177,6 +179,8 @@ publish = false
 edition = "2024"
 
 [workspace.dependencies]
+grammars = { path = "crates/grammars" }
+bench_metrics = { path = "crates/bench_metrics" }
 gpui_rgba = { path = "crates/gpui_rgba" }
 gpui_macros = { path = "crates/gpui_macros" }
 derive_refineable = { path = "crates/refineable/derive_refineable" }
@@ -976,3 +980,20 @@ large_enum_variant = "allow"
 nonminimal_bool = "allow"
 
 
+
+# zmij (serde_json's float formatter) uses SSE intrinsics Cranelift doesn't implement
+# and panics at runtime; build it with LLVM.
+[profile.dev.package.zmij]
+codegen-backend = "llvm"
+
+# Cranelift can't unwind (catch_unwind never catches), so tests that catch panics need LLVM:
+#   cargo nextest run --cargo-profile test-llvm
+[profile.test-llvm]
+inherits = "dev"
+codegen-backend = "llvm"
+
+[profile.test-llvm.build-override]
+codegen-backend = "llvm"
+
+[profile.test-llvm.package.zmij]
+codegen-backend = "llvm"

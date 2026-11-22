@@ -429,7 +429,7 @@ mod tests {
     use futures::StreamExt;
     use gpui::{Entity, Rgba, TestAppContext, VisualTestContext};
     use language::FakeLspAdapter;
-    use languages::rust_lang;
+    use language::rust_lang;
     use project::{FakeFs, Project};
     use serde_json::json;
     use util::{path, rel_path::rel_path};

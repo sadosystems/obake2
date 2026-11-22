@@ -1805,7 +1805,7 @@ pub fn markdown_lang() -> Arc<Language> {
 }
 
 #[cfg(any(test, feature = "test-support"))]
-fn test_language(name: &str, grammar: tree_sitter::Language) -> Arc<Language> {
+pub fn test_language(name: &str, grammar: tree_sitter::Language) -> Arc<Language> {
     Arc::new(
         Language::new(grammars::load_config(name), Some(grammar))
             .with_queries(grammars::load_queries(name))

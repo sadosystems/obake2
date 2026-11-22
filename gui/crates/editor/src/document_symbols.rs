@@ -377,7 +377,7 @@ mod tests {
         px,
     };
     use language::{Buffer, Capability, OutlineItem, highlight_ranges_from_text};
-    use languages::rust_lang;
+    use language::rust_lang;
     use lsp::LanguageServerId;
     use multi_buffer::{ExcerptRange, MultiBuffer, PathKey, ToPoint};
     use project::{lsp_store::TokenType, project_settings::DiagnosticSeverity};

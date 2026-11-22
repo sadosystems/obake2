@@ -47,7 +47,7 @@ pub fn main() {
         let language_registry = LanguageRegistry::new(cx.background_executor().clone());
         language_registry.set_theme(cx.theme().clone());
         let language_registry = Arc::new(language_registry);
-        languages::init(language_registry.clone(), fs, node_runtime, cx);
+        let _ = (fs, node_runtime); // obake: built-in languages removed
         Assets.load_fonts(cx).unwrap();
 
         cx.activate(true);

@@ -1744,7 +1744,7 @@ pub mod tests {
     use language::language_settings::{ConfiguredLanguageServer, InlayHintKind, InlayHintSettings};
     use language::{Capability, FakeLspAdapter};
     use language::{Language, LanguageConfig, LanguageMatcher};
-    use languages::rust_lang;
+    use language::rust_lang;
     use lsp::{DEFAULT_LSP_REQUEST_TIMEOUT, FakeLanguageServer, LanguageServerId};
     use multi_buffer::{MultiBuffer, MultiBufferOffset, PathKey};
     use parking_lot::Mutex;

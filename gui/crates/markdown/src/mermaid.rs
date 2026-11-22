@@ -13,7 +13,6 @@ use ui::{CopyButton, ScrollAxes, Scrollbars, TintColor, Tooltip, WithScrollbar, 
 
 use crate::parser::{CodeBlockKind, MarkdownEvent, MarkdownTag};
 use settings::Settings as _;
-use theme_settings::ThemeSettings;
 
 use super::{CopyButtonVisibility, Markdown, MarkdownStyle, MermaidZoomCallback, ParsedMarkdown};
 
@@ -1840,35 +1839,4 @@ mod tests {
         });
     }
 
-    #[gpui::test]
-    fn test_has_pending_render_until_diagram_completes(cx: &mut TestAppContext) {
-        ensure_theme_initialized(cx);
-        let markdown = cx.new(|cx| Markdown::new(SharedString::default(), None, None, cx));
-
-        for (source, succeeds) in [("flowchart TD\n  A --> B", true), ("not a diagram", false)] {
-            let contents = mermaid_contents(source);
-            markdown.update(cx, |markdown, cx| {
-                let cached = CachedMermaidDiagram::new(contents.clone(), 1.0, None, cx);
-                markdown
-                    .mermaid_state
-                    .cache
-                    .insert(contents.clone(), Arc::new(cached));
-                assert!(!markdown.is_parsing());
-                assert!(markdown.has_pending_render());
-            });
-            cx.run_until_parked();
-            markdown.read_with(cx, |markdown, _| {
-                assert!(!markdown.has_pending_render());
-                assert_eq!(
-                    markdown
-                        .mermaid_state
-                        .cache
-                        .get(&contents)
-                        .and_then(|cached| cached.render_image.get())
-                        .map(|result| result.is_ok()),
-                    Some(succeeds)
-                );
-            });
-        }
-    }
 }

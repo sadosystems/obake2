@@ -1,0 +1,24 @@
+[profile.default]
+slow-timeout = { period = "30s", terminate-after = 4 }
+fail-fast = false
+# Cranelift (dev backend) can't unwind, so tests that catch a panic always fail
+# under it. They're skipped here; run them with LLVM:
+#   cargo nextest run --cargo-profile test-llvm -P llvm
+default-filter = """not (
+    test(=columnar_selection::tests::test_random_columnar_selections)
+  | test(=split::tests::test_random_split_editor)
+  | test(=app::test::app_borrow_diagnostics)
+  | test(=profiler::hang::tests::starting_the_hang_monitor_twice_is_rejected)
+  | test(=text_system::line::tests::test_cursor_rejects_invalid_boundaries)
+  | test(=buffer_tests::test_bracket_colorization_indices_remain_stable_across_row_chunks)
+  | test(=tests::test_nondeterministic_wake_detection)
+  | test(=tests::test_nondeterministic_waker_drop_detection)
+)"""
+
+# Randomized stress test: >2 min unoptimized.
+[[profile.default.overrides]]
+filter = "test(test_random_blocks)"
+slow-timeout = { period = "60s", terminate-after = 5 }
+
+[profile.llvm]
+default-filter = "all()"

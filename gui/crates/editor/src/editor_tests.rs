@@ -40,7 +40,7 @@ use language::{
     tree_sitter_python,
 };
 use language_settings::Formatter;
-use languages::{language, markdown_lang, rust_lang};
+use language::{markdown_lang, rust_lang, test_language as language};
 use lsp::{CompletionParams, DEFAULT_LSP_REQUEST_TIMEOUT};
 use multi_buffer::{IndentGuide, MultiBuffer, MultiBufferOffset, MultiBufferOffsetUtf16, PathKey};
 use parking_lot::Mutex;
@@ -5401,7 +5401,7 @@ async fn test_newline_yaml(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let yaml_language = languages::language("yaml", tree_sitter_yaml::LANGUAGE.into());
+    let yaml_language = language::test_language("yaml", tree_sitter_yaml::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(yaml_language), cx));
 
     // Object (between 2 fields)
@@ -6627,13 +6627,13 @@ async fn test_newline_closing_comment_indent_across_languages(cx: &mut TestAppCo
     init_test(cx, |_| {});
     let mut cx = EditorTestContext::new(cx).await;
 
-    let go_language = languages::language("go", tree_sitter_go::LANGUAGE.into());
+    let go_language = language::test_language("go", tree_sitter_go::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(go_language), cx));
     cx.set_state("func test() {\n\t/**\n\t * doc\n\t */ˇ\n}");
     cx.update_editor(|editor, window, cx| editor.newline(&Newline, window, cx));
     cx.assert_editor_state("func test() {\n\t/**\n\t * doc\n\t */\n\tˇ\n}");
 
-    let typescript_language = languages::language(
+    let typescript_language = language::test_language(
         "typescript",
         tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
     );
@@ -6642,7 +6642,7 @@ async fn test_newline_closing_comment_indent_across_languages(cx: &mut TestAppCo
     cx.update_editor(|editor, window, cx| editor.newline(&Newline, window, cx));
     cx.assert_editor_state("function test() {\n    /**\n     * doc\n     */\n    ˇ\n}");
 
-    let python_language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let python_language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(python_language), cx));
     cx.set_state("def test():\n    \"\"\"doc\n    \"\"\"ˇ\n");
     cx.update_editor(|editor, window, cx| editor.newline(&Newline, window, cx));
@@ -6655,7 +6655,7 @@ async fn test_newline_after_closing_delimiter_lookalike_in_string(cx: &mut TestA
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -6673,7 +6673,7 @@ async fn test_newline_twice_inside_block(cx: &mut TestAppContext) {
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -7018,7 +7018,7 @@ async fn test_tab_after_closing_comment_delimiter(cx: &mut TestAppContext) {
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -7169,7 +7169,7 @@ async fn test_indent_yaml_comments_with_multiple_cursors(cx: &mut TestAppContext
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let yaml_language = languages::language("yaml", tree_sitter_yaml::LANGUAGE.into());
+    let yaml_language = language::test_language("yaml", tree_sitter_yaml::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(yaml_language), cx));
 
     cx.set_state(
@@ -7204,7 +7204,7 @@ async fn test_indent_yaml_non_comments_with_multiple_cursors(cx: &mut TestAppCon
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let yaml_language = languages::language("yaml", tree_sitter_yaml::LANGUAGE.into());
+    let yaml_language = language::test_language("yaml", tree_sitter_yaml::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(yaml_language), cx));
 
     cx.set_state(
@@ -7232,7 +7232,7 @@ async fn test_multicursor_input_preserves_yaml_indentation(cx: &mut TestAppConte
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let yaml_language = languages::language("yaml", tree_sitter_yaml::LANGUAGE.into());
+    let yaml_language = language::test_language("yaml", tree_sitter_yaml::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(yaml_language), cx));
 
     let initial_state = indoc! {r#"
@@ -7287,7 +7287,7 @@ async fn test_multicursor_input_autoindents_multiline_replacements(cx: &mut Test
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let python_language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let python_language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(python_language), cx));
 
     cx.set_state(indoc! {"
@@ -7318,7 +7318,7 @@ async fn test_tab_indents_selected_yaml_block(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let yaml_language = languages::language("yaml", tree_sitter_yaml::LANGUAGE.into());
+    let yaml_language = language::test_language("yaml", tree_sitter_yaml::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(yaml_language), cx));
 
     cx.set_state(indoc! {"
@@ -10845,7 +10845,7 @@ async fn test_rewrap_line_comment_in_go(cx: &mut TestAppContext) {
 
     let mut cx = EditorTestContext::new(cx).await;
 
-    let go_lang = languages::language("go", tree_sitter_go::LANGUAGE.into());
+    let go_lang = language::test_language("go", tree_sitter_go::LANGUAGE.into());
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(go_lang), cx));
     cx.set_state(indoc! {"
@@ -10873,7 +10873,7 @@ async fn test_rewrap_line_comment_in_c(cx: &mut TestAppContext) {
 
     let mut cx = EditorTestContext::new(cx).await;
 
-    let c_lang = languages::language("c", tree_sitter_c::LANGUAGE.into());
+    let c_lang = language::test_language("c", tree_sitter_c::LANGUAGE.into());
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(c_lang), cx));
     cx.set_state(indoc! {"
@@ -12271,7 +12271,7 @@ async fn test_paste_after_closing_documentation_comment(cx: &mut TestAppContext)
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -12296,7 +12296,7 @@ async fn test_paste_shifts_block_by_first_line_delta(cx: &mut TestAppContext) {
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -12325,7 +12325,7 @@ async fn test_paste_after_closing_comment_delimiter(cx: &mut TestAppContext) {
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(
-            Some(languages::language("go", tree_sitter_go::LANGUAGE.into())),
+            Some(language::test_language("go", tree_sitter_go::LANGUAGE.into())),
             cx,
         )
     });
@@ -18080,7 +18080,7 @@ async fn test_autoclose_quotes_with_scope_awareness(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
@@ -18168,7 +18168,7 @@ async fn test_autoclose_quotes_with_multibyte_characters(cx: &mut TestAppContext
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     cx.set_state(indoc! {r#"
@@ -18190,7 +18190,7 @@ async fn test_surround_backticks_in_rust(cx: &mut TestAppContext) {
 
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| {
-        let language = languages::language("rust", tree_sitter_rust::LANGUAGE.into());
+        let language = language::test_language("rust", tree_sitter_rust::LANGUAGE.into());
         buffer.set_language(Some(language), cx)
     });
 
@@ -26236,7 +26236,7 @@ async fn test_as_is_completions(cx: &mut TestAppContext) {
 async fn test_panic_during_c_completions(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
     let language =
-        Arc::try_unwrap(languages::language("c", tree_sitter_c::LANGUAGE.into())).unwrap();
+        Arc::try_unwrap(language::test_language("c", tree_sitter_c::LANGUAGE.into())).unwrap();
     let mut cx = EditorLspTestContext::new(
         language,
         lsp::ServerCapabilities {
@@ -41573,7 +41573,7 @@ async fn test_tab_in_leading_whitespace_auto_indents_for_python(cx: &mut TestApp
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test cursor move to start of each line on tab
@@ -41687,7 +41687,7 @@ async fn test_outdent_after_input_for_python(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test `else` auto outdents when typed inside `if` block
@@ -41958,7 +41958,7 @@ async fn test_indent_on_newline_for_python(cx: &mut TestAppContext) {
         settings.defaults.extend_comment_on_newline = Some(false);
     });
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let language = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test correct indent after newline on comment
@@ -42020,7 +42020,7 @@ async fn test_python_indent_in_markdown(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let language_registry = Arc::new(language::LanguageRegistry::test(cx.executor()));
-    let python_lang = languages::language("python", tree_sitter_python::LANGUAGE.into());
+    let python_lang = language::test_language("python", tree_sitter_python::LANGUAGE.into());
     language_registry.add(markdown_lang());
     language_registry.add(python_lang);
 
@@ -42062,7 +42062,7 @@ async fn test_tab_in_leading_whitespace_auto_indents_for_bash(cx: &mut TestAppCo
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("bash", tree_sitter_bash::LANGUAGE.into());
+    let language = language::test_language("bash", tree_sitter_bash::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test cursor move to start of each line on tab
@@ -42159,7 +42159,7 @@ async fn test_indent_after_input_for_bash(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("bash", tree_sitter_bash::LANGUAGE.into());
+    let language = language::test_language("bash", tree_sitter_bash::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| {
         buffer.set_language(Some(language), cx);
         buffer.set_sync_parse_timeout(None);
@@ -42205,7 +42205,7 @@ async fn test_outdent_after_input_for_bash(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("bash", tree_sitter_bash::LANGUAGE.into());
+    let language = language::test_language("bash", tree_sitter_bash::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test `else` auto outdents when typed inside `if` block
@@ -42366,7 +42366,7 @@ async fn test_indent_on_newline_for_bash(cx: &mut TestAppContext) {
         settings.defaults.extend_comment_on_newline = Some(false);
     });
     let mut cx = EditorTestContext::new(cx).await;
-    let language = languages::language("bash", tree_sitter_bash::LANGUAGE.into());
+    let language = language::test_language("bash", tree_sitter_bash::LANGUAGE.into());
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(language), cx));
 
     // test correct indent after newline on comment
@@ -44191,7 +44191,7 @@ async fn test_paste_url_from_other_app_creates_markdown_link_over_selected_text(
 async fn test_markdown_indents(cx: &mut gpui::TestAppContext) {
     init_test(cx, |_| {});
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
 
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
@@ -45354,7 +45354,7 @@ async fn test_sticky_scroll_anchors_multiline_c_signature_on_name_row(cx: &mut T
             .unwrap()
             .update(cx, |buffer, cx| {
                 buffer.set_language(
-                    Some(languages::language("c", tree_sitter_c::LANGUAGE.into())),
+                    Some(language::test_language("c", tree_sitter_c::LANGUAGE.into())),
                     cx,
                 );
             })
@@ -46676,7 +46676,7 @@ async fn test_newline_task_list_continuation(cx: &mut TestAppContext) {
         settings.defaults.tab_size = Some(2.try_into().unwrap());
     });
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
 
@@ -46811,7 +46811,7 @@ async fn test_newline_unordered_list_continuation(cx: &mut TestAppContext) {
         settings.defaults.tab_size = Some(2.try_into().unwrap());
     });
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
 
@@ -46980,7 +46980,7 @@ async fn test_newline_ordered_list_continuation(cx: &mut TestAppContext) {
         settings.defaults.tab_size = Some(2.try_into().unwrap());
     });
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
 
@@ -47103,7 +47103,7 @@ async fn test_newline_should_not_autoindent_ordered_list(cx: &mut TestAppContext
         settings.defaults.tab_size = Some(2.try_into().unwrap());
     });
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
 
@@ -47130,7 +47130,7 @@ async fn test_tab_list_indent(cx: &mut TestAppContext) {
         settings.defaults.tab_size = Some(2.try_into().unwrap());
     });
 
-    let markdown_language = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
+    let markdown_language = language::test_language("markdown", tree_sitter_md::LANGUAGE.into());
     let mut cx = EditorTestContext::new(cx).await;
     cx.update_buffer(|buffer, cx| buffer.set_language(Some(markdown_language), cx));
 

@@ -942,7 +942,6 @@ mod tests {
 
     use super::*;
     use editor::Editor;
-    use go_to_line::GoToLine;
     use gpui::{TestAppContext, VisualTestContext};
     use language::Point;
     use project::Project;
@@ -1157,19 +1156,19 @@ mod tests {
         cx.update(|cx| cx.set_global(db::AppDatabase::test_new()));
         let db = cx.update(|cx| persistence::CommandPaletteDB::global(cx));
 
-        db.write_command_invocation("editor: backspace", "")
+        db.write_command_invocation("pane: go back", "")
             .await
             .unwrap();
-        db.write_command_invocation("editor: backspace", "")
+        db.write_command_invocation("pane: go back", "")
             .await
             .unwrap();
-        db.write_command_invocation("go to line: toggle", "")
+        db.write_command_invocation("pane: join all", "")
             .await
             .unwrap();
-        db.set_last_invoked(100, "editor: backspace".to_string())
+        db.set_last_invoked(100, "pane: go back".to_string())
             .await
             .unwrap();
-        db.set_last_invoked(200, "go to line: toggle".to_string())
+        db.set_last_invoked(200, "pane: join all".to_string())
             .await
             .unwrap();
 
@@ -1197,8 +1196,8 @@ mod tests {
                 .iter()
                 .map(|command| command.name.as_str())
                 .collect::<Vec<_>>();
-            assert_eq!(names[0], "go to line: toggle");
-            assert_eq!(names[1], "editor: backspace");
+            assert_eq!(names[0], "pane: join all");
+            assert_eq!(names[1], "pane: go back");
             assert!(
                 names[2..].windows(2).all(|pair| pair[0] <= pair[1]),
                 "unused commands should stay alphabetical"
@@ -1487,75 +1486,13 @@ mod tests {
         });
     }
 
-    #[gpui::test]
-    async fn test_go_to_line(cx: &mut TestAppContext) {
-        let app_state = init_test(cx);
-        let project = Project::test(app_state.fs.clone(), [], cx).await;
-        let (multi_workspace, cx) =
-            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
-        let workspace = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
-
-        cx.simulate_keystrokes("cmd-n");
-
-        let editor = workspace.update(cx, |workspace, cx| {
-            workspace.active_item_as::<Editor>(cx).unwrap()
-        });
-        editor.update_in(cx, |editor, window, cx| {
-            editor.set_text("1\n2\n3\n4\n5\n6\n", window, cx)
-        });
-
-        cx.simulate_keystrokes("cmd-shift-p");
-        cx.simulate_input("go to line: Toggle");
-        cx.simulate_keystrokes("enter");
-
-        workspace.update(cx, |workspace, cx| {
-            assert!(workspace.active_modal::<GoToLine>(cx).is_some())
-        });
-
-        cx.simulate_keystrokes("3 enter");
-
-        editor.update_in(cx, |editor, window, cx| {
-            assert!(editor.focus_handle(cx).is_focused(window));
-            assert_eq!(
-                editor
-                    .selections
-                    .last::<Point>(&editor.display_snapshot(cx))
-                    .range()
-                    .start,
-                Point::new(2, 0)
-            );
-        });
-    }
-
-    #[gpui::test]
-    async fn test_reopen_command_palette_over_another_modal(cx: &mut TestAppContext) {
-        let app_state = init_test(cx);
-        let project = Project::test(app_state.fs.clone(), [], cx).await;
-        let (multi_workspace, cx) =
-            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
-        let workspace =
-            multi_workspace.read_with(cx, |multi_workspace, _| multi_workspace.workspace().clone());
-
-        cx.simulate_keystrokes("cmd-n");
-
-        for _ in 0..2 {
-            cx.simulate_keystrokes("cmd-shift-p");
-            cx.simulate_input("go to line: Toggle");
-            cx.simulate_keystrokes("enter");
-
-            workspace.update(cx, |workspace, cx| {
-                assert!(workspace.active_modal::<GoToLine>(cx).is_some());
-            });
-        }
-    }
-
     fn init_test(cx: &mut TestAppContext) -> Arc<AppState> {
         cx.update(|cx| {
             let app_state = AppState::test(cx);
+            AppState::set_global(app_state.clone(), cx);
             theme_settings::init(theme::LoadThemes::JustBase, cx);
             editor::init(cx);
             menu::init();
-            go_to_line::init(cx);
             workspace::init(app_state.clone(), cx);
             init(cx);
             cx.bind_keys(KeymapFile::load_panic_on_failure(
