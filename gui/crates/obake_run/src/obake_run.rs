@@ -12,7 +12,7 @@ use std::time::Duration;
 use gpui::{
     App, Context, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement,
     ObjectFit, PathPromptOptions, PromptLevel, Render, RenderImage, SharedString, Styled,
-    StyledImage as _, Subscription, Task, Window, div, img,
+    AnimationExt as _, StyledImage as _, Subscription, Task, Window, div, img,
 };
 use obake_controller::{LaunchSpec, MovieSpec, Recording, Run, RunState, RunStatus};
 use project::DirectoryLister;
@@ -21,7 +21,7 @@ use workspace::{
     Item, OpenPathPromptMode, Toast, Workspace, item::ItemEvent, notifications::NotificationId,
 };
 use obake_actions::obake::{
-    LaunchGame, PlayMovie, RecordMovie, SaveMovie, StepFrame, StopGame, TogglePause, ToggleReadOnly,
+    LaunchGame, PlayMovie, SaveMovie, StepFrame, StopGame, TogglePause, ToggleRecording,
 };
 
 pub fn init(cx: &mut App) {
@@ -37,20 +37,17 @@ pub fn init(cx: &mut App) {
         if let (Some(window), Ok(path)) = (window, std::env::var("OBAKE_AUTOLAUNCH")) {
             if !AUTOLAUNCHED.swap(true, std::sync::atomic::Ordering::Relaxed) {
                 cx.spawn_in(window, async move |ws, cx| {
-                    ws.update_in(cx, |ws, window, cx| open_run(ws, path.into(), MovieSpec::default(), window, cx))
+                    ws.update_in(cx, |ws, window, cx| open_run(ws, path.into(), MovieSpec::default(), false, window, cx))
                         .ok();
                 })
                 .detach();
             }
         }
         workspace.register_action(launch_game);
-        workspace.register_action(record_movie);
         workspace.register_action(play_movie);
-        workspace.register_action(|ws, a: &SaveMovie, window, cx| {
-            with_active_game(ws, cx, |v, cx| v.save_movie(a, window, cx))
-        });
-        workspace.register_action(|ws, a: &ToggleReadOnly, window, cx| {
-            with_active_game(ws, cx, |v, cx| v.toggle_read_only(a, window, cx))
+        workspace.register_action(save_movie);
+        workspace.register_action(|ws, a: &ToggleRecording, window, cx| {
+            with_active_game(ws, cx, |v, cx| v.toggle_recording(a, window, cx))
         });
         // Transport actions reach the active game pane even when focus is
         // elsewhere in the window (menus, docks, title bar).
@@ -77,19 +74,20 @@ fn with_active_game(
     }
 }
 
-/// Asks for an existing file.
-fn pick_file(
+/// Asks for existing files.
+fn pick_files(
     workspace: &mut Workspace,
     prompt: &str,
+    multiple: bool,
     window: &mut Window,
     cx: &mut Context<Workspace>,
-) -> Task<Option<PathBuf>> {
+) -> Task<Vec<PathBuf>> {
     let lister = DirectoryLister::Local(workspace.project().clone(), workspace.app_state().fs.clone());
     let paths = workspace.prompt_for_open_path(
         PathPromptOptions {
             files: true,
             directories: false,
-            multiple: false,
+            multiple,
             prompt: Some(prompt.to_string().into()),
         },
         lister,
@@ -97,60 +95,93 @@ fn pick_file(
         window,
         cx,
     );
-    cx.background_spawn(async move {
-        paths.await.ok().flatten().and_then(|r| r.paths.into_iter().next())
-    })
+    cx.background_spawn(async move { paths.await.ok().flatten().map(|r| r.paths).unwrap_or_default() })
 }
 
-/// Picks the game binary, then launches it with `movie`.
+/// Picks game binaries and launches each with `movie`, one pane apiece.
 fn pick_and_launch(
     workspace: &mut Workspace,
     movie: MovieSpec,
+    multiple: bool,
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    let game = pick_file(workspace, "Launch", window, cx);
+    let games = pick_files(workspace, "Launch", multiple, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
-        let Some(path) = game.await else { return };
+        let games = games.await;
         workspace
-            .update_in(cx, |workspace, window, cx| open_run(workspace, path, movie, window, cx))
+            .update_in(cx, |workspace, window, cx| {
+                for (i, game) in games.into_iter().enumerate() {
+                    open_run(workspace, game, movie.clone(), i > 0, window, cx);
+                }
+            })
             .ok();
     })
     .detach();
 }
 
+/// Every run records its input; there is no separate "record" launch.
 fn launch_game(workspace: &mut Workspace, _: &LaunchGame, window: &mut Window, cx: &mut Context<Workspace>) {
-    pick_and_launch(workspace, MovieSpec::default(), window, cx);
+    pick_and_launch(workspace, MovieSpec::default(), false, window, cx);
 }
 
-/// libTAS: a movie file in write mode, then start the game.
-fn record_movie(workspace: &mut Workspace, _: &RecordMovie, window: &mut Window, cx: &mut Context<Workspace>) {
-    let lister = DirectoryLister::Local(workspace.project().clone(), workspace.app_state().fs.clone());
-    let movie = workspace.prompt_for_new_path(lister, Some("movie.ltm".into()), window, cx);
-    cx.spawn_in(window, async move |workspace, cx| {
-        let Some(path) = movie.await.ok().flatten().and_then(|p| p.into_iter().next()) else { return };
-        let spec = MovieSpec { recording: Recording::Write, path: Some(path), ..Default::default() };
-        workspace.update_in(cx, |workspace, window, cx| pick_and_launch(workspace, spec, window, cx)).ok();
-    })
-    .detach();
-}
-
-/// libTAS: a movie file in read-only mode, then start the game.
+/// Opens a movie on the game that recorded it. If that binary is gone (or
+/// the movie came from libTAS), pick one or more games: each plays the
+/// movie in its own pane, e.g. to compare builds.
 fn play_movie(workspace: &mut Workspace, _: &PlayMovie, window: &mut Window, cx: &mut Context<Workspace>) {
-    let movie = pick_file(workspace, "Play", window, cx);
+    let movie = pick_files(workspace, "Play", false, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
-        let Some(path) = movie.await else { return };
+        let Some(path) = movie.await.into_iter().next() else { return };
+        let game = match obake_controller::read_movie(&path) {
+            Ok(m) => m.game_path.filter(|g| g.is_file()),
+            Err(e) => {
+                workspace
+                    .update(cx, |workspace, cx| {
+                        struct BadMovie;
+                        workspace.show_toast(
+                            Toast::new(NotificationId::unique::<BadMovie>(), format!("{}: {e}", path.display())),
+                            cx,
+                        )
+                    })
+                    .ok();
+                return;
+            }
+        };
         let spec = MovieSpec { recording: Recording::Read, path: Some(path), ..Default::default() };
-        workspace.update_in(cx, |workspace, window, cx| pick_and_launch(workspace, spec, window, cx)).ok();
+        workspace
+            .update_in(cx, |workspace, window, cx| match game {
+                Some(game) => open_run(workspace, game, spec, false, window, cx),
+                None => pick_and_launch(workspace, spec, true, window, cx),
+            })
+            .ok();
     })
     .detach();
 }
 
-/// Launches `path` and shows it in the active pane.
+/// Saves the focused game's movie, asking where the first time.
+fn save_movie(workspace: &mut Workspace, _: &SaveMovie, window: &mut Window, cx: &mut Context<Workspace>) {
+    let Some(view) = workspace.active_item_as::<GameView>(cx) else { return };
+    if view.read(cx).run.status().movie_path.is_some() {
+        view.update(cx, |v, cx| v.save_to(None, cx));
+        return;
+    }
+    let lister = DirectoryLister::Local(workspace.project().clone(), workspace.app_state().fs.clone());
+    let suggested = format!("{}.ltm", view.read(cx).title);
+    let path = workspace.prompt_for_new_path(lister, Some(suggested), window, cx);
+    cx.spawn_in(window, async move |_, cx| {
+        let Some(path) = path.await.ok().flatten().and_then(|p| p.into_iter().next()) else { return };
+        view.update(cx, |v, cx| v.save_to(Some(path), cx));
+    })
+    .detach();
+}
+
+/// Launches `path` and shows it in the active pane, or in a new pane to the
+/// right with `split`.
 pub fn open_run(
     workspace: &mut Workspace,
     path: PathBuf,
     movie: MovieSpec,
+    split: bool,
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
@@ -168,7 +199,11 @@ pub fn open_run(
                 run.set_fastforward(true);
             }
             let view = cx.new(|cx| GameView::new(run, path, window, cx));
-            workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, window, cx);
+            if split {
+                workspace.split_item(workspace::SplitDirection::Right, Box::new(view.clone()), window, cx);
+            } else {
+                workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, window, cx);
+            }
             window.focus(&view.focus_handle(cx), cx);
         }
         Err(err) => {
@@ -260,6 +295,7 @@ pub struct GameView {
     display_pacer: DisplayPacer,
     /// Last movie save result, shown in the status bar.
     notice: Option<(String, Color)>,
+    frame_log: Option<std::rc::Rc<std::cell::RefCell<FrameLog>>>,
     _poll: Task<()>,
     _focus: [Subscription; 2],
 }
@@ -272,6 +308,8 @@ impl GameView {
             .unwrap_or_else(|| path.display().to_string())
             .into();
         let poll_run = run.clone();
+        let frame_log = FrameLog::from_env();
+        let render_log = frame_log.clone();
         let poll = cx.spawn_in(window, async move |this, cx| {
             let mut seen_draws = 0;
             let mut seen_seq = 0;
@@ -283,9 +321,17 @@ impl GameView {
                     .background_executor()
                     .spawn(async move {
                         let d = run.wait_draw(seen_draws, Duration::from_millis(100));
-                        (d, run.latest_frame(seen_seq))
+                        let t = std::time::Instant::now();
+                        let f = run.latest_frame(seen_seq);
+                        (d, f.map(|f| (f, t.elapsed())))
                     })
                     .await;
+                let frame = frame.map(|(f, read)| {
+                    if let Some(log) = &frame_log {
+                        log.borrow_mut().arrived(read, f.framecount);
+                    }
+                    f
+                });
                 seen_draws = draws;
                 if let Some(f) = &frame {
                     seen_seq = f.seq;
@@ -352,6 +398,7 @@ impl GameView {
         Self {
             focus_handle,
             notice: None,
+            frame_log: render_log,
             _focus: focus,
             status: run.status(),
             frame: None,
@@ -388,24 +435,30 @@ impl GameView {
         cx.notify();
     }
 
-    fn save_movie(&mut self, _: &SaveMovie, _: &mut Window, cx: &mut Context<Self>) {
-        self.notice = Some(match self.run.save_movie() {
-            Ok(p) => (format!("Movie saved to {}", p.display()), Color::Muted),
+    /// Saves the movie to `path`, or to its own file.
+    fn save_to(&mut self, path: Option<PathBuf>, cx: &mut Context<Self>) {
+        let r = match path {
+            Some(p) => self.run.save_movie_as(&p).map(|_| p),
+            None => self.run.save_movie(),
+        };
+        self.notice = Some(match r {
+            Ok(p) => (format!("Saved {}", p.display()), Color::Muted),
             Err(e) => (format!("Movie not saved: {e}"), Color::Error),
         });
         self.status = self.run.status();
         cx.notify();
     }
 
-    fn toggle_read_only(&mut self, _: &ToggleReadOnly, _: &mut Window, cx: &mut Context<Self>) {
-        self.run.set_read_only(self.status.recording != Recording::Read);
+    fn toggle_recording(&mut self, _: &ToggleRecording, _: &mut Window, cx: &mut Context<Self>) {
+        self.run.set_recording(self.status.recording == Recording::Read);
         self.status = self.run.status();
         cx.notify();
     }
 
     /// libTAS on game exit: offer to save a modified movie.
     fn ask_to_save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.status.recording == Recording::None || !self.status.movie_modified {
+        // A movie without a file was kept as a backup by the controller.
+        if self.status.movie_path.is_none() || !self.status.movie_modified {
             return;
         }
         let answer = window.prompt(
@@ -417,21 +470,52 @@ impl GameView {
         );
         cx.spawn_in(window, async move |this, cx| {
             if answer.await == Ok(0) {
-                this.update_in(cx, |this, window, cx| this.save_movie(&SaveMovie, window, cx)).ok();
+                this.update(cx, |this, cx| this.save_to(None, cx)).ok();
             }
         })
         .detach();
     }
 
-    /// libTAS status bar: frame count against the movie length.
+    /// Playback progress through the movie.
     fn movie_text(&self) -> Option<String> {
         let s = &self.status;
-        let star = if s.movie_modified { "*" } else { "" };
-        match s.recording {
-            Recording::None => None,
-            Recording::Read => Some(format!("Playback {} / {}{star}", s.frame, s.movie_frames)),
-            Recording::Write => Some(format!("Recording {}{star}", s.movie_frames)),
-        }
+        (s.recording == Recording::Read).then(|| format!("▶ {} / {}", s.frame.min(s.movie_frames), s.movie_frames))
+    }
+
+    /// ● record: red and pulsing while live input goes into the movie; off
+    /// while the movie plays back. Turning it on mid-movie takes over from
+    /// that frame (the rest of the movie is replaced).
+    fn record_button(&self, alive: bool, cx: &mut Context<Self>) -> impl IntoElement {
+        let recording = self.status.recording == Recording::Write;
+        let live = recording && alive && self.status.state == RunState::Running && !self.status.pause_requested;
+        let dot = div()
+            .size(gpui::px(10.))
+            .rounded_full()
+            .border_1()
+            .border_color(if recording { Color::Error.color(cx) } else { Color::Muted.color(cx) })
+            .when(recording, |d| d.bg(Color::Error.color(cx)));
+        let dot = if live {
+            dot.with_animation(
+                "recording",
+                gpui::Animation::new(Duration::from_millis(1200))
+                    .repeat()
+                    .with_easing(gpui::pulsating_between(0.35, 1.0)),
+                |d, delta| d.opacity(delta),
+            )
+            .into_any_element()
+        } else {
+            dot.into_any_element()
+        };
+        ui::ButtonLike::new("record")
+            .size(ui::ButtonSize::Large)
+            .disabled(!alive)
+            .child(h_flex().size(gpui::px(20.)).justify_center().child(dot))
+            .tooltip(Tooltip::text(if recording {
+                "Recording your input (click to play the movie back instead)"
+            } else {
+                "Playing the movie back (click to record from this frame on)"
+            }))
+            .on_click(cx.listener(|this, _, window, cx| this.toggle_recording(&ToggleRecording, window, cx)))
     }
 
     fn state_text(&self) -> (String, Color) {
@@ -469,7 +553,11 @@ impl Item for GameView {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _: &App) -> SharedString {
-        self.title.clone()
+        let star = if self.status.movie_modified && self.status.movie_path.is_some() { "*" } else { "" };
+        match self.status.movie_path.as_ref().and_then(|p| p.file_name()) {
+            Some(m) => format!("{} · {}{star}", self.title, m.to_string_lossy()).into(),
+            None => self.title.clone(),
+        }
     }
 
     fn tab_tooltip_text(&self, _: &App) -> Option<SharedString> {
@@ -483,6 +571,9 @@ impl Item for GameView {
 
 impl Render for GameView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if let Some(log) = &self.frame_log {
+            log.borrow_mut().painted();
+        }
         for old in self.stale_frames.drain(..) {
             window.drop_image(old).ok();
         }
@@ -521,8 +612,7 @@ impl Render for GameView {
             .on_action(cx.listener(Self::toggle_pause))
             .on_action(cx.listener(Self::step))
             .on_action(cx.listener(Self::stop))
-            .on_action(cx.listener(Self::save_movie))
-            .on_action(cx.listener(Self::toggle_read_only))
+            .on_action(cx.listener(Self::toggle_recording))
             // Keys typed in the pane are the game's input. Chords with
             // ctrl/alt/super are left for app keybindings (ctrl-k splits etc).
             .on_key_down(cx.listener(|this, e: &gpui::KeyDownEvent, window, cx| {
@@ -615,20 +705,11 @@ impl Render for GameView {
                         d.child(Label::new(t).size(LabelSize::Small).color(c))
                     })
                     .child(div().flex_1())
-                    .when(self.status.recording != Recording::None, |d| {
-                        d.child(
-                            ui::Button::new("read-only", "Read-only")
-                                .label_size(LabelSize::Small)
-                                .toggle_state(self.status.recording == Recording::Read)
-                                .tooltip(Tooltip::text("Read-only: play the movie's inputs. Off: record, replacing the movie from here on."))
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    this.toggle_read_only(&ToggleReadOnly, window, cx)
-                                })),
-                        )
-                    })
+
                     .child(
                         h_flex()
                             .gap_1()
+                            .child(self.record_button(alive, cx))
                             .child(
                                 IconButton::new(
                                     "toggle-pause",
@@ -683,6 +764,81 @@ impl Render for GameView {
                             )
                     ),
             )
+    }
+}
+
+/// OBAKE_FRAME_LOG=1: every 2s, print to stderr where frame time goes in the
+/// pane (read = copying the frame out of the shared file, arrive = interval
+/// between new frames reaching the UI thread, paint = interval between
+/// renders) and how many game frames were never shown.
+struct FrameLog {
+    read: Vec<f64>,
+    arrive: Vec<f64>,
+    paint: Vec<f64>,
+    last_arrive: Option<std::time::Instant>,
+    last_paint: Option<std::time::Instant>,
+    last_framecount: u64,
+    skipped: u64,
+    since: std::time::Instant,
+}
+
+impl FrameLog {
+    fn from_env() -> Option<std::rc::Rc<std::cell::RefCell<Self>>> {
+        std::env::var_os("OBAKE_FRAME_LOG")?;
+        Some(std::rc::Rc::new(std::cell::RefCell::new(FrameLog {
+            read: Vec::new(),
+            arrive: Vec::new(),
+            paint: Vec::new(),
+            last_arrive: None,
+            last_paint: None,
+            last_framecount: 0,
+            skipped: 0,
+            since: std::time::Instant::now(),
+        })))
+    }
+
+    fn ms(d: Duration) -> f64 {
+        d.as_secs_f64() * 1000.0
+    }
+
+    fn arrived(&mut self, read: Duration, framecount: u64) {
+        let now = std::time::Instant::now();
+        self.read.push(Self::ms(read));
+        if let Some(l) = self.last_arrive.replace(now) {
+            self.arrive.push(Self::ms(now - l));
+        }
+        if self.last_framecount != 0 && framecount > self.last_framecount + 1 {
+            self.skipped += framecount - self.last_framecount - 1;
+        }
+        self.last_framecount = framecount;
+    }
+
+    fn painted(&mut self) {
+        let now = std::time::Instant::now();
+        if let Some(l) = self.last_paint.replace(now) {
+            self.paint.push(Self::ms(now - l));
+        }
+        if now - self.since >= Duration::from_secs(2) {
+            let stats = |v: &mut Vec<f64>| {
+                if v.is_empty() {
+                    return "-".to_string();
+                }
+                v.sort_by(f64::total_cmp);
+                let q = |p: f64| v[((v.len() - 1) as f64 * p) as usize];
+                let r = format!("p50 {:.1} p95 {:.1} max {:.1} (n {})", q(0.5), q(0.95), q(1.0), v.len());
+                v.clear();
+                r
+            };
+            eprintln!(
+                "obake frames: read [{}] arrive [{}] paint [{}] skipped {}",
+                stats(&mut self.read),
+                stats(&mut self.arrive),
+                stats(&mut self.paint),
+                self.skipped
+            );
+            self.skipped = 0;
+            self.since = now;
+        }
     }
 }
 
