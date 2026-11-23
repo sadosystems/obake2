@@ -499,24 +499,30 @@ impl GameView {
             .map(|n| n.to_string_lossy().into_owned());
         let small = |t: String, c: Color| Label::new(t).size(LabelSize::Small).color(c);
         let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, bool)>) = match s.recording {
+            // Live play with no movie file: just playing. Input is still kept
+            // (that's what "Save as movie" saves), but it isn't "recording".
+            Recording::Write if movie_name.is_none() => (
+                small("Live".into(), Color::Muted).into_any_element(),
+                String::new(),
+                Some(("Save as movie…", true)),
+            ),
             Recording::Write => {
                 let dot = div().size(gpui::px(8.)).rounded_full().bg(RED);
                 let lead = h_flex()
                     .gap_1p5()
                     .child(dot)
-                    .child(div().text_sm().text_color(RED).child("Recording"))
+                    .child(div().text_sm().text_color(RED).child(format!(
+                        "Recording into {}",
+                        movie_name.clone().unwrap_or_default()
+                    )))
                     .into_any_element();
-                let saved = match (&movie_name, s.movie_modified) {
-                    (Some(n), false) => format!("saved as {n}"),
-                    (Some(n), true) => format!("{n}, unsaved changes"),
-                    (None, _) => "not saved".into(),
-                };
-                (lead, format!("{} frames  ·  {saved}", s.movie_frames), Some(("Save", true)))
+                let unsaved = if s.movie_modified { "  ·  unsaved" } else { "" };
+                (lead, format!("{} frames{unsaved}", s.movie_frames), s.movie_modified.then_some(("Save", true)))
             }
             Recording::Read if s.frame >= s.movie_frames => (
                 div().text_sm().text_color(AMBER).child("Movie ended").into_any_element(),
                 format!("{}  ·  {} frames", movie_name.unwrap_or_default(), s.movie_frames),
-                Some(("Keep recording", false)),
+                Some(("Take control", false)),
             ),
             Recording::Read => (
                 div()
@@ -525,7 +531,7 @@ impl GameView {
                     .child(format!("▶ Playing {}", movie_name.unwrap_or_default()))
                     .into_any_element(),
                 format!("{} / {}", s.frame, s.movie_frames),
-                Some(("Record from here", false)),
+                Some(("Take control", false)),
             ),
         };
         h_flex()
