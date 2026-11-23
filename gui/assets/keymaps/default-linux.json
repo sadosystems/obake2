@@ -635,7 +635,7 @@
   {
     "context": "GameView",
     "bindings": {
-      "ctrl-s": "obake::SaveMovie",
+      "ctrl-s": "obake::SaveInputs",
     },
   },
   {

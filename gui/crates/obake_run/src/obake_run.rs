@@ -21,7 +21,7 @@ use workspace::{
     Item, OpenPathPromptMode, Toast, Workspace, item::ItemEvent, notifications::NotificationId,
 };
 use obake_actions::obake::{
-    LaunchGame, PlayMovie, SaveMovie, StepFrame, StopGame, TogglePause, ToggleRecording,
+    LaunchGame, OpenInputs, SaveInputs, StepFrame, StopGame, TogglePause, ToggleRecording,
 };
 
 pub fn init(cx: &mut App) {
@@ -54,7 +54,7 @@ pub fn init(cx: &mut App) {
         }
         workspace.register_action(launch_game);
         workspace.register_action(play_movie);
-        workspace.register_action(save_movie);
+        workspace.register_action(save_inputs);
         workspace.register_action(|ws, a: &ToggleRecording, window, cx| {
             with_active_game(ws, cx, |v, cx| v.toggle_recording(a, window, cx))
         });
@@ -134,33 +134,31 @@ fn launch_game(workspace: &mut Workspace, _: &LaunchGame, window: &mut Window, c
     pick_and_launch(workspace, MovieSpec::default(), false, window, cx);
 }
 
-/// Opens a movie on the game that recorded it. If that binary is gone (or
-/// the movie came from libTAS), pick one or more games: each plays the
-/// movie in its own pane, e.g. to compare builds.
-fn play_movie(workspace: &mut Workspace, _: &PlayMovie, window: &mut Window, cx: &mut Context<Workspace>) {
-    let movie = pick_files(workspace, "Play", false, window, cx);
+/// Opens an inputs file in its own pane. It is data on its own: nothing
+/// runs until you pick games to run it on.
+fn play_movie(workspace: &mut Workspace, _: &OpenInputs, window: &mut Window, cx: &mut Context<Workspace>) {
+    let picked = pick_files(workspace, "Open", false, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
-        let Some(path) = movie.await.into_iter().next() else { return };
-        let game = match obake_controller::read_movie(&path) {
-            Ok(m) => m.game_path.filter(|g| g.is_file()),
-            Err(e) => {
-                workspace
-                    .update(cx, |workspace, cx| {
-                        struct BadMovie;
-                        workspace.show_toast(
-                            Toast::new(NotificationId::unique::<BadMovie>(), format!("{}: {e}", path.display())),
-                            cx,
-                        )
-                    })
-                    .ok();
-                return;
-            }
-        };
-        let spec = MovieSpec { recording: Recording::Read, path: Some(path), ..Default::default() };
+        let Some(path) = picked.await.into_iter().next() else { return };
+        let movie = cx.background_spawn({
+            let path = path.clone();
+            async move { obake_controller::read_movie(&path) }
+        });
+        let movie = movie.await;
         workspace
-            .update_in(cx, |workspace, window, cx| match game {
-                Some(game) => open_run(workspace, game, spec, false, window, cx),
-                None => pick_and_launch(workspace, spec, true, window, cx),
+            .update_in(cx, |workspace, window, cx| match movie {
+                Ok(movie) => {
+                    let ws = cx.entity().downgrade();
+                    let view = cx.new(|cx| InputsView::new(path, movie, ws, cx));
+                    workspace.add_item_to_active_pane(Box::new(view), None, true, window, cx);
+                }
+                Err(e) => {
+                    struct BadInputs;
+                    workspace.show_toast(
+                        Toast::new(NotificationId::unique::<BadInputs>(), format!("{}: {e}", path.display())),
+                        cx,
+                    );
+                }
             })
             .ok();
     })
@@ -168,7 +166,7 @@ fn play_movie(workspace: &mut Workspace, _: &PlayMovie, window: &mut Window, cx:
 }
 
 /// Saves the focused game's movie, asking where the first time.
-fn save_movie(workspace: &mut Workspace, _: &SaveMovie, window: &mut Window, cx: &mut Context<Workspace>) {
+fn save_inputs(workspace: &mut Workspace, _: &SaveInputs, window: &mut Window, cx: &mut Context<Workspace>) {
     let Some(view) = workspace.active_item_as::<GameView>(cx) else { return };
     if view.read(cx).run.status().movie_path.is_some() {
         view.update(cx, |v, cx| v.save_to(None, cx));
@@ -473,7 +471,7 @@ impl GameView {
         }
         let answer = window.prompt(
             PromptLevel::Info,
-            "Do you want to save the movie file?",
+            "Save the changes to these inputs?",
             None,
             &["Save", "Don't Save"],
             cx,
@@ -500,11 +498,11 @@ impl GameView {
         let small = |t: String, c: Color| Label::new(t).size(LabelSize::Small).color(c);
         let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, bool)>) = match s.recording {
             // Live play with no movie file: just playing. Input is still kept
-            // (that's what "Save as movie" saves), but it isn't "recording".
+            // (that is what "Save inputs" saves), but it isn't "recording".
             Recording::Write if movie_name.is_none() => (
                 small("Live".into(), Color::Muted).into_any_element(),
                 String::new(),
-                Some(("Save as movie…", true)),
+                Some(("Save inputs…", true)),
             ),
             Recording::Write => {
                 let dot = div().size(gpui::px(8.)).rounded_full().bg(RED);
@@ -520,7 +518,7 @@ impl GameView {
                 (lead, format!("{} frames{unsaved}", s.movie_frames), s.movie_modified.then_some(("Save", true)))
             }
             Recording::Read if s.frame >= s.movie_frames => (
-                div().text_sm().text_color(AMBER).child("Movie ended").into_any_element(),
+                div().text_sm().text_color(AMBER).child("Inputs ended").into_any_element(),
                 format!("{}  ·  {} frames", movie_name.unwrap_or_default(), s.movie_frames),
                 Some(("Take control", false)),
             ),
@@ -548,7 +546,7 @@ impl GameView {
                         .label_size(LabelSize::Small)
                         .on_click(cx.listener(move |this, _, window, cx| {
                             if save {
-                                window.dispatch_action(Box::new(SaveMovie), cx);
+                                window.dispatch_action(Box::new(SaveInputs), cx);
                             } else {
                                 this.toggle_recording(&ToggleRecording, window, cx);
                             }
@@ -877,6 +875,186 @@ impl FrameLog {
 const RED: gpui::Rgba = gpui::Rgba { r: 0.898, g: 0.282, b: 0.302, a: 1.0 };
 const GREEN: gpui::Rgba = gpui::Rgba { r: 0.247, g: 0.725, b: 0.380, a: 1.0 };
 const AMBER: gpui::Rgba = gpui::Rgba { r: 0.945, g: 0.659, b: 0.204, a: 1.0 };
+
+/// An inputs file (libTAS .ltm) on its own: what's in it, and buttons to run
+/// it on one or more game binaries, each in its own pane.
+pub struct InputsView {
+    focus_handle: FocusHandle,
+    path: PathBuf,
+    movie: obake_controller::Movie,
+    /// Runs of identical frames: (first frame, last frame, keys).
+    spans: Arc<Vec<(u64, u64, String)>>,
+    workspace: gpui::WeakEntity<Workspace>,
+}
+
+impl InputsView {
+    fn new(
+        path: PathBuf,
+        movie: obake_controller::Movie,
+        workspace: gpui::WeakEntity<Workspace>,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let mut spans: Vec<(u64, u64, String)> = Vec::new();
+        for (i, f) in movie.frames.iter().enumerate() {
+            let keys = if f.keys.is_empty() {
+                String::new()
+            } else {
+                f.keys.iter().map(|&k| key_name(k)).collect::<Vec<_>>().join(" + ")
+            };
+            match spans.last_mut() {
+                Some(last) if last.2 == keys => last.1 = i as u64,
+                _ => spans.push((i as u64, i as u64, keys)),
+            }
+        }
+        Self { focus_handle: cx.focus_handle(), path, movie, spans: Arc::new(spans), workspace }
+    }
+
+    fn name(&self) -> String {
+        self.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+    }
+
+    /// Runs the inputs on `games`, each in a new pane to the right.
+    fn run_on(&self, games: Vec<PathBuf>, window: &mut Window, cx: &mut App) {
+        let spec = MovieSpec { recording: Recording::Read, path: Some(self.path.clone()), ..Default::default() };
+        self.workspace
+            .update(cx, |workspace, cx| {
+                for game in games {
+                    open_run(workspace, game, spec.clone(), true, window, cx);
+                }
+            })
+            .ok();
+    }
+
+    fn pick_games(&self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(workspace) = self.workspace.upgrade() else { return };
+        let picked = workspace.update(cx, |ws, cx| pick_files(ws, "Run", true, window, cx));
+        cx.spawn_in(window, async move |this, cx| {
+            let games = picked.await;
+            this.update_in(cx, |this, window, cx| this.run_on(games, window, cx)).ok();
+        })
+        .detach();
+    }
+}
+
+impl EventEmitter<ItemEvent> for InputsView {}
+
+impl Focusable for InputsView {
+    fn focus_handle(&self, _: &App) -> FocusHandle {
+        self.focus_handle.clone()
+    }
+}
+
+impl Item for InputsView {
+    type Event = ItemEvent;
+
+    fn tab_content_text(&self, _detail: usize, _: &App) -> SharedString {
+        self.name().into()
+    }
+
+    fn tab_tooltip_text(&self, _: &App) -> Option<SharedString> {
+        Some(self.path.display().to_string().into())
+    }
+
+    fn to_item_events(event: &Self::Event, f: &mut dyn FnMut(ItemEvent)) {
+        f(*event)
+    }
+}
+
+impl Render for InputsView {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let m = &self.movie;
+        let (num, den) = m.framerate;
+        let secs = m.len() as f64 * den as f64 / num.max(1) as f64;
+        let summary = format!(
+            "{} frames  ·  {} fps  ·  {}:{:05.2}",
+            m.len(),
+            num / den.max(1),
+            (secs / 60.0) as u64,
+            secs % 60.0
+        );
+        let recorded_on = m.game_path.clone().filter(|g| g.is_file());
+        let spans = self.spans.clone();
+        v_flex()
+            .track_focus(&self.focus_handle)
+            .size_full()
+            .bg(cx.theme().colors().editor_background)
+            .p_4()
+            .gap_3()
+            .child(Label::new(self.name()).size(LabelSize::Large))
+            .child(Label::new(summary).size(LabelSize::Small).color(Color::Muted))
+            .child(
+                h_flex()
+                    .gap_2()
+                    .when_some(recorded_on, |d, game| {
+                        let label = format!(
+                            "Run on {}",
+                            game.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+                        );
+                        d.child(
+                            ui::Button::new("run-recorded", label)
+                                .style(ui::ButtonStyle::Filled)
+                                .tooltip(Tooltip::text(game.display().to_string()))
+                                .on_click(cx.listener(move |this, _, window, cx| {
+                                    this.run_on(vec![game.clone()], window, cx)
+                                })),
+                        )
+                    })
+                    .child(
+                        ui::Button::new("run-on", "Run on games…")
+                            .style(ui::ButtonStyle::Filled)
+                            .tooltip(Tooltip::text("Pick one or more game binaries; each runs these inputs in its own pane"))
+                            .on_click(cx.listener(|this, _, window, cx| this.pick_games(window, cx))),
+                    ),
+            )
+            .child(
+                v_flex()
+                    .flex_1()
+                    .min_h_0()
+                    .border_t_1()
+                    .border_color(cx.theme().colors().border_variant)
+                    .pt_2()
+                    .child(
+                        gpui::uniform_list("spans", spans.len(), move |range, _, _| {
+                            range
+                                .map(|i| {
+                                    let (a, b, keys) = &spans[i];
+                                    let frames = if a == b { format!("{a}") } else { format!("{a}–{b}") };
+                                    h_flex()
+                                        .gap_4()
+                                        .child(div().w(gpui::px(110.)).child(
+                                            Label::new(frames).size(LabelSize::Small).color(Color::Muted),
+                                        ))
+                                        .child(if keys.is_empty() {
+                                            Label::new("—").size(LabelSize::Small).color(Color::Disabled)
+                                        } else {
+                                            Label::new(keys.clone()).size(LabelSize::Small)
+                                        })
+                                })
+                                .collect()
+                        })
+                        .size_full(),
+                    ),
+            )
+    }
+}
+
+/// X11 keysym -> short readable name.
+fn key_name(sym: u32) -> String {
+    match sym {
+        0xff51 => "←".into(),
+        0xff52 => "↑".into(),
+        0xff53 => "→".into(),
+        0xff54 => "↓".into(),
+        0xff0d => "Enter".into(),
+        0xff1b => "Esc".into(),
+        0xff08 => "Backspace".into(),
+        0xff09 => "Tab".into(),
+        0x20 => "Space".into(),
+        0xffbe..=0xffc9 => format!("F{}", sym - 0xffbe + 1),
+        0x21..=0x7e => (sym as u8 as char).to_ascii_uppercase().to_string(),
+        _ => format!("0x{sym:x}"),
+    }
+}
 
 /// gpui key name -> X11 keysym.
 fn keysym(key: &str) -> Option<u32> {
