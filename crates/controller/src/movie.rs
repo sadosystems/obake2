@@ -16,11 +16,11 @@ use std::process::{Command, Stdio};
 /// libTAS `AllInputs::MAXKEYS`.
 pub const MAXKEYS: usize = 16;
 
-/// libTAS `SharedConfig::recording`. Every run has a movie: without a file
-/// it is recorded in memory (and kept as a backup on exit), so libTAS's
-/// `NO_RECORDING` is just `Write` with no path.
+/// libTAS `SharedConfig::recording`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Recording {
+    /// Live play: input goes to the game and nowhere else.
+    Off,
     /// Live input is recorded into the movie, replacing anything after it.
     Write,
     /// Inputs come from the movie; live input is ignored.
@@ -95,6 +95,9 @@ pub struct Movie {
     /// The game binary that recorded it (obake extension: `obake_game_path`,
     /// ignored by libTAS).
     pub game_path: Option<PathBuf>,
+    /// Game binaries this replay is played on (obake extension:
+    /// `obake_build_<n>`, ignored by libTAS).
+    pub builds: Vec<PathBuf>,
     /// libTAS `initial_time_*` / `initial_monotonic_time_*` (sec, nsec).
     pub initial_time: (i64, i64),
     pub initial_monotonic_time: (i64, i64),
@@ -112,6 +115,7 @@ impl Movie {
             game_name: String::new(),
             md5: String::new(),
             game_path: None,
+            builds: Vec::new(),
             initial_time: (1, 0),
             initial_monotonic_time: (1, 0),
             modified: false,
@@ -190,6 +194,7 @@ impl Movie {
         m.game_name = get("game_name").unwrap_or_default().to_string();
         m.md5 = get("md5").unwrap_or_default().to_string();
         m.game_path = get("obake_game_path").filter(|p| !p.is_empty()).map(PathBuf::from);
+        m.builds = (0..).map_while(|i| get(&format!("obake_build_{i}")).map(PathBuf::from)).collect();
         m.initial_time = (num("initial_time_sec").unwrap_or(1), num("initial_time_nsec").unwrap_or(0));
         m.initial_monotonic_time =
             (num("initial_monotonic_time_sec").unwrap_or(1), num("initial_monotonic_time_nsec").unwrap_or(0));
@@ -242,6 +247,9 @@ impl Movie {
         }
         if let Some(g) = &self.game_path {
             kv("obake_game_path", &ini_string(&g.display().to_string()));
+        }
+        for (i, b) in self.builds.iter().enumerate() {
+            kv(&format!("obake_build_{i}"), &ini_string(&b.display().to_string()));
         }
         // obake doesn't track main-thread time calls yet; -1 = off, as libTAS.
         c.push_str("\n[mainthread_timetrack]\n");
@@ -334,7 +342,7 @@ pub struct MovieSpec {
 
 impl Default for MovieSpec {
     fn default() -> Self {
-        MovieSpec { recording: Recording::Write, path: None, on_movie_end: OnMovieEnd::Read }
+        MovieSpec { recording: Recording::Off, path: None, on_movie_end: OnMovieEnd::Read }
     }
 }
 
@@ -368,6 +376,7 @@ mod tests {
         let mut m = Movie::new((30, 1));
         m.game_name = "a game".into();
         m.game_path = Some("/games/a game/run".into());
+        m.builds = vec!["/games/a game/run".into(), "/games/b/run".into()];
         m.set_inputs(0, FrameInputs::default());
         m.set_inputs(1, FrameInputs { keys: vec![0x61], other: vec![] });
         let path = dir.with_extension("ltm");
@@ -377,6 +386,7 @@ mod tests {
         assert_eq!(l.framerate, (30, 1));
         assert_eq!(l.game_name, "a game");
         assert_eq!(l.game_path, m.game_path);
+        assert_eq!(l.builds, m.builds);
         let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::remove_file(&path);
     }

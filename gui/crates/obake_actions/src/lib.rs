@@ -294,10 +294,10 @@ pub mod obake {
             StepFrame,
             /// Asks the game to quit (killed after two seconds).
             StopGame,
-            /// Opens an inputs file (libTAS .ltm) to look at and run on games.
-            OpenInputs,
-            /// Saves the focused game's inputs, asking for a file the first time.
-            SaveInputs,
+            /// Opens a replay (libTAS .ltm) to look at and play on games.
+            OpenReplay,
+            /// Saves the focused game's replay, asking for a file the first time.
+            SaveReplay,
             /// Starts or stops recording live input into the focused game's movie.
             ToggleRecording,
         ]

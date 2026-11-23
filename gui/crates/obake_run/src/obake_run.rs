@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use gpui::{
-    App, Context, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement,
+    App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement,
     ObjectFit, PathPromptOptions, PromptLevel, Render, RenderImage, SharedString, Styled,
     StyledImage as _, Subscription, Task, Window, div, img,
 };
@@ -21,7 +21,7 @@ use workspace::{
     Item, OpenPathPromptMode, Toast, Workspace, item::ItemEvent, notifications::NotificationId,
 };
 use obake_actions::obake::{
-    LaunchGame, OpenInputs, SaveInputs, StepFrame, StopGame, TogglePause, ToggleRecording,
+    LaunchGame, OpenReplay, SaveReplay, StepFrame, StopGame, TogglePause, ToggleRecording,
 };
 
 pub fn init(cx: &mut App) {
@@ -53,8 +53,8 @@ pub fn init(cx: &mut App) {
             }
         }
         workspace.register_action(launch_game);
-        workspace.register_action(play_movie);
-        workspace.register_action(save_inputs);
+        workspace.register_action(open_replay);
+        workspace.register_action(save_replay);
         workspace.register_action(|ws, a: &ToggleRecording, window, cx| {
             with_active_game(ws, cx, |v, cx| v.toggle_recording(a, window, cx))
         });
@@ -134,9 +134,9 @@ fn launch_game(workspace: &mut Workspace, _: &LaunchGame, window: &mut Window, c
     pick_and_launch(workspace, MovieSpec::default(), false, window, cx);
 }
 
-/// Opens an inputs file in its own pane. It is data on its own: nothing
-/// runs until you pick games to run it on.
-fn play_movie(workspace: &mut Workspace, _: &OpenInputs, window: &mut Window, cx: &mut Context<Workspace>) {
+/// Opens a replay in its own pane. It is data on its own: nothing
+/// runs until you pick games to play it on.
+fn open_replay(workspace: &mut Workspace, _: &OpenReplay, window: &mut Window, cx: &mut Context<Workspace>) {
     let picked = pick_files(workspace, "Open", false, window, cx);
     cx.spawn_in(window, async move |workspace, cx| {
         let Some(path) = picked.await.into_iter().next() else { return };
@@ -149,13 +149,13 @@ fn play_movie(workspace: &mut Workspace, _: &OpenInputs, window: &mut Window, cx
             .update_in(cx, |workspace, window, cx| match movie {
                 Ok(movie) => {
                     let ws = cx.entity().downgrade();
-                    let view = cx.new(|cx| InputsView::new(path, movie, ws, cx));
+                    let view = cx.new(|cx| ReplayView::new(path, movie, ws, cx));
                     workspace.add_item_to_active_pane(Box::new(view), None, true, window, cx);
                 }
                 Err(e) => {
-                    struct BadInputs;
+                    struct BadReplay;
                     workspace.show_toast(
-                        Toast::new(NotificationId::unique::<BadInputs>(), format!("{}: {e}", path.display())),
+                        Toast::new(NotificationId::unique::<BadReplay>(), format!("{}: {e}", path.display())),
                         cx,
                     );
                 }
@@ -166,8 +166,14 @@ fn play_movie(workspace: &mut Workspace, _: &OpenInputs, window: &mut Window, cx
 }
 
 /// Saves the focused game's movie, asking where the first time.
-fn save_inputs(workspace: &mut Workspace, _: &SaveInputs, window: &mut Window, cx: &mut Context<Workspace>) {
-    let Some(view) = workspace.active_item_as::<GameView>(cx) else { return };
+fn save_replay(workspace: &mut Workspace, _: &SaveReplay, window: &mut Window, cx: &mut Context<Workspace>) {
+    if let Some(view) = workspace.active_item_as::<GameView>(cx) {
+        save_view(workspace, view, window, cx);
+    }
+}
+
+/// Saves a game's recording, asking for a file the first time.
+fn save_view(workspace: &mut Workspace, view: Entity<GameView>, window: &mut Window, cx: &mut Context<Workspace>) {
     if view.read(cx).run.status().movie_path.is_some() {
         view.update(cx, |v, cx| v.save_to(None, cx));
         return;
@@ -205,7 +211,8 @@ pub fn open_run(
             if std::env::var("OBAKE_AUTOLAUNCH_FF").is_ok() {
                 run.set_fastforward(true);
             }
-            let view = cx.new(|cx| GameView::new(run, path, window, cx));
+            let ws = cx.entity().downgrade();
+            let view = cx.new(|cx| GameView::new(run, path, ws, window, cx));
             if split {
                 workspace.split_item(workspace::SplitDirection::Right, Box::new(view.clone()), window, cx);
             } else {
@@ -284,6 +291,7 @@ impl DisplayPacer {
 pub struct GameView {
     focus_handle: FocusHandle,
     run: Run,
+    workspace: gpui::WeakEntity<Workspace>,
     path: PathBuf,
     title: SharedString,
     status: RunStatus,
@@ -308,7 +316,13 @@ pub struct GameView {
 }
 
 impl GameView {
-    fn new(run: Run, path: PathBuf, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    fn new(
+        run: Run,
+        path: PathBuf,
+        workspace: gpui::WeakEntity<Workspace>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let title = path
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
@@ -419,6 +433,7 @@ impl GameView {
             stale_frames: Vec::new(),
             display_pacer: DisplayPacer::default(),
             run,
+            workspace,
             path,
             title,
             _poll: poll,
@@ -465,23 +480,46 @@ impl GameView {
 
     /// libTAS on game exit: offer to save a modified movie.
     fn ask_to_save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        // A movie without a file was kept as a backup by the controller.
-        if self.status.movie_path.is_none() || !self.status.movie_modified {
+        if self.status.recording == Recording::Off || !self.status.movie_modified {
             return;
         }
-        let answer = window.prompt(
-            PromptLevel::Info,
-            "Save the changes to these inputs?",
-            None,
-            &["Save", "Don't Save"],
-            cx,
-        );
+        let question = if self.status.movie_path.is_some() {
+            "Save the changes to this replay?"
+        } else {
+            "Save this recording as a replay?"
+        };
+        let answer = window.prompt(PromptLevel::Info, question, None, &["Save", "Don't Save"], cx);
         cx.spawn_in(window, async move |this, cx| {
             if answer.await == Ok(0) {
-                this.update(cx, |this, cx| this.save_to(None, cx)).ok();
+                this.update_in(cx, |this, window, cx| this.save(window, cx)).ok();
             }
         })
         .detach();
+    }
+
+    fn save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let (ws, me) = (self.workspace.clone(), cx.entity());
+        window.defer(cx, move |window, cx| {
+            ws.update(cx, |ws, cx| save_view(ws, me, window, cx)).ok();
+        });
+    }
+
+    /// Inputs only replay from frame 0, so recording restarts the game with
+    /// recording on, in place of this pane.
+    fn record(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.run.stop();
+        let (ws, me, path) = (self.workspace.clone(), cx.entity(), self.path.clone());
+        window.defer(cx, move |window, cx| {
+            ws.update(cx, |ws, cx| {
+                let pane = ws.pane_for(&me);
+                let spec = MovieSpec { recording: Recording::Write, ..Default::default() };
+                open_run(ws, path, spec, false, window, cx);
+                if let Some(pane) = pane {
+                    pane.update(cx, |p, cx| p.remove_item(me.entity_id(), false, false, window, cx));
+                }
+            })
+            .ok();
+        });
     }
 
     // Mode colours are fixed rather than themed: the default theme is
@@ -496,31 +534,35 @@ impl GameView {
             .and_then(|p| p.file_name())
             .map(|n| n.to_string_lossy().into_owned());
         let small = |t: String, c: Color| Label::new(t).size(LabelSize::Small).color(c);
-        let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, bool)>) = match s.recording {
-            // Live play with no movie file: just playing. Input is still kept
-            // (that is what "Save inputs" saves), but it isn't "recording".
-            Recording::Write if movie_name.is_none() => (
+        let red_lead = |text: String| {
+            h_flex()
+                .gap_1p5()
+                .child(div().size(gpui::px(8.)).rounded_full().bg(RED))
+                .child(div().text_sm().text_color(RED).child(text))
+                .into_any_element()
+        };
+        let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, StripAction)>) = match s.recording {
+            Recording::Off => (
                 small("Live".into(), Color::Muted).into_any_element(),
                 String::new(),
-                Some(("Save inputs…", true)),
+                Some(("● Record", StripAction::Record)),
             ),
             Recording::Write => {
-                let dot = div().size(gpui::px(8.)).rounded_full().bg(RED);
-                let lead = h_flex()
-                    .gap_1p5()
-                    .child(dot)
-                    .child(div().text_sm().text_color(RED).child(format!(
-                        "Recording into {}",
-                        movie_name.clone().unwrap_or_default()
-                    )))
-                    .into_any_element();
-                let unsaved = if s.movie_modified { "  ·  unsaved" } else { "" };
-                (lead, format!("{} frames{unsaved}", s.movie_frames), s.movie_modified.then_some(("Save", true)))
+                let unsaved = if s.movie_modified && movie_name.is_some() { "  ·  unsaved" } else { "" };
+                let lead = match &movie_name {
+                    Some(n) => red_lead(format!("Recording into {n}")),
+                    None => red_lead("Recording".into()),
+                };
+                let action = match &movie_name {
+                    None => Some(("Save replay…", StripAction::Save)),
+                    Some(_) => s.movie_modified.then_some(("Save", StripAction::Save)),
+                };
+                (lead, format!("{} frames{unsaved}", s.movie_frames), action)
             }
             Recording::Read if s.frame >= s.movie_frames => (
-                div().text_sm().text_color(AMBER).child("Inputs ended").into_any_element(),
+                div().text_sm().text_color(AMBER).child("Replay ended").into_any_element(),
                 format!("{}  ·  {} frames", movie_name.unwrap_or_default(), s.movie_frames),
-                Some(("Take control", false)),
+                Some(("Take control", StripAction::TakeControl)),
             ),
             Recording::Read => (
                 div()
@@ -529,7 +571,7 @@ impl GameView {
                     .child(format!("▶ Playing {}", movie_name.unwrap_or_default()))
                     .into_any_element(),
                 format!("{} / {}", s.frame, s.movie_frames),
-                Some(("Take control", false)),
+                Some(("Take control", StripAction::TakeControl)),
             ),
         };
         h_flex()
@@ -540,16 +582,14 @@ impl GameView {
             .child(small(info, Color::Muted))
             .when_some(self.notice.clone(), |d, (t, c)| d.child(small(t, c)))
             .child(div().flex_1())
-            .when_some(action.filter(|_| alive), |d, (label, save)| {
+            .when_some(action.filter(|_| alive), |d, (label, act)| {
                 d.child(
                     ui::Button::new("movie-action", label)
                         .label_size(LabelSize::Small)
-                        .on_click(cx.listener(move |this, _, window, cx| {
-                            if save {
-                                window.dispatch_action(Box::new(SaveInputs), cx);
-                            } else {
-                                this.toggle_recording(&ToggleRecording, window, cx);
-                            }
+                        .on_click(cx.listener(move |this, _, window, cx| match act {
+                            StripAction::Save => this.save(window, cx),
+                            StripAction::Record => this.record(window, cx),
+                            StripAction::TakeControl => this.toggle_recording(&ToggleRecording, window, cx),
                         })),
                 )
             })
@@ -872,22 +912,31 @@ impl FrameLog {
     }
 }
 
+#[derive(Clone, Copy)]
+enum StripAction {
+    Save,
+    Record,
+    TakeControl,
+}
+
 const RED: gpui::Rgba = gpui::Rgba { r: 0.898, g: 0.282, b: 0.302, a: 1.0 };
 const GREEN: gpui::Rgba = gpui::Rgba { r: 0.247, g: 0.725, b: 0.380, a: 1.0 };
 const AMBER: gpui::Rgba = gpui::Rgba { r: 0.945, g: 0.659, b: 0.204, a: 1.0 };
 
-/// An inputs file (libTAS .ltm) on its own: what's in it, and buttons to run
+/// A replay (libTAS .ltm) on its own: what's in it, and buttons to play
 /// it on one or more game binaries, each in its own pane.
-pub struct InputsView {
+pub struct ReplayView {
     focus_handle: FocusHandle,
     path: PathBuf,
     movie: obake_controller::Movie,
     /// Runs of identical frames: (first frame, last frame, keys).
     spans: Arc<Vec<(u64, u64, String)>>,
     workspace: gpui::WeakEntity<Workspace>,
+    /// Why the builds list couldn't be saved into the file.
+    notice: Option<String>,
 }
 
-impl InputsView {
+impl ReplayView {
     fn new(
         path: PathBuf,
         movie: obake_controller::Movie,
@@ -906,7 +955,7 @@ impl InputsView {
                 _ => spans.push((i as u64, i as u64, keys)),
             }
         }
-        Self { focus_handle: cx.focus_handle(), path, movie, spans: Arc::new(spans), workspace }
+        Self { focus_handle: cx.focus_handle(), path, movie, spans: Arc::new(spans), workspace, notice: None }
     }
 
     fn name(&self) -> String {
@@ -925,26 +974,51 @@ impl InputsView {
             .ok();
     }
 
-    fn pick_games(&self, window: &mut Window, cx: &mut Context<Self>) {
+    /// The builds this replay is played on: saved with it, falling back to
+    /// the one that recorded it.
+    fn builds(&self) -> Vec<PathBuf> {
+        if self.movie.builds.is_empty() {
+            self.movie.game_path.iter().cloned().collect()
+        } else {
+            self.movie.builds.clone()
+        }
+    }
+
+    fn set_builds(&mut self, builds: Vec<PathBuf>, cx: &mut Context<Self>) {
+        self.movie.builds = builds;
+        self.notice = obake_controller::write_movie(&self.path, &mut self.movie).err();
+        cx.notify();
+    }
+
+    fn add_builds(&self, window: &mut Window, cx: &mut Context<Self>) {
         let Some(workspace) = self.workspace.upgrade() else { return };
-        let picked = workspace.update(cx, |ws, cx| pick_files(ws, "Run", true, window, cx));
+        let picked = workspace.update(cx, |ws, cx| pick_files(ws, "Add", true, window, cx));
         cx.spawn_in(window, async move |this, cx| {
             let games = picked.await;
-            this.update_in(cx, |this, window, cx| this.run_on(games, window, cx)).ok();
+            this.update(cx, |this, cx| {
+                let mut builds = this.builds();
+                for g in games {
+                    if !builds.contains(&g) {
+                        builds.push(g);
+                    }
+                }
+                this.set_builds(builds, cx);
+            })
+            .ok();
         })
         .detach();
     }
 }
 
-impl EventEmitter<ItemEvent> for InputsView {}
+impl EventEmitter<ItemEvent> for ReplayView {}
 
-impl Focusable for InputsView {
+impl Focusable for ReplayView {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus_handle.clone()
     }
 }
 
-impl Item for InputsView {
+impl Item for ReplayView {
     type Event = ItemEvent;
 
     fn tab_content_text(&self, _detail: usize, _: &App) -> SharedString {
@@ -960,12 +1034,49 @@ impl Item for InputsView {
     }
 }
 
-impl Render for InputsView {
+impl Render for ReplayView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let m = &self.movie;
         let summary = format!("{} frames", m.len());
-        let recorded_on = m.game_path.clone().filter(|g| g.is_file());
+        let builds = self.builds();
+        let playable: Vec<PathBuf> = builds.iter().filter(|b| b.is_file()).cloned().collect();
         let spans = self.spans.clone();
+        let rows = builds.into_iter().enumerate().map(|(i, build)| {
+            let exists = build.is_file();
+            let name = build.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            let dir = build.parent().map(|d| d.display().to_string()).unwrap_or_default();
+            h_flex()
+                .gap_3()
+                .py_0p5()
+                .child(
+                    ui::Button::new(("play-build", i), "▶ Play")
+                        .label_size(LabelSize::Small)
+                        .disabled(!exists)
+                        .on_click(cx.listener({
+                            let build = build.clone();
+                            move |this, _, window, cx| this.run_on(vec![build.clone()], window, cx)
+                        })),
+                )
+                .child(Label::new(name).color(if exists { Color::Default } else { Color::Disabled }))
+                .child(
+                    Label::new(if exists { dir } else { format!("{dir}  (missing)") })
+                        .size(LabelSize::Small)
+                        .color(Color::Muted),
+                )
+                .child(div().flex_1())
+                .child(
+                    IconButton::new(("remove-build", i), IconName::Close)
+                        .icon_size(IconSize::Small)
+                        .tooltip(Tooltip::text("Remove from this replay"))
+                        .on_click(cx.listener({
+                            let build = build.clone();
+                            move |this, _, _, cx| {
+                                let builds = this.builds().into_iter().filter(|b| *b != build).collect();
+                                this.set_builds(builds, cx);
+                            }
+                        })),
+                )
+        });
         v_flex()
             .track_focus(&self.focus_handle)
             .size_full()
@@ -977,27 +1088,27 @@ impl Render for InputsView {
             .child(
                 h_flex()
                     .gap_2()
-                    .when_some(recorded_on, |d, game| {
-                        let label = format!(
-                            "Run on {}",
-                            game.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
-                        );
+                    .child(Label::new("Builds").color(Color::Muted))
+                    .child(div().flex_1())
+                    .when(playable.len() > 1, |d| {
                         d.child(
-                            ui::Button::new("run-recorded", label)
+                            ui::Button::new("play-all", "▶ Play all side by side")
                                 .style(ui::ButtonStyle::Filled)
-                                .tooltip(Tooltip::text(game.display().to_string()))
-                                .on_click(cx.listener(move |this, _, window, cx| {
-                                    this.run_on(vec![game.clone()], window, cx)
+                                .on_click(cx.listener({
+                                    let playable = playable.clone();
+                                    move |this, _, window, cx| this.run_on(playable.clone(), window, cx)
                                 })),
                         )
                     })
                     .child(
-                        ui::Button::new("run-on", "Run on games…")
-                            .style(ui::ButtonStyle::Filled)
-                            .tooltip(Tooltip::text("Pick one or more game binaries; each runs these inputs in its own pane"))
-                            .on_click(cx.listener(|this, _, window, cx| this.pick_games(window, cx))),
+                        ui::Button::new("add-build", "+ Add build…")
+                            .on_click(cx.listener(|this, _, window, cx| this.add_builds(window, cx))),
                     ),
             )
+            .child(v_flex().children(rows))
+            .when_some(self.notice.clone(), |d, n| {
+                d.child(Label::new(format!("Couldn't save the builds list: {n}")).size(LabelSize::Small).color(Color::Error))
+            })
             .child(
                 v_flex()
                     .flex_1()

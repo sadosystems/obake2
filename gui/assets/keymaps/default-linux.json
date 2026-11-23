@@ -635,7 +635,7 @@
   {
     "context": "GameView",
     "bindings": {
-      "ctrl-s": "obake::SaveInputs",
+      "ctrl-s": "obake::SaveReplay",
     },
   },
   {

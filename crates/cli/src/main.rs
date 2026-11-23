@@ -144,9 +144,6 @@ fn cmd_run(bin: &str, args: &[String], movie: MovieSpec) -> i32 {
                     Err(e) => eprintln!("save failed: {e}"),
                 }
             }
-            if let Some(b) = &s.backup_movie {
-                eprintln!("No movie file was selected. A backup movie was saved to {}", b.display());
-            }
             return code.unwrap_or(1);
         }
     }
