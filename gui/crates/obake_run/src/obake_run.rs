@@ -963,15 +963,7 @@ impl Item for InputsView {
 impl Render for InputsView {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let m = &self.movie;
-        let (num, den) = m.framerate;
-        let secs = m.len() as f64 * den as f64 / num.max(1) as f64;
-        let summary = format!(
-            "{} frames  ·  {} fps  ·  {}:{:05.2}",
-            m.len(),
-            num / den.max(1),
-            (secs / 60.0) as u64,
-            secs % 60.0
-        );
+        let summary = format!("{} frames", m.len());
         let recorded_on = m.game_path.clone().filter(|g| g.is_file());
         let spans = self.spans.clone();
         v_flex()

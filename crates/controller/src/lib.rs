@@ -213,6 +213,7 @@ impl Run {
         let mut warning = None;
         let mut recording = spec.movie.recording;
         let mut mv = Movie::new(spec.framerate);
+        let run_framerate = spec.framerate;
         if recording == Recording::Read {
             let path = spec.movie.path.clone().unwrap_or_default();
             match Movie::load(&path, &dir.join("movie")) {
@@ -220,8 +221,10 @@ impl Run {
                     if !m.md5.is_empty() && m.md5 != md5 {
                         warning = Some("Game executable hash does not match with the hash stored in the movie!".into());
                     }
-                    spec.framerate = m.framerate;
+                    // Frame time is the run's setting, not the inputs'; the
+                    // run's framerate is what gets written back for libTAS.
                     mv = m;
+                    mv.framerate = run_framerate;
                 }
                 Err(e) => {
                     warning = Some(e);
