@@ -12,7 +12,7 @@ use std::time::Duration;
 use gpui::{
     App, Context, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement,
     ObjectFit, PathPromptOptions, PromptLevel, Render, RenderImage, SharedString, Styled,
-    AnimationExt as _, StyledImage as _, Subscription, Task, Window, div, img,
+    StyledImage as _, Subscription, Task, Window, div, img,
 };
 use obake_controller::{LaunchSpec, MovieSpec, Recording, Run, RunState, RunStatus};
 use project::DirectoryLister;
@@ -32,13 +32,22 @@ pub fn init(cx: &mut App) {
     cx.observe_new(open_path_prompt::OpenPathPrompt::register_new_path)
         .detach();
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
-        // Dev hook: OBAKE_AUTOLAUNCH=<binary> launches it in the first window.
+        // Dev hook: OBAKE_AUTOLAUNCH=<binary or .ltm> launches it in the first window.
         static AUTOLAUNCHED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if let (Some(window), Ok(path)) = (window, std::env::var("OBAKE_AUTOLAUNCH")) {
             if !AUTOLAUNCHED.swap(true, std::sync::atomic::Ordering::Relaxed) {
                 cx.spawn_in(window, async move |ws, cx| {
-                    ws.update_in(cx, |ws, window, cx| open_run(ws, path.into(), MovieSpec::default(), false, window, cx))
-                        .ok();
+                    // A .ltm opens the movie on the game that recorded it.
+                    let path = PathBuf::from(path);
+                    let (game, spec) = if path.extension().is_some_and(|e| e == "ltm") {
+                        let game = obake_controller::read_movie(&path).ok().and_then(|m| m.game_path);
+                        (game, MovieSpec { recording: Recording::Read, path: Some(path), ..Default::default() })
+                    } else {
+                        (Some(path), MovieSpec::default())
+                    };
+                    if let Some(game) = game {
+                        ws.update_in(cx, |ws, window, cx| open_run(ws, game, spec, false, window, cx)).ok();
+                    }
                 })
                 .detach();
             }
@@ -437,14 +446,15 @@ impl GameView {
 
     /// Saves the movie to `path`, or to its own file.
     fn save_to(&mut self, path: Option<PathBuf>, cx: &mut Context<Self>) {
+        self.notice = None;
         let r = match path {
-            Some(p) => self.run.save_movie_as(&p).map(|_| p),
-            None => self.run.save_movie(),
+            Some(p) => self.run.save_movie_as(&p),
+            None => self.run.save_movie().map(|_| ()),
         };
-        self.notice = Some(match r {
-            Ok(p) => (format!("Saved {}", p.display()), Color::Muted),
-            Err(e) => (format!("Movie not saved: {e}"), Color::Error),
-        });
+        // Success shows in the strip ("saved as ..."); only failures need words.
+        if let Err(e) = r {
+            self.notice = Some((format!("Could not save: {e}"), Color::Error));
+        }
         self.status = self.run.status();
         cx.notify();
     }
@@ -476,46 +486,69 @@ impl GameView {
         .detach();
     }
 
-    /// Playback progress through the movie.
-    fn movie_text(&self) -> Option<String> {
+    // Mode colours are fixed rather than themed: the default theme is
+    // monochrome, and recording vs playback must be told apart at a glance.
+    /// The movie line under the game: what is happening, in words, and the
+    /// one thing you'd want to do next.
+    fn movie_strip(&self, alive: bool, cx: &mut Context<Self>) -> impl IntoElement {
         let s = &self.status;
-        (s.recording == Recording::Read).then(|| format!("▶ {} / {}", s.frame.min(s.movie_frames), s.movie_frames))
-    }
-
-    /// ● record: red and pulsing while live input goes into the movie; off
-    /// while the movie plays back. Turning it on mid-movie takes over from
-    /// that frame (the rest of the movie is replaced).
-    fn record_button(&self, alive: bool, cx: &mut Context<Self>) -> impl IntoElement {
-        let recording = self.status.recording == Recording::Write;
-        let live = recording && alive && self.status.state == RunState::Running && !self.status.pause_requested;
-        let dot = div()
-            .size(gpui::px(10.))
-            .rounded_full()
-            .border_1()
-            .border_color(if recording { Color::Error.color(cx) } else { Color::Muted.color(cx) })
-            .when(recording, |d| d.bg(Color::Error.color(cx)));
-        let dot = if live {
-            dot.with_animation(
-                "recording",
-                gpui::Animation::new(Duration::from_millis(1200))
-                    .repeat()
-                    .with_easing(gpui::pulsating_between(0.35, 1.0)),
-                |d, delta| d.opacity(delta),
-            )
-            .into_any_element()
-        } else {
-            dot.into_any_element()
+        let movie_name = s
+            .movie_path
+            .as_ref()
+            .and_then(|p| p.file_name())
+            .map(|n| n.to_string_lossy().into_owned());
+        let small = |t: String, c: Color| Label::new(t).size(LabelSize::Small).color(c);
+        let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, bool)>) = match s.recording {
+            Recording::Write => {
+                let dot = div().size(gpui::px(8.)).rounded_full().bg(RED);
+                let lead = h_flex()
+                    .gap_1p5()
+                    .child(dot)
+                    .child(div().text_sm().text_color(RED).child("Recording"))
+                    .into_any_element();
+                let saved = match (&movie_name, s.movie_modified) {
+                    (Some(n), false) => format!("saved as {n}"),
+                    (Some(n), true) => format!("{n}, unsaved changes"),
+                    (None, _) => "not saved".into(),
+                };
+                (lead, format!("{} frames  ·  {saved}", s.movie_frames), Some(("Save", true)))
+            }
+            Recording::Read if s.frame >= s.movie_frames => (
+                div().text_sm().text_color(AMBER).child("Movie ended").into_any_element(),
+                format!("{}  ·  {} frames", movie_name.unwrap_or_default(), s.movie_frames),
+                Some(("Keep recording", false)),
+            ),
+            Recording::Read => (
+                div()
+                    .text_sm()
+                    .text_color(GREEN)
+                    .child(format!("▶ Playing {}", movie_name.unwrap_or_default()))
+                    .into_any_element(),
+                format!("{} / {}", s.frame, s.movie_frames),
+                Some(("Record from here", false)),
+            ),
         };
-        ui::ButtonLike::new("record")
-            .size(ui::ButtonSize::Large)
-            .disabled(!alive)
-            .child(h_flex().size(gpui::px(20.)).justify_center().child(dot))
-            .tooltip(Tooltip::text(if recording {
-                "Recording your input (click to play the movie back instead)"
-            } else {
-                "Playing the movie back (click to record from this frame on)"
-            }))
-            .on_click(cx.listener(|this, _, window, cx| this.toggle_recording(&ToggleRecording, window, cx)))
+        h_flex()
+            .px_2()
+            .pt_1()
+            .gap_3()
+            .child(lead)
+            .child(small(info, Color::Muted))
+            .when_some(self.notice.clone(), |d, (t, c)| d.child(small(t, c)))
+            .child(div().flex_1())
+            .when_some(action.filter(|_| alive), |d, (label, save)| {
+                d.child(
+                    ui::Button::new("movie-action", label)
+                        .label_size(LabelSize::Small)
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            if save {
+                                window.dispatch_action(Box::new(SaveMovie), cx);
+                            } else {
+                                this.toggle_recording(&ToggleRecording, window, cx);
+                            }
+                        })),
+                )
+            })
     }
 
     fn state_text(&self) -> (String, Color) {
@@ -687,6 +720,7 @@ impl Render for GameView {
                         .size_full()
                     }),
             )
+            .child(self.movie_strip(alive, cx))
             .child(
                 h_flex()
                     .p_2()
@@ -698,18 +732,10 @@ impl Render for GameView {
                         |d| d.child(Label::new(state).color(state_color)),
                     )
                     .child(Label::new(details).size(LabelSize::Small).color(Color::Muted))
-                    .when_some(self.movie_text(), |d, t| {
-                        d.child(Label::new(t).size(LabelSize::Small).color(Color::Muted))
-                    })
-                    .when_some(self.notice.clone(), |d, (t, c)| {
-                        d.child(Label::new(t).size(LabelSize::Small).color(c))
-                    })
                     .child(div().flex_1())
-
                     .child(
                         h_flex()
                             .gap_1()
-                            .child(self.record_button(alive, cx))
                             .child(
                                 IconButton::new(
                                     "toggle-pause",
@@ -841,6 +867,10 @@ impl FrameLog {
         }
     }
 }
+
+const RED: gpui::Rgba = gpui::Rgba { r: 0.898, g: 0.282, b: 0.302, a: 1.0 };
+const GREEN: gpui::Rgba = gpui::Rgba { r: 0.247, g: 0.725, b: 0.380, a: 1.0 };
+const AMBER: gpui::Rgba = gpui::Rgba { r: 0.945, g: 0.659, b: 0.204, a: 1.0 };
 
 /// gpui key name -> X11 keysym.
 fn keysym(key: &str) -> Option<u32> {
