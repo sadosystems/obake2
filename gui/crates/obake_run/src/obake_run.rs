@@ -16,7 +16,7 @@ use gpui::{
 };
 use obake_controller::{LaunchSpec, MovieSpec, Recording, Run, RunState, RunStatus};
 use project::DirectoryLister;
-use ui::{Color, IconButton, IconButtonShape, IconName, IconSize, Label, Tooltip, LabelCommon as _, LabelSize, prelude::*};
+use ui::{ContextMenu, PopoverMenu, Color, IconButton, IconButtonShape, IconName, IconSize, Label, Tooltip, LabelCommon as _, LabelSize, prelude::*};
 use workspace::{
     Item, OpenPathPromptMode, Toast, Workspace, item::ItemEvent, notifications::NotificationId,
 };
@@ -148,6 +148,7 @@ fn open_replay(workspace: &mut Workspace, _: &OpenReplay, window: &mut Window, c
         workspace
             .update_in(cx, |workspace, window, cx| match movie {
                 Ok(movie) => {
+                    remember_replay(path.clone(), cx);
                     let ws = cx.entity().downgrade();
                     let view = cx.new(|cx| ReplayView::new(path, movie, ws, cx));
                     workspace.add_item_to_active_pane(Box::new(view), None, true, window, cx);
@@ -465,6 +466,9 @@ impl GameView {
             None => self.run.save_movie().map(|_| ()),
         };
         // Success shows in the strip ("saved as ..."); only failures need words.
+        if let Some(p) = self.run.status().movie_path.filter(|_| r.is_ok()) {
+            remember_replay(p, cx);
+        }
         if let Err(e) = r {
             self.notice = Some((format!("Could not save: {e}"), Color::Error));
         }
@@ -507,12 +511,92 @@ impl GameView {
     /// Inputs only replay from frame 0, so recording restarts the game with
     /// recording on, in place of this pane.
     fn record(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.restart_with(MovieSpec { recording: Recording::Write, ..Default::default() }, window, cx);
+    }
+
+    /// The replay feeding this game, or `None` for the keyboard.
+    fn source(&self) -> Option<PathBuf> {
+        let m = &self.run.spec.movie;
+        (m.recording == Recording::Read).then(|| m.path.clone()).flatten()
+    }
+
+    /// Plugs a different input source in. Replays only line up from frame 0,
+    /// so the game restarts with it.
+    fn set_source(&mut self, source: Option<PathBuf>, window: &mut Window, cx: &mut Context<Self>) {
+        if source == self.source() {
+            return;
+        }
+        let spec = match source {
+            Some(path) => {
+                remember_replay(path.clone(), cx);
+                MovieSpec { recording: Recording::Read, path: Some(path), ..Default::default() }
+            }
+            None => MovieSpec::default(),
+        };
+        self.restart_with(spec, window, cx);
+    }
+
+    fn load_source(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(workspace) = self.workspace.upgrade() else { return };
+        let picked = workspace.update(cx, |ws, cx| pick_files(ws, "Load", false, window, cx));
+        cx.spawn_in(window, async move |this, cx| {
+            let Some(path) = picked.await.into_iter().next() else { return };
+            this.update_in(cx, |this, window, cx| this.set_source(Some(path), window, cx)).ok();
+        })
+        .detach();
+    }
+
+    /// The input-source switch: keyboard, any replay loaded this session, or
+    /// load another.
+    fn source_menu(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let current = self.source();
+        let label = match &current {
+            Some(p) => p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
+            None => "Keyboard".into(),
+        };
+        let this = cx.entity().downgrade();
+        PopoverMenu::new("input-source")
+            .trigger(
+                ui::Button::new("input-source-trigger", format!("Input: {label}"))
+                    .label_size(LabelSize::Small)
+                    .end_icon(ui::Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
+            )
+            .menu(move |window, cx| {
+                let replays = cx.try_global::<LoadedReplays>().map(|r| r.0.clone()).unwrap_or_default();
+                let current = current.clone();
+                let this = this.clone();
+                Some(ContextMenu::build(window, cx, move |mut menu, _, _| {
+                    let pick = |src: Option<PathBuf>| {
+                        let this = this.clone();
+                        move |window: &mut Window, cx: &mut App| {
+                            this.update(cx, |v, cx| v.set_source(src.clone(), window, cx)).ok();
+                        }
+                    };
+                    menu = menu.toggleable_entry("Keyboard", current.is_none(), ui::IconPosition::Start, None, pick(None));
+                    if !replays.is_empty() {
+                        menu = menu.separator().header("Replays");
+                    }
+                    for r in replays {
+                        let name = r.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                        let on = current.as_ref() == Some(&r);
+                        menu = menu.toggleable_entry(name, on, ui::IconPosition::Start, None, pick(Some(r)));
+                    }
+                    let this = this.clone();
+                    menu.separator().entry("Load replay…", None, move |window, cx| {
+                        this.update(cx, |v, cx| v.load_source(window, cx)).ok();
+                    })
+                }))
+            })
+            .anchor(gpui::Anchor::BottomLeft)
+    }
+
+    /// Replaces this pane with a fresh run of the same game using `spec`.
+    fn restart_with(&mut self, spec: MovieSpec, window: &mut Window, cx: &mut Context<Self>) {
         self.run.stop();
         let (ws, me, path) = (self.workspace.clone(), cx.entity(), self.path.clone());
         window.defer(cx, move |window, cx| {
             ws.update(cx, |ws, cx| {
                 let pane = ws.pane_for(&me);
-                let spec = MovieSpec { recording: Recording::Write, ..Default::default() };
                 open_run(ws, path, spec, false, window, cx);
                 if let Some(pane) = pane {
                     pane.update(cx, |p, cx| p.remove_item(me.entity_id(), false, false, window, cx));
@@ -543,7 +627,7 @@ impl GameView {
         };
         let (lead, info, action): (gpui::AnyElement, String, Option<(&'static str, StripAction)>) = match s.recording {
             Recording::Off => (
-                small("Live".into(), Color::Muted).into_any_element(),
+                div().into_any_element(),
                 String::new(),
                 Some(("● Record", StripAction::Record)),
             ),
@@ -578,6 +662,7 @@ impl GameView {
             .px_2()
             .pt_1()
             .gap_3()
+            .child(self.source_menu(cx))
             .child(lead)
             .child(small(info, Color::Muted))
             .when_some(self.notice.clone(), |d, (t, c)| d.child(small(t, c)))
@@ -909,6 +994,19 @@ impl FrameLog {
             self.skipped = 0;
             self.since = now;
         }
+    }
+}
+
+/// Replays loaded this session, offered as input sources in every game.
+#[derive(Default)]
+struct LoadedReplays(Vec<PathBuf>);
+
+impl gpui::Global for LoadedReplays {}
+
+fn remember_replay(path: PathBuf, cx: &mut App) {
+    let r = cx.default_global::<LoadedReplays>();
+    if !r.0.contains(&path) {
+        r.0.push(path);
     }
 }
 
