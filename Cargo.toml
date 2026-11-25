@@ -11,5 +11,8 @@ version = "0.1.0"
 [workspace.dependencies]
 libc = "0.2"
 
+[workspace.metadata.rargo]
+host = "rargo.rs"
+
 [profile.release]
 debug = 1

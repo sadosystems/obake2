@@ -22,3 +22,21 @@ slow-timeout = { period = "60s", terminate-after = 5 }
 
 [profile.llvm]
 default-filter = "all()"
+
+# What the hook runs on rargo.rs: llvm's tests, minus those that need the
+# machine they run on, which rargo's build sandbox does not offer:
+# package(gpui_wgpu) a GPU; the fetch-tool redirects the network; the power
+# monitor D-Bus and system services; the remote transport tests the host's
+# /bin and /usr/bin tools and /etc/os-release. Run those locally with stock
+# cargo:  cargo nextest run --cargo-profile test-fast -P llvm
+[profile.rargo]
+default-filter = """not (
+    package(gpui_wgpu)
+  | test(=tests::test_fetch_tool_reauthorizes_redirect_to_new_host)
+  | test(=tests::test_fetch_tool_refuses_redirect_to_loopback)
+  | test(=tests::test_fetch_tool_follows_same_host_redirect)
+  | test(=linux::power::tests::monitors_profiles_and_service_restarts)
+  | test(=transport::mock::tests::test_stdio_bootstrap_without_target_path)
+  | test(=transport::ssh::tests::probe_returns_parseable_environment)
+  | test(=transport::ssh::tests::version_query_failure_does_not_abort_probe)
+)"""

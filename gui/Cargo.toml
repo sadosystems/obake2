@@ -1009,6 +1009,9 @@ large_enum_variant = "allow"
 # Boolean expressions can be hard to read, requiring only the minimal form gets in the way
 nonminimal_bool = "allow"
 
+[workspace.metadata.rargo]
+host = "rargo.rs"
+
 
 
 # zmij (serde_json's float formatter) uses SSE intrinsics Cranelift doesn't implement
